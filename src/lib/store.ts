@@ -19,7 +19,9 @@ interface ProcurementState {
   addVendor: (vendor: Vendor) => void;
   addLPO: (lpo: LPO) => void;
   addGRN: (grn: GRN) => void;
+  addBudgetLine: (budgetLine: Omit<BudgetLine, 'id' | 'spent' | 'committed'>) => void;
   updateBudgetLine: (id: string, updates: Partial<BudgetLine>) => void;
+  deleteBudgetLine: (id: string) => void;
 }
 
 const isCommitted = (status: PRStatus) => status !== 'Draft' && status !== 'Rejected';
@@ -143,8 +145,22 @@ export const useStore = create<ProcurementState>()(
         grns: [grn, ...state.grns]
       })),
 
+      addBudgetLine: (blData) => set((state) => {
+        const newBL: BudgetLine = {
+          ...blData,
+          id: `BL-${Math.floor(Math.random() * 10000)}`,
+          spent: 0,
+          committed: 0,
+        };
+        return { budgetLines: [...state.budgetLines, newBL] };
+      }),
+
       updateBudgetLine: (id, updates) => set((state) => ({
         budgetLines: state.budgetLines.map(bl => bl.id === id ? { ...bl, ...updates } : bl)
+      })),
+
+      deleteBudgetLine: (id) => set((state) => ({
+        budgetLines: state.budgetLines.filter(bl => bl.id !== id)
       })),
     }),
     {

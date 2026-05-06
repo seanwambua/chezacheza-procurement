@@ -61,34 +61,43 @@ export default function DashboardPage() {
     <div className="space-y-8 animate-in fade-in duration-500">
       <div>
         <h2 className="text-3xl font-headline font-bold text-primary">Overview</h2>
-        <p className="text-muted-foreground">Welcome back, Jane. Here's what's happening today.</p>
+        <p className="text-muted-foreground">Welcome back. Here's what's happening today.</p>
       </div>
 
+      {/* Bento Stats Grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-        <StatCard 
-          title="Pending Approvals" 
-          value={pendingApprovals} 
-          description="Requires your attention" 
-          icon={Clock} 
-        />
-        <StatCard 
-          title="Active LPOs" 
-          value={activeLposCount} 
-          description={`${awaitingDelivery} awaiting delivery`} 
-          icon={ShoppingCart} 
-        />
-        <StatCard 
-          title="Total Spend (MTD)" 
-          value={`Ksh ${totalSpendVal.toLocaleString()}`} 
-          trend={{ value: 12, isUp: true }}
-          icon={TrendingUp} 
-        />
-        <StatCard 
-          title="GRN Disputes" 
-          value={activeDisputes} 
-          description="Blocking payments" 
-          icon={AlertCircle} 
-        />
+        <div className="lg:col-span-1">
+          <StatCard 
+            title="Pending Approvals" 
+            value={pendingApprovals} 
+            description="Requires your attention" 
+            icon={Clock} 
+          />
+        </div>
+        <div className="lg:col-span-1">
+          <StatCard 
+            title="Active LPOs" 
+            value={activeLposCount} 
+            description={`${awaitingDelivery} awaiting delivery`} 
+            icon={ShoppingCart} 
+          />
+        </div>
+        <div className="md:col-span-2">
+          <StatCard 
+            title="Total Spend (MTD)" 
+            value={`Ksh ${totalSpendVal.toLocaleString()}`} 
+            trend={{ value: 12, isUp: true }}
+            icon={TrendingUp} 
+          />
+        </div>
+        <div className="lg:col-span-1">
+           <StatCard 
+            title="GRN Disputes" 
+            value={activeDisputes} 
+            description="Blocking payments" 
+            icon={AlertCircle} 
+          />
+        </div>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
@@ -123,7 +132,7 @@ export default function DashboardPage() {
           </CardContent>
         </Card>
 
-        <Card className="shadow-none border border-border">
+        <Card className="shadow-none border border-border overflow-hidden">
           <CardHeader>
             <CardTitle className="text-lg font-headline">Vendor Quality</CardTitle>
           </CardHeader>
@@ -162,26 +171,26 @@ export default function DashboardPage() {
       </div>
 
       <div className="grid grid-cols-1 gap-6">
-        <Card className="shadow-none border border-border">
+        <Card className="shadow-none border border-border overflow-x-auto">
           <CardHeader className="flex flex-row items-center justify-between">
             <CardTitle className="text-lg font-headline">Recent Requisitions</CardTitle>
             <Badge variant="outline">View All</Badge>
           </CardHeader>
           <CardContent>
-            <div className="space-y-4">
+            <div className="space-y-4 min-w-[500px]">
               {recentPrs.length > 0 ? (
                 recentPrs.map((req) => (
                   <div key={req.id} className="flex items-center justify-between p-3 rounded-lg hover:bg-muted/50 transition-colors">
                     <div className="flex items-center gap-4">
-                      <div className="p-2 bg-muted rounded-full">
+                      <div className="p-2 bg-muted rounded-full shrink-0">
                         <FileCheck className="w-4 h-4 text-primary" />
                       </div>
-                      <div>
-                        <p className="font-semibold text-sm">{req.itemDescription}</p>
+                      <div className="overflow-hidden">
+                        <p className="font-semibold text-sm truncate">{req.itemDescription}</p>
                         <p className="text-xs text-muted-foreground">{req.refNumber} • {req.budgetLine}</p>
                       </div>
                     </div>
-                    <div className="text-right">
+                    <div className="text-right shrink-0 ml-4">
                       <p className="text-sm font-bold">Ksh {(req.estimatedCost * req.quantity).toLocaleString()}</p>
                       <Badge variant={req.status === 'Approved' ? 'secondary' : 'outline'} className="text-[10px]">
                         {req.status}
