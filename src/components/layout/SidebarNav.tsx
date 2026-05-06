@@ -13,17 +13,19 @@ import {
   Users, 
   CreditCard,
   Settings,
-  Wallet
+  Wallet,
+  UserRound
 } from 'lucide-react';
 
 const navItems = [
-  { name: 'Dashboard', href: '/', icon: LayoutDashboard },
+  { name: 'Dashboard', href: '/dashboard', icon: LayoutDashboard },
   { name: 'Budgets', href: '/budgets', icon: Wallet },
   { name: 'Requisitions', href: '/requisitions', icon: FileText },
   { name: 'Approvals', href: '/approvals', icon: CheckSquare },
   { name: 'LPOs', href: '/lpos', icon: ShoppingCart },
   { name: 'Deliveries (GRN)', href: '/deliveries', icon: Truck },
   { name: 'Vendors', href: '/vendors', icon: Users },
+  { name: 'Users', href: '/users', icon: UserRound },
   { name: 'Payments & Closure', href: '/payments', icon: CreditCard },
 ];
 

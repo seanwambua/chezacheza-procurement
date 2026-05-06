@@ -70,3 +70,15 @@ export interface BudgetLine {
   spent: number;
   committed: number;
 }
+
+export type UserRole = 'Admin' | 'Manager' | 'Staff' | 'Finance';
+
+export interface User {
+  id: string;
+  name: string;
+  email: string;
+  role: UserRole;
+  department: string;
+  status: 'Active' | 'Inactive';
+  createdAt: string;
+}

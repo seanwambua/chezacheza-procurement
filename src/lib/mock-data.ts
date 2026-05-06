@@ -1,5 +1,5 @@
 
-import { PurchaseRequisition, Vendor, LPO, BudgetLine, GRN } from './types';
+import { PurchaseRequisition, Vendor, LPO, BudgetLine, GRN, User } from './types';
 
 export const MOCK_BUDGET_LINES: BudgetLine[] = [
   { id: 'BL-001', name: 'Office Equipment', allocation: 500000, spent: 120000, committed: 50000 },
@@ -117,5 +117,35 @@ export const MOCK_GRNS: GRN[] = [
     ],
     disputeFlag: true,
     disputeReason: 'Short delivery: Received 10 out of 12 chairs.'
+  }
+];
+
+export const MOCK_USERS: User[] = [
+  {
+    id: 'U-001',
+    name: 'Jane Doe',
+    email: 'jane.doe@chezacheza.org',
+    role: 'Admin',
+    department: 'Operations',
+    status: 'Active',
+    createdAt: '2024-01-01T12:00:00Z',
+  },
+  {
+    id: 'U-002',
+    name: 'Robert Karanja',
+    email: 'robert.k@chezacheza.org',
+    role: 'Finance',
+    department: 'Finance',
+    status: 'Active',
+    createdAt: '2024-01-05T09:30:00Z',
+  },
+  {
+    id: 'U-003',
+    name: 'Alice Wambui',
+    email: 'alice.w@chezacheza.org',
+    role: 'Staff',
+    department: 'Programs',
+    status: 'Active',
+    createdAt: '2024-02-10T14:20:00Z',
   }
 ];
