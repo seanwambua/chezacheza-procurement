@@ -317,8 +317,18 @@ export default function BudgetsPage() {
           </CardContent>
         </Card>
         <div className="space-y-6">
-          <StatCard title="Total Utilized" value={`Ksh ${totalUsed.toLocaleString()}`} icon={TrendingDown} />
-          <StatCard title="Remaining" value={`Ksh ${(totalAllocation - totalUsed).toLocaleString()}`} icon={PieChart} />
+          <StatCard 
+            title="Total Utilized" 
+            value={`Ksh ${totalUsed.toLocaleString()}`} 
+            icon={TrendingUp} 
+            tooltip="Sum of actual expenditure and current commitments (approved requisitions/LPOs) across all departments."
+          />
+          <StatCard 
+            title="Remaining" 
+            value={`Ksh ${(totalAllocation - totalUsed).toLocaleString()}`} 
+            icon={PieChart} 
+            tooltip="Total funds available for the remainder of the fiscal year across all planning phases."
+          />
         </div>
       </div>
 

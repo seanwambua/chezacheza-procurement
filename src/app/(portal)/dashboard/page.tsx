@@ -47,7 +47,7 @@ export default function DashboardPage() {
   const budgetData = budgets.map(bl => ({
     name: bl.name,
     spent: bl.spent,
-    budget: bl.allocation
+    budget: [bl.q1Allocation, bl.q2Allocation, bl.q3Allocation, bl.q4Allocation].reduce((a, b) => a + b, 0)
   }));
 
   const vendorPerformance = [
@@ -73,6 +73,7 @@ export default function DashboardPage() {
             value={pendingApprovals} 
             description="Requires your attention" 
             icon={Clock} 
+            tooltip="Number of purchase requisitions currently awaiting manager or finance approval before they can be processed."
           />
         </div>
         <div className="lg:col-span-1">
@@ -81,14 +82,16 @@ export default function DashboardPage() {
             value={activeLposCount} 
             description={`${awaitingDelivery} awaiting delivery`} 
             icon={ShoppingCart} 
+            tooltip="Purchase orders that have been sent to vendors but are not yet fully fulfilled, delivered, or closed."
           />
         </div>
         <div className="md:col-span-2">
           <StatCard 
-            title="Total Spend (MTD)" 
+            title="Total Spend (Actual)" 
             value={`Ksh ${totalSpendVal.toLocaleString()}`} 
             trend={{ value: 12, isUp: true }}
             icon={TrendingUp} 
+            tooltip="The actual verified expenditure across all departmental budgets for the current fiscal period."
           />
         </div>
         <div className="lg:col-span-1">
@@ -97,6 +100,7 @@ export default function DashboardPage() {
             value={activeDisputes} 
             description="Blocking payments" 
             icon={AlertCircle} 
+            tooltip="Goods Received Notes with quality or quantity issues that must be resolved before finance can release payment."
           />
         </div>
       </div>
