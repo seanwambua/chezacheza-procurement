@@ -10,6 +10,8 @@ import { Button } from '@/components/ui/button';
 import {
   Sheet,
   SheetContent,
+  SheetHeader,
+  SheetTitle,
   SheetTrigger,
 } from "@/components/ui/sheet";
 
@@ -47,6 +49,9 @@ export default function PortalLayout({
             </Button>
           </SheetTrigger>
           <SheetContent side="left" className="p-0 w-72">
+            <SheetHeader className="sr-only">
+              <SheetTitle>Navigation Menu</SheetTitle>
+            </SheetHeader>
             <SidebarNav forceExpanded />
           </SheetContent>
         </Sheet>
