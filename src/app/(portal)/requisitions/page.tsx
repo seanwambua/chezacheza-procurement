@@ -15,7 +15,7 @@ import {
   TableRow 
 } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
-import { Plus, Search, Filter, MoreVertical, Pencil, Trash2, CheckCircle, XCircle } from 'lucide-react';
+import { Plus, Search, Filter, MoreVertical, Pencil, Trash2, CheckCircle, XCircle, AlertTriangle } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import {
   Dialog,
@@ -23,7 +23,8 @@ import {
   DialogHeader,
   DialogTitle,
   DialogTrigger,
-  DialogFooter
+  DialogFooter,
+  DialogDescription
 } from "@/components/ui/dialog";
 import {
   DropdownMenu,
@@ -43,8 +44,9 @@ import {
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useStore } from '@/lib/store';
 import { useUserStore } from '@/lib/user-store';
-import { PurchaseRequisition } from '@/lib/types';
+import { PurchaseRequisition, getBudgetStats } from '@/lib/types';
 import { RoleGuard } from '@/components/auth/RoleGuard';
+import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 
 const requisitionSchema = z.object({
   itemDescription: z.string().min(3, "Description must be at least 3 characters"),
@@ -108,7 +110,15 @@ export default function RequisitionsPage() {
     return matchesSearch;
   });
 
+  // Check if selected budget is paused
+  const selectedBudgetName = form.watch('budgetLine');
+  const selectedBudget = budgets.find(b => b.name === selectedBudgetName);
+  const budgetStats = selectedBudget ? getBudgetStats(selectedBudget) : null;
+  const isBudgetPaused = budgetStats?.isPaused;
+
   const onSubmit = (values: RequisitionFormValues) => {
+    if (isBudgetPaused && !editingPr) return; // Block submission if paused
+
     if (editingPr) {
       updatePR(editingPr.id, values);
     } else {
@@ -134,6 +144,12 @@ export default function RequisitionsPage() {
   };
 
   const handleApprove = (id: string) => {
+    const pr = prs.find(p => p.id === id);
+    const budget = budgets.find(b => b.name === pr?.budgetLine);
+    if (budget && getBudgetStats(budget).isPaused) {
+      alert("Cannot approve: This budget is currently exhausted for the quarter.");
+      return;
+    }
     updatePRStatus(id, 'Approved');
   };
 
@@ -158,7 +174,7 @@ export default function RequisitionsPage() {
             if (!open) setEditingPr(null);
           }}>
             <DialogTrigger asChild>
-              <Button className="bg-primary hover:bg-primary/90" onClick={() => setEditingPr(null)}>
+              <Button className="bg-primary" onClick={() => setEditingPr(null)}>
                 <Plus className="w-4 h-4 mr-2" />
                 New Requisition
               </Button>
@@ -166,9 +182,22 @@ export default function RequisitionsPage() {
             <DialogContent className="max-w-2xl">
               <DialogHeader>
                 <DialogTitle>{editingPr ? 'Edit Requisition' : 'Submit New PR'}</DialogTitle>
+                <DialogDescription>
+                  Procurements are subject to quarterly budget availability.
+                </DialogDescription>
               </DialogHeader>
               <Form {...form}>
                 <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4 py-4">
+                  {isBudgetPaused && (
+                    <Alert variant="destructive" className="bg-red-50">
+                      <AlertTriangle className="h-4 w-4" />
+                      <AlertTitle>Budget Exhausted</AlertTitle>
+                      <AlertDescription>
+                        The selected budget ({selectedBudgetName}) has exhausted its allocation for the current quarter. Submissions are paused.
+                      </AlertDescription>
+                    </Alert>
+                  )}
+                  
                   <div className="grid grid-cols-2 gap-4">
                     <div className="col-span-2">
                       <FormField
@@ -228,8 +257,8 @@ export default function RequisitionsPage() {
                                 </SelectTrigger>
                               </FormControl>
                               <SelectContent>
-                                {budgets.map(bl => (
-                                  <SelectItem key={bl.id} value={bl.name}>{bl.name}</SelectItem>
+                                {budgets.map(b => (
+                                  <SelectItem key={b.id} value={b.name}>{b.name}</SelectItem>
                                 ))}
                               </SelectContent>
                             </Select>
@@ -241,7 +270,9 @@ export default function RequisitionsPage() {
                   </div>
                   <DialogFooter className="pt-4">
                     <Button type="button" variant="outline" onClick={() => setIsDialogOpen(false)}>Cancel</Button>
-                    <Button type="submit">{editingPr ? 'Update Requisition' : 'Submit for Approval'}</Button>
+                    <Button type="submit" disabled={isBudgetPaused && !editingPr}>
+                      {editingPr ? 'Update Requisition' : 'Submit for Approval'}
+                    </Button>
                   </DialogFooter>
                 </form>
               </Form>
@@ -280,65 +311,75 @@ export default function RequisitionsPage() {
           </TableHeader>
           <TableBody>
             {filteredPrs.length > 0 ? (
-              filteredPrs.map((pr) => (
-                <TableRow key={pr.id}>
-                  <TableCell className="font-medium">{pr.refNumber}</TableCell>
-                  <TableCell>{pr.itemDescription}</TableCell>
-                  <TableCell>{pr.requesterName}</TableCell>
-                  <TableCell className="text-xs text-muted-foreground">{pr.budgetLine}</TableCell>
-                  <TableCell>
-                    <Badge variant={
-                      pr.status === 'Approved' ? 'secondary' : 
-                      pr.status === 'Rejected' ? 'destructive' : 'outline'
-                    }>
-                      {pr.status}
-                    </Badge>
-                  </TableCell>
-                  <TableCell className="text-right font-semibold">Ksh {(pr.estimatedCost * pr.quantity).toLocaleString()}</TableCell>
-                  <TableCell>
-                    <DropdownMenu>
-                      <DropdownMenuTrigger asChild>
-                        <Button variant="ghost" size="icon">
-                          <MoreVertical className="w-4 h-4" />
-                        </Button>
-                      </DropdownMenuTrigger>
-                      <DropdownMenuContent align="end">
-                        <RoleGuard permission="approve_requisitions">
-                          {pr.status === 'Pending Manager' && (
-                            <>
-                              <DropdownMenuItem onClick={() => handleApprove(pr.id)} className="text-green-600">
-                                <CheckCircle className="w-4 h-4 mr-2" />
-                                Approve
-                              </DropdownMenuItem>
-                              <DropdownMenuItem onClick={() => handleReject(pr.id)} className="text-red-600">
-                                <XCircle className="w-4 h-4 mr-2" />
-                                Reject
-                              </DropdownMenuItem>
-                              <DropdownMenuSeparator />
-                            </>
-                          )}
-                        </RoleGuard>
+              filteredPrs.map((pr) => {
+                const budget = budgets.find(b => b.name === pr.budgetLine);
+                const isPaused = budget ? getBudgetStats(budget).isPaused : false;
+                
+                return (
+                  <TableRow key={pr.id}>
+                    <TableCell className="font-medium">{pr.refNumber}</TableCell>
+                    <TableCell>{pr.itemDescription}</TableCell>
+                    <TableCell>{pr.requesterName}</TableCell>
+                    <TableCell>
+                      <div className="flex flex-col">
+                        <span className="text-xs">{pr.budgetLine}</span>
+                        {isPaused && <span className="text-[9px] text-destructive font-bold uppercase">Budget Paused</span>}
+                      </div>
+                    </TableCell>
+                    <TableCell>
+                      <Badge variant={
+                        pr.status === 'Approved' ? 'secondary' : 
+                        pr.status === 'Rejected' ? 'destructive' : 'outline'
+                      }>
+                        {pr.status}
+                      </Badge>
+                    </TableCell>
+                    <TableCell className="text-right font-semibold">Ksh {(pr.estimatedCost * pr.quantity).toLocaleString()}</TableCell>
+                    <TableCell>
+                      <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                          <Button variant="ghost" size="icon">
+                            <MoreVertical className="w-4 h-4" />
+                          </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end">
+                          <RoleGuard permission="approve_requisitions">
+                            {pr.status === 'Pending Manager' && (
+                              <>
+                                <DropdownMenuItem onClick={() => handleApprove(pr.id)} className="text-green-600">
+                                  <CheckCircle className="w-4 h-4 mr-2" />
+                                  Approve
+                                </DropdownMenuItem>
+                                <DropdownMenuItem onClick={() => handleReject(pr.id)} className="text-red-600">
+                                  <XCircle className="w-4 h-4 mr-2" />
+                                  Reject
+                                </DropdownMenuItem>
+                                <DropdownMenuSeparator />
+                              </>
+                            )}
+                          </RoleGuard>
 
-                        <RoleGuard allowedRoles={['Admin', 'Staff']}>
-                          {(pr.status === 'Draft' || currentUser.role === 'Admin') && (
-                             <DropdownMenuItem onClick={() => handleEdit(pr)}>
-                              <Pencil className="w-4 h-4 mr-2" />
-                              Edit
+                          <RoleGuard allowedRoles={['Admin', 'Staff']}>
+                            {(pr.status === 'Draft' || currentUser.role === 'Admin') && (
+                               <DropdownMenuItem onClick={() => handleEdit(pr)}>
+                                <Pencil className="w-4 h-4 mr-2" />
+                                Edit
+                              </DropdownMenuItem>
+                            )}
+                          </RoleGuard>
+
+                          <RoleGuard allowedRoles={['Admin']}>
+                            <DropdownMenuItem onClick={() => handleDelete(pr.id)} className="text-destructive focus:text-destructive">
+                              <Trash2 className="w-4 h-4 mr-2" />
+                              Delete
                             </DropdownMenuItem>
-                          )}
-                        </RoleGuard>
-
-                        <RoleGuard allowedRoles={['Admin']}>
-                          <DropdownMenuItem onClick={() => handleDelete(pr.id)} className="text-destructive focus:text-destructive">
-                            <Trash2 className="w-4 h-4 mr-2" />
-                            Delete
-                          </DropdownMenuItem>
-                        </RoleGuard>
-                      </DropdownMenuContent>
-                    </DropdownMenu>
-                  </TableCell>
-                </TableRow>
-              ))
+                          </RoleGuard>
+                        </DropdownMenuContent>
+                      </DropdownMenu>
+                    </TableCell>
+                  </TableRow>
+                );
+              })
             ) : (
               <TableRow>
                 <TableCell colSpan={7} className="h-24 text-center text-muted-foreground">

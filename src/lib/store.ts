@@ -1,7 +1,7 @@
 
 import { create } from 'zustand';
 import { persist, createJSONStorage } from 'zustand/middleware';
-import { PurchaseRequisition, Vendor, LPO, Budget, GRN, PRStatus } from './types';
+import { PurchaseRequisition, Vendor, LPO, Budget, GRN, PRStatus, getBudgetStats } from './types';
 import { MOCK_PRS, MOCK_VENDORS, MOCK_LPOS, MOCK_BUDGETS, MOCK_GRNS } from './mock-data';
 
 interface ProcurementState {
@@ -45,11 +45,11 @@ export const useStore = create<ProcurementState>()(
           createdAt: new Date().toISOString(),
         };
 
-        const updatedBudgets = state.budgets.map(bl => {
-          if (bl.name === newPR.budgetLine && isCommitted(newPR.status)) {
-            return { ...bl, committed: bl.committed + (newPR.estimatedCost * newPR.quantity) };
+        const updatedBudgets = state.budgets.map(b => {
+          if (b.name === newPR.budgetLine && isCommitted(newPR.status)) {
+            return { ...b, committed: b.committed + (newPR.estimatedCost * newPR.quantity) };
           }
-          return bl;
+          return b;
         });
 
         return { 
@@ -69,17 +69,15 @@ export const useStore = create<ProcurementState>()(
         const wasCommitted = isCommitted(oldPR.status);
         const isNowCommitted = isCommitted(newPR.status);
 
-        const updatedBudgets = state.budgets.map(bl => {
-          let committed = bl.committed;
-          // Subtract old value if it was previously committed to this budget
-          if (bl.name === oldPR.budgetLine && wasCommitted) {
+        const updatedBudgets = state.budgets.map(b => {
+          let committed = b.committed;
+          if (b.name === oldPR.budgetLine && wasCommitted) {
             committed -= oldVal;
           }
-          // Add new value if it is now committed to this budget
-          if (bl.name === newPR.budgetLine && isNowCommitted) {
+          if (b.name === newPR.budgetLine && isNowCommitted) {
             committed += newVal;
           }
-          return { ...bl, committed: Math.max(0, committed) };
+          return { ...b, committed: Math.max(0, committed) };
         });
 
         return {
@@ -92,14 +90,14 @@ export const useStore = create<ProcurementState>()(
         const prToDelete = state.prs.find(p => p.id === id);
         if (!prToDelete) return state;
 
-        const updatedBudgets = state.budgets.map(bl => {
-          if (bl.name === prToDelete.budgetLine && isCommitted(prToDelete.status)) {
+        const updatedBudgets = state.budgets.map(b => {
+          if (b.name === prToDelete.budgetLine && isCommitted(prToDelete.status)) {
             return { 
-              ...bl, 
-              committed: Math.max(0, bl.committed - (prToDelete.estimatedCost * prToDelete.quantity)) 
+              ...b, 
+              committed: Math.max(0, b.committed - (prToDelete.estimatedCost * prToDelete.quantity)) 
             };
           }
-          return bl;
+          return b;
         });
 
         return { 
@@ -116,17 +114,17 @@ export const useStore = create<ProcurementState>()(
         const wasCommitted = isCommitted(pr.status);
         const isNowCommitted = isCommitted(status);
 
-        const updatedBudgets = state.budgets.map(bl => {
-          if (bl.name === pr.budgetLine) {
-            let committed = bl.committed;
+        const updatedBudgets = state.budgets.map(b => {
+          if (b.name === pr.budgetLine) {
+            let committed = b.committed;
             if (wasCommitted && !isNowCommitted) {
               committed -= oldVal;
             } else if (!wasCommitted && isNowCommitted) {
               committed += oldVal;
             }
-            return { ...bl, committed: Math.max(0, committed) };
+            return { ...b, committed: Math.max(0, committed) };
           }
-          return bl;
+          return b;
         });
 
         return {
@@ -147,22 +145,22 @@ export const useStore = create<ProcurementState>()(
         grns: [grn, ...state.grns]
       })),
 
-      addBudget: (blData) => set((state) => {
-        const newBL: Budget = {
-          ...blData,
+      addBudget: (bData) => set((state) => {
+        const newBudget: Budget = {
+          ...bData,
           id: `B-${Math.floor(Math.random() * 10000)}`,
           spent: 0,
           committed: 0,
         };
-        return { budgets: [...state.budgets, newBL] };
+        return { budgets: [...state.budgets, newBudget] };
       }),
 
       updateBudget: (id, updates) => set((state) => ({
-        budgets: state.budgets.map(bl => bl.id === id ? { ...bl, ...updates } : bl)
+        budgets: state.budgets.map(b => b.id === id ? { ...b, ...updates } : b)
       })),
 
       deleteBudget: (id) => set((state) => ({
-        budgets: state.budgets.filter(bl => bl.id !== id)
+        budgets: state.budgets.filter(b => b.id !== id)
       })),
     }),
     {
