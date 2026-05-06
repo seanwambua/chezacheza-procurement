@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useEffect, useState } from 'react';
@@ -67,6 +68,7 @@ import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
 import { useToast } from '@/hooks/use-toast';
+import { RoleGuard } from '@/components/auth/RoleGuard';
 
 const fiscalYearSchema = z.object({
   year: z.string().min(4, "Year is required"),
@@ -77,11 +79,14 @@ const fiscalYearSchema = z.object({
 type FiscalYearValues = z.infer<typeof fiscalYearSchema>;
 
 export default function DashboardPage() {
-  const { prs, budgets, vendors, lpos, grns } = useStore();
+  const { prs, budgets, vendors, lpos, grns, addBudget } = useStore();
   const { viewPreference } = useUserStore();
   const { toast } = useToast();
   const [mounted, setMounted] = useState(false);
-  const [selectedYear, setSelectedYear] = useState('2024');
+  
+  // Dynamic available years from budgets
+  const availableYears = Array.from(new Set(budgets.map(b => b.fiscalYear))).sort((a, b) => Number(b) - Number(a));
+  const [selectedYear, setSelectedYear] = useState(availableYears[0] || '2024');
   
   // Wizard state
   const [isWizardOpen, setIsWizardOpen] = useState(false);
@@ -99,6 +104,13 @@ export default function DashboardPage() {
   useEffect(() => {
     setMounted(true);
   }, []);
+
+  // Update selected year if the list was empty and now has data
+  useEffect(() => {
+    if (availableYears.length > 0 && !availableYears.includes(selectedYear)) {
+      setSelectedYear(availableYears[0]);
+    }
+  }, [availableYears, selectedYear]);
 
   if (!mounted) return null;
 
@@ -125,6 +137,22 @@ export default function DashboardPage() {
   const recentPrs = prs.slice(0, isDetailed ? 5 : 3);
 
   const onWizardSubmit = (values: FiscalYearValues) => {
+    // To "establish" the year, we create a primary general budget for it
+    // In a real app, this might create several departmental defaults
+    addBudget({
+      name: `General Operations - ${values.year}`,
+      department: 'Operations',
+      fiscalYear: values.year,
+      description: `Auto-initialized budget for FY ${values.year} (${values.strategy} strategy).`,
+      q1Allocation: values.globalTarget / 4,
+      q2Allocation: values.globalTarget / 4,
+      q3Allocation: values.globalTarget / 4,
+      q4Allocation: values.globalTarget / 4,
+    });
+
+    // Switch to the new year
+    setSelectedYear(values.year);
+    
     toast({
       title: "Fiscal Year Established",
       description: `Strategy for FY ${values.year} has been successfully initialized.`,
@@ -142,7 +170,7 @@ export default function DashboardPage() {
   };
 
   return (
-    <div className="space-y-6 md:space-y-8 animate-in fade-in duration-500 pb-10">
+    <div className="space-y-6 md:space-y-8 animate-in fade-in duration-500 pb-10 max-w-full overflow-hidden">
       <div className="flex flex-col md:flex-row md:items-end justify-between gap-4">
         <div className="space-y-1">
           <h2 className={cn(
@@ -153,164 +181,173 @@ export default function DashboardPage() {
           </h2>
           <p className="text-sm text-muted-foreground font-medium">Strategic procurement metrics and fiscal health.</p>
         </div>
-        <div className="flex items-center gap-2">
-          <CalendarDays className="w-4 h-4 text-muted-foreground" />
-          <Select value={selectedYear} onValueChange={setSelectedYear}>
-            <SelectTrigger className="w-full md:w-[160px] h-9 text-[10px] font-bold uppercase tracking-wider bg-card shadow-sm">
-              <SelectValue placeholder="Fiscal Year" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="2023">FY 2023</SelectItem>
-              <SelectItem value="2024">FY 2024</SelectItem>
-              <SelectItem value="2025">FY 2025</SelectItem>
-            </SelectContent>
-          </Select>
+        <div className="flex flex-wrap items-center gap-3">
+          <div className="flex items-center gap-2">
+            <CalendarDays className="w-4 h-4 text-muted-foreground" />
+            <Select value={selectedYear} onValueChange={setSelectedYear}>
+              <SelectTrigger className="w-[140px] md:w-[180px] h-9 text-[10px] font-bold uppercase tracking-wider bg-card shadow-sm">
+                <SelectValue placeholder="Fiscal Year" />
+              </SelectTrigger>
+              <SelectContent>
+                {availableYears.length > 0 ? (
+                  availableYears.map(year => (
+                    <SelectItem key={year} value={year} className="text-xs">FY {year}</SelectItem>
+                  ))
+                ) : (
+                  <SelectItem value="2024" className="text-xs">FY 2024</SelectItem>
+                )}
+              </SelectContent>
+            </Select>
+          </div>
           
-          <Dialog open={isWizardOpen} onOpenChange={(open) => {
-            setIsWizardOpen(open);
-            if (!open) {
-              setWizardStep(1);
-              form.reset();
-            }
-          }}>
-            <DialogTrigger asChild>
-              <Button size="icon" variant="outline" className="h-9 w-9 bg-card shadow-sm hover:bg-accent hover:text-white transition-all">
-                <Plus className="w-4 h-4" />
-              </Button>
-            </DialogTrigger>
-            <DialogContent className="max-w-xl w-[95vw] max-h-[90vh] overflow-y-auto">
-              <DialogHeader>
-                <DialogTitle className="text-xl md:text-2xl font-black tracking-tight">Establish Fiscal Year</DialogTitle>
-                <DialogDescription className="text-xs font-medium">
-                  Step {wizardStep} of 3: {wizardStep === 1 ? 'Period Definition' : wizardStep === 2 ? 'Strategic Posture' : 'Review & Authorization'}
-                </DialogDescription>
-              </DialogHeader>
+          <RoleGuard allowedRoles={['Admin', 'Finance']}>
+            <Dialog open={isWizardOpen} onOpenChange={(open) => {
+              setIsWizardOpen(open);
+              if (!open) {
+                setWizardStep(1);
+                form.reset();
+              }
+            }}>
+              <DialogTrigger asChild>
+                <Button variant="outline" className="h-9 gap-2 bg-card shadow-sm hover:bg-accent hover:text-white transition-all group">
+                  <Plus className="w-4 h-4" />
+                  <span className="hidden md:inline text-[10px] font-bold uppercase tracking-widest">New Fiscal Year</span>
+                </Button>
+              </DialogTrigger>
+              <DialogContent className="max-w-xl w-[95vw] max-h-[90vh] overflow-y-auto">
+                <DialogHeader>
+                  <DialogTitle className="text-xl md:text-2xl font-black tracking-tight">Establish Fiscal Year</DialogTitle>
+                  <DialogDescription className="text-xs font-medium">
+                    Step {wizardStep} of 3: {wizardStep === 1 ? 'Period Definition' : wizardStep === 2 ? 'Strategic Posture' : 'Review & Authorization'}
+                  </DialogDescription>
+                </DialogHeader>
 
-              <div className="py-4">
-                <div className="flex items-center gap-2 mb-8 px-2">
-                  {[1, 2, 3].map((s) => (
-                    <div key={s} className="flex-1 flex items-center gap-2">
-                      <div className={cn(
-                        "w-7 h-7 rounded-full flex items-center justify-center text-[10px] font-black transition-all",
-                        wizardStep === s ? "bg-accent text-white scale-110 shadow-lg" : 
-                        wizardStep > s ? "bg-primary text-white" : "bg-muted text-muted-foreground"
-                      )}>
-                        {wizardStep > s ? <CheckCircle2 className="w-3.5 h-3.5" /> : s}
+                <div className="py-4">
+                  <div className="flex items-center gap-2 mb-8 px-2">
+                    {[1, 2, 3].map((s) => (
+                      <div key={s} className="flex-1 flex items-center gap-2">
+                        <div className={cn(
+                          "w-7 h-7 rounded-full flex items-center justify-center text-[10px] font-black transition-all",
+                          wizardStep === s ? "bg-accent text-white scale-110 shadow-lg" : 
+                          wizardStep > s ? "bg-primary text-white" : "bg-muted text-muted-foreground"
+                        )}>
+                          {wizardStep > s ? <CheckCircle2 className="w-3.5 h-3.5" /> : s}
+                        </div>
+                        {s < 3 && <div className={cn("flex-1 h-0.5 rounded-full", wizardStep > s ? "bg-primary" : "bg-muted")} />}
                       </div>
-                      {s < 3 && <div className={cn("flex-1 h-0.5 rounded-full", wizardStep > s ? "bg-primary" : "bg-muted")} />}
-                    </div>
-                  ))}
+                    ))}
+                  </div>
+
+                  <Form {...form}>
+                    <form onSubmit={form.handleSubmit(onWizardSubmit)} className="space-y-6">
+                      {wizardStep === 1 && (
+                        <div className="space-y-4 animate-in slide-in-from-right-4 duration-300">
+                          <FormField control={form.control} name="year" render={({ field }) => (
+                            <FormItem>
+                              <FormLabel className="text-[10px] uppercase font-bold text-muted-foreground">Target Fiscal Period</FormLabel>
+                              <Select onValueChange={field.onChange} value={field.value}>
+                                <FormControl><SelectTrigger className="h-10 text-xs"><SelectValue placeholder="Select Year" /></SelectTrigger></FormControl>
+                                <SelectContent>
+                                  <SelectItem value="2025" className="text-xs">Fiscal Year 2025</SelectItem>
+                                  <SelectItem value="2026" className="text-xs">Fiscal Year 2026</SelectItem>
+                                  <SelectItem value="2027" className="text-xs">Fiscal Year 2027</SelectItem>
+                                </SelectContent>
+                              </Select>
+                              <FormMessage />
+                            </FormItem>
+                          )} />
+                          <div className="p-4 bg-muted/30 rounded-xl border border-border/50">
+                            <p className="text-[10px] font-medium text-muted-foreground leading-relaxed">
+                              Establishing a new period allows departmental managers to draft preliminary budgets and requisitions for the upcoming fiscal cycle.
+                            </p>
+                          </div>
+                        </div>
+                      )}
+
+                      {wizardStep === 2 && (
+                        <div className="space-y-6 animate-in slide-in-from-right-4 duration-300">
+                          <FormField control={form.control} name="globalTarget" render={({ field }) => (
+                            <FormItem>
+                              <FormLabel className="text-[10px] uppercase font-bold text-muted-foreground">Global Allocation Target (Ksh)</FormLabel>
+                              <FormControl><Input type="number" {...field} className="h-10 text-xs font-bold" /></FormControl>
+                              <FormMessage />
+                            </FormItem>
+                          )} />
+                          
+                          <FormField control={form.control} name="strategy" render={({ field }) => (
+                            <FormItem>
+                              <FormLabel className="text-[10px] uppercase font-bold text-muted-foreground">Strategic Posture</FormLabel>
+                              <Select onValueChange={field.onChange} value={field.value}>
+                                <FormControl><SelectTrigger className="h-10 text-xs"><SelectValue placeholder="Select Strategy" /></SelectTrigger></FormControl>
+                                <SelectContent>
+                                  <SelectItem value="Growth" className="text-xs flex items-center gap-2">
+                                    <div className="flex items-center gap-2"><TrendingUp className="w-3 h-3 text-accent" /> Growth-Oriented</div>
+                                  </SelectItem>
+                                  <SelectItem value="Conservative" className="text-xs">
+                                    <div className="flex items-center gap-2"><TrendingDown className="w-3 h-3 text-destructive" /> Conservative</div>
+                                  </SelectItem>
+                                  <SelectItem value="Balanced" className="text-xs">
+                                    <div className="flex items-center gap-2"><Target className="w-3 h-3 text-primary" /> Balanced</div>
+                                  </SelectItem>
+                                </SelectContent>
+                              </Select>
+                              <FormMessage />
+                            </FormItem>
+                          )} />
+                        </div>
+                      )}
+
+                      {wizardStep === 3 && (
+                        <div className="space-y-6 animate-in slide-in-from-right-4 duration-300">
+                          <div className="p-6 bg-muted/30 border border-border/50 rounded-xl space-y-4">
+                            <div className="flex items-center gap-4 pb-4 border-b border-border/50">
+                              <div className="w-12 h-12 bg-primary/10 rounded-lg flex items-center justify-center text-primary">
+                                <Target className="w-6 h-6" />
+                              </div>
+                              <div>
+                                <p className="text-sm font-black text-primary">FY {form.getValues().year} Initialization</p>
+                                <p className="text-[10px] text-muted-foreground uppercase font-bold">{form.getValues().strategy} Posture</p>
+                              </div>
+                            </div>
+                            <div className="space-y-2">
+                              <div className="flex justify-between items-center text-xs">
+                                <span className="text-muted-foreground font-bold uppercase tracking-tight">Cap Target</span>
+                                <span className="font-black text-primary tracking-tighter">Ksh {Number(form.getValues().globalTarget).toLocaleString()}</span>
+                              </div>
+                              <div className="flex justify-between items-center text-xs">
+                                <span className="text-muted-foreground font-bold uppercase tracking-tight">Status</span>
+                                <Badge variant="outline" className="text-[9px] uppercase font-bold px-1.5 h-4">Pending Authorization</Badge>
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                      )}
+
+                      <DialogFooter className="gap-2 sm:gap-0 pt-6 flex-col sm:flex-row border-t">
+                        {wizardStep > 1 && (
+                          <Button type="button" variant="outline" onClick={() => setWizardStep(prev => prev - 1)} className="w-full sm:w-auto font-bold uppercase text-xs h-10">
+                            <ArrowLeft className="w-3.5 h-3.5 mr-2" />
+                            Previous
+                          </Button>
+                        )}
+                        <div className="flex-1" />
+                        {wizardStep < 3 ? (
+                          <Button type="button" onClick={nextStep} className="w-full sm:w-auto bg-primary font-bold uppercase text-xs h-10 shadow-md">
+                            Continue
+                            <ArrowRight className="w-3.5 h-3.5 ml-2" />
+                          </Button>
+                        ) : (
+                          <Button type="submit" className="w-full sm:w-auto bg-accent hover:bg-accent/90 text-white font-bold uppercase text-xs h-10 shadow-md">
+                            Confirm & Establish
+                          </Button>
+                        )}
+                      </DialogFooter>
+                    </form>
+                  </Form>
                 </div>
-
-                <Form {...form}>
-                  <form onSubmit={form.handleSubmit(onWizardSubmit)} className="space-y-6">
-                    {wizardStep === 1 && (
-                      <div className="space-y-4 animate-in slide-in-from-right-4 duration-300">
-                        <FormField control={form.control} name="year" render={({ field }) => (
-                          <FormItem>
-                            <FormLabel className="text-[10px] uppercase font-bold text-muted-foreground">Target Fiscal Period</FormLabel>
-                            <Select onValueChange={field.onChange} value={field.value}>
-                              <FormControl><SelectTrigger className="h-10 text-xs"><SelectValue placeholder="Select Year" /></SelectTrigger></FormControl>
-                              <SelectContent>
-                                <SelectItem value="2025" className="text-xs">Fiscal Year 2025</SelectItem>
-                                <SelectItem value="2026" className="text-xs">Fiscal Year 2026</SelectItem>
-                                <SelectItem value="2027" className="text-xs">Fiscal Year 2027</SelectItem>
-                              </SelectContent>
-                            </Select>
-                            <FormMessage />
-                          </FormItem>
-                        )} />
-                        <div className="p-4 bg-muted/30 rounded-xl border border-border/50">
-                          <p className="text-[10px] font-medium text-muted-foreground leading-relaxed">
-                            Establishing a new period allows departmental managers to draft preliminary budgets and requisitions for the upcoming fiscal cycle.
-                          </p>
-                        </div>
-                      </div>
-                    )}
-
-                    {wizardStep === 2 && (
-                      <div className="space-y-6 animate-in slide-in-from-right-4 duration-300">
-                        <FormField control={form.control} name="globalTarget" render={({ field }) => (
-                          <FormItem>
-                            <FormLabel className="text-[10px] uppercase font-bold text-muted-foreground">Global Allocation Target (Ksh)</FormLabel>
-                            <FormControl><Input type="number" {...field} className="h-10 text-xs font-bold" /></FormControl>
-                            <FormMessage />
-                          </FormItem>
-                        )} />
-                        
-                        <FormField control={form.control} name="strategy" render={({ field }) => (
-                          <FormItem>
-                            <FormLabel className="text-[10px] uppercase font-bold text-muted-foreground">Strategic Posture</FormLabel>
-                            <Select onValueChange={field.onChange} value={field.value}>
-                              <FormControl><SelectTrigger className="h-10 text-xs"><SelectValue placeholder="Select Strategy" /></SelectTrigger></FormControl>
-                              <SelectContent>
-                                <SelectItem value="Growth" className="text-xs flex items-center gap-2">
-                                  <div className="flex items-center gap-2"><TrendingUp className="w-3 h-3 text-accent" /> Growth-Oriented</div>
-                                </SelectItem>
-                                <SelectItem value="Conservative" className="text-xs">
-                                  <div className="flex items-center gap-2"><TrendingDown className="w-3 h-3 text-destructive" /> Conservative</div>
-                                </SelectItem>
-                                <SelectItem value="Balanced" className="text-xs">
-                                  <div className="flex items-center gap-2"><Target className="w-3 h-3 text-primary" /> Balanced</div>
-                                </SelectItem>
-                              </SelectContent>
-                            </Select>
-                            <FormMessage />
-                          </FormItem>
-                        )} />
-                      </div>
-                    )}
-
-                    {wizardStep === 3 && (
-                      <div className="space-y-6 animate-in slide-in-from-right-4 duration-300">
-                        <div className="p-6 bg-muted/30 border border-border/50 rounded-xl space-y-4">
-                          <div className="flex items-center gap-4 pb-4 border-b border-border/50">
-                            <div className="w-12 h-12 bg-primary/10 rounded-lg flex items-center justify-center text-primary">
-                              <Target className="w-6 h-6" />
-                            </div>
-                            <div>
-                              <p className="text-sm font-black text-primary">FY {form.getValues().year} Initialization</p>
-                              <p className="text-[10px] text-muted-foreground uppercase font-bold">{form.getValues().strategy} Posture</p>
-                            </div>
-                          </div>
-                          <div className="space-y-2">
-                            <div className="flex justify-between items-center text-xs">
-                              <span className="text-muted-foreground font-bold uppercase tracking-tight">Cap Target</span>
-                              <span className="font-black text-primary tracking-tighter">Ksh {Number(form.getValues().globalTarget).toLocaleString()}</span>
-                            </div>
-                            <div className="flex justify-between items-center text-xs">
-                              <span className="text-muted-foreground font-bold uppercase tracking-tight">Status</span>
-                              <Badge variant="outline" className="text-[9px] uppercase font-bold px-1.5 h-4">Pending Authorization</Badge>
-                            </div>
-                          </div>
-                        </div>
-                      </div>
-                    )}
-
-                    <DialogFooter className="gap-2 sm:gap-0 pt-6 flex-col sm:flex-row border-t">
-                      {wizardStep > 1 && (
-                        <Button type="button" variant="outline" onClick={() => setWizardStep(prev => prev - 1)} className="w-full sm:w-auto font-bold uppercase text-xs h-10">
-                          <ArrowLeft className="w-3.5 h-3.5 mr-2" />
-                          Previous
-                        </Button>
-                      )}
-                      <div className="flex-1" />
-                      {wizardStep < 3 ? (
-                        <Button type="button" onClick={nextStep} className="w-full sm:w-auto bg-primary font-bold uppercase text-xs h-10 shadow-md">
-                          Continue
-                          <ArrowRight className="w-3.5 h-3.5 ml-2" />
-                        </Button>
-                      ) : (
-                        <Button type="submit" className="w-full sm:w-auto bg-accent hover:bg-accent/90 text-white font-bold uppercase text-xs h-10 shadow-md">
-                          Confirm & Establish
-                        </Button>
-                      )}
-                    </DialogFooter>
-                  </form>
-                </Form>
-              </div>
-            </DialogContent>
-          </Dialog>
+              </DialogContent>
+            </Dialog>
+          </RoleGuard>
         </div>
       </div>
 
