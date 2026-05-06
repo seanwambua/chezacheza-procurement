@@ -1,4 +1,3 @@
-
 "use client";
 
 import { useState, useEffect } from 'react';
@@ -143,7 +142,7 @@ export default function BudgetsPage() {
         q4Allocation: 0,
       });
     }
-  }, [editingBudget, form]);
+  }, [editingBudget, form, isDialogOpen]);
 
   if (!mounted) return null;
 
@@ -197,13 +196,16 @@ export default function BudgetsPage() {
   };
 
   return (
-    <div className="space-y-8 animate-in fade-in duration-500 pb-10">
+    <div className="space-y-6 md:space-y-8 animate-in fade-in duration-500 pb-10 max-w-full overflow-hidden">
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-        <div>
-          <h2 className={isDetailed ? "text-2xl md:text-3xl font-headline font-bold text-primary" : "text-4xl font-black text-primary"}>
+        <div className="min-w-0 flex-1">
+          <h2 className={cn(
+            "font-headline font-bold text-primary tracking-tighter leading-tight truncate",
+            isDetailed ? "text-2xl md:text-3xl" : "text-3xl md:text-4xl"
+          )}>
             {isDetailed ? 'Budget & Quarterly Planning' : 'Budgets'}
           </h2>
-          <p className="text-sm text-muted-foreground">
+          <p className="text-muted-foreground text-sm font-medium">
             {isDetailed 
               ? 'Rolling quarterly allocations with automatic procurement pausing.' 
               : 'Review departmental spend and remaining funds.'}
@@ -216,31 +218,31 @@ export default function BudgetsPage() {
             if (!open) setEditingBudget(null);
           }}>
             <DialogTrigger asChild>
-              <Button className="bg-primary w-full md:w-auto font-bold uppercase text-xs">
+              <Button className="w-full md:w-auto bg-primary font-bold uppercase text-xs h-10 shadow-sm">
                 <Plus className="w-4 h-4 mr-2" />
                 Plan Budget
               </Button>
             </DialogTrigger>
-            <DialogContent className="max-w-3xl w-[95vw]">
+            <DialogContent className="max-w-3xl w-[95vw] max-h-[90vh] overflow-y-auto">
               <DialogHeader>
-                <DialogTitle>{editingBudget ? 'Update Budget Plan' : 'Establish New Budget Plan'}</DialogTitle>
-                <DialogDescription>
+                <DialogTitle className="text-xl md:text-2xl font-black tracking-tight">{editingBudget ? 'Update Budget Plan' : 'Establish New Budget Plan'}</DialogTitle>
+                <DialogDescription className="text-xs font-medium">
                   Configure quarterly allocations. Unused funds roll over to the next quarter.
                 </DialogDescription>
               </DialogHeader>
               <Form {...form}>
                 <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6 py-4">
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6">
                     <FormField control={form.control} name="name" render={({ field }) => (
-                      <FormItem><FormLabel>Budget Name</FormLabel><FormControl><Input placeholder="IT Hardware" {...field} /></FormControl><FormMessage /></FormItem>
+                      <FormItem><FormLabel className="text-[10px] uppercase font-bold text-muted-foreground">Budget Name</FormLabel><FormControl><Input placeholder="IT Hardware" {...field} className="h-10 text-xs" /></FormControl><FormMessage /></FormItem>
                     )} />
                     <FormField control={form.control} name="department" render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Department</FormLabel>
+                        <FormLabel className="text-[10px] uppercase font-bold text-muted-foreground">Department</FormLabel>
                         <Select onValueChange={field.onChange} value={field.value}>
-                          <FormControl><SelectTrigger><SelectValue placeholder="Select" /></SelectTrigger></FormControl>
+                          <FormControl><SelectTrigger className="h-10 text-xs"><SelectValue placeholder="Select" /></SelectTrigger></FormControl>
                           <SelectContent>
-                            {['IT', 'Operations', 'Marketing', 'Finance', 'Programs'].map(d => <SelectItem key={d} value={d}>{d}</SelectItem>)}
+                            {['IT', 'Operations', 'Marketing', 'Finance', 'Programs'].map(d => <SelectItem key={d} value={d} className="text-xs">{d}</SelectItem>)}
                           </SelectContent>
                         </Select>
                         <FormMessage />
@@ -248,28 +250,28 @@ export default function BudgetsPage() {
                     )} />
                   </div>
 
-                  <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 p-4 bg-muted/30 rounded-lg border border-border/50">
+                  <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 md:gap-4 p-4 bg-muted/30 rounded-lg border border-border/50">
                     <FormField control={form.control} name="q1Allocation" render={({ field }) => (
-                      <FormItem><FormLabel className="text-[10px] uppercase">Q1 (Jan-Mar)</FormLabel><FormControl><Input type="number" {...field} /></FormControl></FormItem>
+                      <FormItem><FormLabel className="text-[9px] uppercase font-bold">Q1</FormLabel><FormControl><Input type="number" {...field} className="h-9 text-xs" /></FormControl></FormItem>
                     )} />
                     <FormField control={form.control} name="q2Allocation" render={({ field }) => (
-                      <FormItem><FormLabel className="text-[10px] uppercase">Q2 (Apr-Jun)</FormLabel><FormControl><Input type="number" {...field} /></FormControl></FormItem>
+                      <FormItem><FormLabel className="text-[9px] uppercase font-bold">Q2</FormLabel><FormControl><Input type="number" {...field} className="h-9 text-xs" /></FormControl></FormItem>
                     )} />
                     <FormField control={form.control} name="q3Allocation" render={({ field }) => (
-                      <FormItem><FormLabel className="text-[10px] uppercase">Q3 (Jul-Sep)</FormLabel><FormControl><Input type="number" {...field} /></FormControl></FormItem>
+                      <FormItem><FormLabel className="text-[9px] uppercase font-bold">Q3</FormLabel><FormControl><Input type="number" {...field} className="h-9 text-xs" /></FormControl></FormItem>
                     )} />
                     <FormField control={form.control} name="q4Allocation" render={({ field }) => (
-                      <FormItem><FormLabel className="text-[10px] uppercase">Q4 (Oct-Dec)</FormLabel><FormControl><Input type="number" {...field} /></FormControl></FormItem>
+                      <FormItem><FormLabel className="text-[9px] uppercase font-bold">Q4</FormLabel><FormControl><Input type="number" {...field} className="h-9 text-xs" /></FormControl></FormItem>
                     )} />
                   </div>
 
                   <FormField control={form.control} name="description" render={({ field }) => (
-                    <FormItem><FormLabel>Purpose</FormLabel><FormControl><Textarea {...field} /></FormControl><FormMessage /></FormItem>
+                    <FormItem><FormLabel className="text-[10px] uppercase font-bold text-muted-foreground">Purpose & Scope</FormLabel><FormControl><Textarea {...field} className="min-h-[80px] text-xs" /></FormControl><FormMessage /></FormItem>
                   )} />
 
-                  <DialogFooter className="gap-2 sm:gap-0">
-                    <Button type="button" variant="outline" onClick={() => setIsDialogOpen(false)}>Cancel</Button>
-                    <Button type="submit">Authorize Budget</Button>
+                  <DialogFooter className="gap-2 sm:gap-0 flex-col sm:flex-row border-t pt-6">
+                    <Button type="button" variant="outline" onClick={() => setIsDialogOpen(false)} className="w-full sm:w-auto font-bold uppercase text-xs h-10">Cancel</Button>
+                    <Button type="submit" className="w-full sm:w-auto bg-primary shadow-md font-bold uppercase text-xs h-10">Authorize Budget</Button>
                   </DialogFooter>
                 </form>
               </Form>
@@ -278,10 +280,10 @@ export default function BudgetsPage() {
         </RoleGuard>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 md:gap-6">
         <Card className="md:col-span-2 border-primary/10 bg-gradient-to-br from-primary/5 to-transparent relative overflow-hidden group">
-          <CardHeader>
-             <CardTitle className="text-xs font-bold text-muted-foreground uppercase tracking-widest text-center sm:text-left">
+          <CardHeader className="py-4">
+             <CardTitle className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest text-center sm:text-left">
                {isDetailed ? 'Global Fiscal Status' : 'Overall Spend'}
              </CardTitle>
           </CardHeader>
@@ -289,7 +291,7 @@ export default function BudgetsPage() {
             <div className="flex flex-col sm:flex-row items-center gap-6 sm:gap-10">
               <div className={cn(
                 "relative shrink-0",
-                isDetailed ? "w-32 h-32 md:w-36 md:h-36" : "w-36 h-36 md:w-40 md:h-40"
+                isDetailed ? "w-28 h-28 md:w-36 md:h-36" : "w-32 h-32 md:w-40 md:h-40"
               )}>
                 <svg className="w-full h-full transform -rotate-90" viewBox="0 0 100 100">
                   <circle className="text-muted/20 stroke-current" strokeWidth="8" fill="transparent" r="40" cx="50" cy="50" />
@@ -303,7 +305,10 @@ export default function BudgetsPage() {
                   />
                 </svg>
                 <div className="absolute inset-0 flex flex-col items-center justify-center">
-                  <span className={isDetailed ? "text-xl md:text-2xl font-black" : "text-2xl md:text-3xl font-black"}>{overallUtilization}%</span>
+                  <span className={cn(
+                    "font-black tracking-tight",
+                    isDetailed ? "text-lg md:text-2xl" : "text-xl md:text-3xl"
+                  )}>{overallUtilization}%</span>
                   <span className="text-[8px] uppercase font-bold text-muted-foreground">Total Use</span>
                 </div>
               </div>
@@ -333,25 +338,23 @@ export default function BudgetsPage() {
             </div>
           </CardContent>
         </Card>
-        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-1 gap-6">
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-1 gap-4 md:gap-6">
           <StatCard 
             title="Total Utilized" 
             value={`Ksh ${totalUsed.toLocaleString()}`} 
             icon={TrendingUp} 
-            tooltip={isDetailed ? "Sum of actual expenditure and current commitments (approved requisitions/LPOs) across all departments." : undefined}
           />
           <StatCard 
             title="Remaining" 
             value={`Ksh ${(totalAllocation - totalUsed).toLocaleString()}`} 
             icon={PieChart} 
-            tooltip={isDetailed ? "Total funds available for the remainder of the fiscal year across all planning phases." : undefined}
           />
         </div>
       </div>
 
-      <Card className="border-none shadow-none bg-card overflow-hidden">
+      <Card className="border-border shadow-none bg-card overflow-hidden">
         <CardHeader className="border-b border-border/50 py-4 px-4 md:px-6">
-          <CardTitle className="text-lg">
+          <CardTitle className="text-base md:text-lg font-headline">
             {isDetailed ? 'Budget Analysis & Quarterly Health' : 'Budget Health'}
           </CardTitle>
         </CardHeader>
@@ -359,12 +362,12 @@ export default function BudgetsPage() {
           <div className="overflow-x-auto w-full">
             <Table>
               <TableHeader>
-                <TableRow className="bg-muted/30">
-                  <TableHead className="min-w-[180px]">Budget</TableHead>
-                  <TableHead className="min-w-[140px]">Status</TableHead>
-                  {isDetailed && <TableHead className="text-right min-w-[120px]">Q Allocation</TableHead>}
-                  <TableHead className="text-right min-w-[140px]">Remaining in Q</TableHead>
-                  {isDetailed && <TableHead className="text-right min-w-[140px]">Annual Pool</TableHead>}
+                <TableRow className="bg-muted/30 border-none">
+                  <TableHead className="min-w-[180px] font-bold uppercase text-[10px]">Budget</TableHead>
+                  <TableHead className="min-w-[140px] font-bold uppercase text-[10px]">Status</TableHead>
+                  {isDetailed && <TableHead className="text-right min-w-[120px] font-bold uppercase text-[10px]">Q Allocation</TableHead>}
+                  <TableHead className="text-right min-w-[140px] font-bold uppercase text-[10px]">Remaining in Q</TableHead>
+                  {isDetailed && <TableHead className="text-right min-w-[140px] font-bold uppercase text-[10px]">Annual Pool</TableHead>}
                   <TableHead className="w-[50px]"></TableHead>
                 </TableRow>
               </TableHeader>
@@ -373,22 +376,24 @@ export default function BudgetsPage() {
                   const stats = getBudgetStats(b);
                   const details = getBudgetDetails(b.name);
                   return (
-                    <TableRow key={b.id} className="group hover:bg-muted/10">
+                    <TableRow key={b.id} className="group hover:bg-muted/5">
                       <TableCell>
                         <TooltipProvider>
                           <Tooltip delayDuration={0}>
                             <TooltipTrigger asChild>
                               <div className="flex flex-col cursor-help">
-                                <span className={isDetailed ? "font-bold text-primary flex items-center gap-2 whitespace-nowrap" : "font-black text-primary flex items-center gap-2 whitespace-nowrap text-base"}>
+                                <span className={cn(
+                                  "font-bold text-primary flex items-center gap-2 whitespace-nowrap",
+                                  !isDetailed && "text-sm"
+                                )}>
                                   {b.name}
-                                  {isDetailed && <Info className="w-3.5 h-3.5 text-muted-foreground opacity-50 group-hover:opacity-100" />}
                                   {stats.isPaused ? (
                                     <PauseCircle className="w-3.5 h-3.5 text-destructive" />
                                   ) : (
-                                    <PlayCircle className="w-3.5 h-3.5 text-green-500" />
+                                    <PlayCircle className="w-3.5 h-3.5 text-accent" />
                                   )}
                                 </span>
-                                <span className="text-[10px] text-muted-foreground uppercase">{b.department}</span>
+                                <span className="text-[10px] text-muted-foreground uppercase font-medium">{b.department}</span>
                               </div>
                             </TooltipTrigger>
                             <TooltipContent side="right" className="w-80 p-0 overflow-hidden border-primary/20 shadow-2xl bg-card text-foreground hidden sm:block">
@@ -404,10 +409,6 @@ export default function BudgetsPage() {
                                       <FileText className="w-3 h-3 text-accent" />
                                       <span>{details.prsRequested} Requested</span>
                                     </div>
-                                    <div className="flex items-center gap-2 text-[10px] text-muted-foreground pl-5">
-                                      <CheckCircle2 className="w-2.5 h-2.5 text-green-500" />
-                                      <span>{details.prsApproved} Approved</span>
-                                    </div>
                                   </div>
                                   <div className="space-y-1">
                                     <p className="text-[9px] uppercase font-bold text-muted-foreground">LPO Status</p>
@@ -415,23 +416,6 @@ export default function BudgetsPage() {
                                       <ShoppingCart className="w-3 h-3 text-accent" />
                                       <span>{details.lposPending + details.lposDelivered} Total</span>
                                     </div>
-                                    <div className="flex items-center gap-2 text-[10px] text-muted-foreground pl-5">
-                                      <Clock className="w-2.5 h-2.5 text-orange-400" />
-                                      <span>{details.lposPending} Pending</span>
-                                    </div>
-                                  </div>
-                                </div>
-                                <Separator />
-                                <div className="space-y-2">
-                                  <div className="flex justify-between items-center text-[10px] font-bold">
-                                    <span className="uppercase text-muted-foreground">Fulfillment Rate</span>
-                                    <span>{details.prsRequested > 0 ? Math.round((details.prsFulfilled / details.prsRequested) * 100) : 0}%</span>
-                                  </div>
-                                  <div className="h-1.5 w-full bg-muted rounded-full overflow-hidden">
-                                    <div 
-                                      className="h-full bg-accent transition-all duration-500"
-                                      style={{ width: `${details.prsRequested > 0 ? (details.prsFulfilled / details.prsRequested) * 100 : 0}%` }}
-                                    />
                                   </div>
                                 </div>
                               </div>
@@ -441,49 +425,47 @@ export default function BudgetsPage() {
                       </TableCell>
                       <TableCell>
                         <div className="flex items-center gap-2 min-w-[120px]">
-                           <div className={isDetailed ? "h-1.5 flex-1 bg-muted rounded-full overflow-hidden flex" : "h-2.5 flex-1 bg-muted rounded-full overflow-hidden flex"}>
+                           <div className="h-1.5 flex-1 bg-muted rounded-full overflow-hidden flex">
                               <div 
                                 className={`h-full transition-all duration-500 ${stats.isPaused ? 'bg-destructive' : 'bg-accent'}`}
                                 style={{ width: `${Math.min(100, (stats.totalUsed / stats.cumulativeAllocation) * 100)}%` }}
                               />
                            </div>
-                           <Badge variant={stats.isPaused ? "destructive" : "secondary"} className="text-[9px] px-1.5 py-0 whitespace-nowrap">
-                              {stats.isPaused ? "EXHAUSTED" : "HEALTHY"}
+                           <Badge variant={stats.isPaused ? "destructive" : "secondary"} className="text-[9px] px-1.5 py-0 h-4 whitespace-nowrap tracking-tighter">
+                              {stats.isPaused ? "PAUSED" : "ACTIVE"}
                            </Badge>
                         </div>
                       </TableCell>
                       {isDetailed && (
-                        <TableCell className="text-right font-medium whitespace-nowrap">
+                        <TableCell className="text-right font-bold text-[10px] whitespace-nowrap uppercase text-muted-foreground">
                           Ksh {(b as any)[`q${stats.currentQ}Allocation`].toLocaleString()}
                         </TableCell>
                       )}
                       <TableCell className="text-right">
                         <div className="flex flex-col items-end">
-                          <span className={isDetailed ? "font-black whitespace-nowrap" : "font-black whitespace-nowrap text-primary text-base"}>
+                          <span className={cn(
+                            "font-black tracking-tighter whitespace-nowrap",
+                            isDetailed ? "text-xs" : "text-sm text-primary"
+                          )}>
                             Ksh {stats.remainingInQuarter.toLocaleString()}
                           </span>
-                          {stats.isPaused && isDetailed && (
-                             <span className="text-[9px] text-muted-foreground uppercase flex items-center gap-1 whitespace-nowrap">
-                               To Q{stats.currentQ + 1} <ArrowRight className="w-2 h-2" />
-                             </span>
-                          )}
                         </div>
                       </TableCell>
                       {isDetailed && (
-                        <TableCell className="text-right text-muted-foreground text-xs whitespace-nowrap">
+                        <TableCell className="text-right text-muted-foreground text-[10px] font-bold whitespace-nowrap tracking-tighter">
                           Ksh {stats.totalAllocation.toLocaleString()}
                         </TableCell>
                       )}
                       <TableCell>
                         <DropdownMenu>
                           <DropdownMenuTrigger asChild>
-                            <Button variant="ghost" size="icon"><MoreVertical className="w-4 h-4" /></Button>
+                            <Button variant="ghost" size="icon" className="h-8 w-8 md:opacity-0 group-hover:opacity-100 transition-opacity"><MoreVertical className="w-4 h-4" /></Button>
                           </DropdownMenuTrigger>
                           <DropdownMenuContent align="end">
-                            <DropdownMenuItem onClick={() => {setEditingBudget(b); setIsDialogOpen(true);}}>
+                            <DropdownMenuItem onClick={() => {setEditingBudget(b); setIsDialogOpen(true);}} className="text-xs font-bold">
                               <Pencil className="w-4 h-4 mr-2" /> Edit Plan
                             </DropdownMenuItem>
-                            <DropdownMenuItem onClick={() => handleDelete(b.id)} className="text-destructive">
+                            <DropdownMenuItem onClick={() => handleDelete(b.id)} className="text-destructive text-xs font-bold">
                               <Trash2 className="w-4 h-4 mr-2" /> Delete
                             </DropdownMenuItem>
                           </DropdownMenuContent>
