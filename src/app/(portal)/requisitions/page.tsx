@@ -1,6 +1,7 @@
+
 "use client";
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, Suspense } from 'react';
 import { useForm, useFieldArray } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
@@ -60,7 +61,7 @@ const requisitionSchema = z.object({
 
 type RequisitionFormValues = z.infer<typeof requisitionSchema>;
 
-export default function RequisitionsPage() {
+function RequisitionsContent() {
   const { prs, budgets, addPR, updatePR, deletePR, updatePRStatus } = useStore();
   const { currentUser, viewPreference } = useUserStore();
   const [search, setSearch] = useState('');
@@ -89,7 +90,6 @@ export default function RequisitionsPage() {
     setMounted(true);
   }, []);
 
-  // Handle deep-linking from Dashboard
   useEffect(() => {
     if (mounted) {
       const prId = searchParams.get('id');
@@ -173,7 +173,6 @@ export default function RequisitionsPage() {
   const handleCloseDialog = () => {
     setIsDialogOpen(false);
     setEditingPr(null);
-    // Clear URL param if it exists
     if (searchParams.get('id')) {
       router.replace('/requisitions');
     }
@@ -449,5 +448,18 @@ export default function RequisitionsPage() {
         </Table>
       </Card>
     </div>
+  );
+}
+
+export default function RequisitionsPage() {
+  return (
+    <Suspense fallback={
+      <div className="flex flex-col items-center justify-center h-64 space-y-4">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary" />
+        <p className="text-sm text-muted-foreground">Loading requisitions...</p>
+      </div>
+    }>
+      <RequisitionsContent />
+    </Suspense>
   );
 }

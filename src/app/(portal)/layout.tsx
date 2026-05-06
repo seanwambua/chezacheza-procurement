@@ -25,7 +25,11 @@ export default function PortalLayout({
     setMounted(true);
   }, []);
 
-  // Avoid hydration mismatch by rendering a stable structure until mounted
+  // Defaults for server and initial client render to prevent hydration mismatch
+  // Defaulting to expanded as per latest project requirements
+  const defaultSidebarWidth = "w-64";
+  const defaultMainMargin = "md:ml-64";
+
   const sidebarWidth = isSidebarCollapsed ? "w-20" : "w-64";
   const mainMargin = isSidebarCollapsed ? "md:ml-20" : "md:ml-64";
 
@@ -51,7 +55,7 @@ export default function PortalLayout({
       {/* Desktop Sidebar */}
       <aside className={cn(
         "fixed inset-y-0 hidden md:block z-50 transition-all duration-300 ease-in-out border-r border-sidebar-border",
-        mounted ? sidebarWidth : "w-20"
+        mounted ? sidebarWidth : defaultSidebarWidth
       )}>
         <SidebarNav />
       </aside>
@@ -59,11 +63,10 @@ export default function PortalLayout({
       {/* Main Content */}
       <main className={cn(
         "flex-1 p-6 md:p-10 max-w-7xl mx-auto w-full transition-all duration-300 ease-in-out mt-16 md:mt-0",
-        mounted ? mainMargin : "md:ml-20"
+        mounted ? mainMargin : defaultMainMargin
       )}>
         {children}
       </main>
     </div>
   );
 }
-
