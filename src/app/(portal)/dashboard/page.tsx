@@ -95,7 +95,7 @@ const DEPARTMENTS = ['IT', 'Operations', 'Marketing', 'Finance', 'Programs', 'HR
 
 export default function DashboardPage() {
   const { prs, budgets, vendors, lpos, grns, addBudget, selectedYear, setSelectedYear, deleteFiscalYear } = useStore();
-  const { viewPreference } = useUserStore();
+  const { viewPreference, currentUser } = useUserStore();
   const { toast } = useToast();
   const [mounted, setMounted] = useState(false);
   
@@ -204,19 +204,21 @@ export default function DashboardPage() {
     }
   };
 
-  const handleDeleteYear = () => {
-    if (confirm(`CRITICAL ACTION: Are you sure you want to delete the entire fiscal year ${selectedYear}? This will remove ALL budgets, requisitions, and orders for this period.`)) {
-      if (confirm(`Confirming deletion for FY ${selectedYear}. This action is irreversible.`)) {
-        deleteFiscalYear(selectedYear);
+  const handleDeleteYear = (yearToDelete: string) => {
+    if (confirm(`CRITICAL ACTION: Are you sure you want to delete the entire fiscal year ${yearToDelete}? This will remove ALL budgets, requisitions, and orders for this period.`)) {
+      if (confirm(`Confirming deletion for FY ${yearToDelete}. This action is irreversible.`)) {
+        deleteFiscalYear(yearToDelete);
         toast({
           variant: "destructive",
           title: "Fiscal Year Deleted",
-          description: `All records for FY ${selectedYear} have been purged.`,
+          description: `All records for FY ${yearToDelete} have been purged.`,
         });
-        // Switch to the next available year
-        const remainingYears = availableYears.filter(y => y !== selectedYear);
-        if (remainingYears.length > 0) {
-          setSelectedYear(remainingYears[0]);
+        
+        if (yearToDelete === selectedYear) {
+          const remainingYears = availableYears.filter(y => y !== yearToDelete);
+          if (remainingYears.length > 0) {
+            setSelectedYear(remainingYears[0]);
+          }
         }
       }
     }
@@ -243,20 +245,26 @@ export default function DashboardPage() {
               </SelectTrigger>
               <SelectContent>
                 {availableYears.map(year => (
-                  <SelectItem key={year} value={year} className="text-xs">FY {year}</SelectItem>
+                  <SelectItem key={year} value={year} className="text-xs group">
+                    <div className="flex items-center justify-between w-full gap-2 min-w-[120px]">
+                      <span>FY {year}</span>
+                      {currentUser?.role === 'Admin' && (
+                        <span 
+                          className="p-1 hover:bg-destructive/10 rounded-md text-destructive transition-colors opacity-0 group-hover:opacity-100"
+                          onClick={(e) => {
+                            e.preventDefault();
+                            e.stopPropagation();
+                            handleDeleteYear(year);
+                          }}
+                        >
+                          <Trash2 className="w-3 h-3" />
+                        </span>
+                      )}
+                    </div>
+                  </SelectItem>
                 ))}
               </SelectContent>
             </Select>
-            <RoleGuard allowedRoles={['Admin']}>
-              <Button 
-                variant="outline" 
-                size="icon" 
-                className="h-9 w-9 bg-card shadow-sm hover:bg-destructive hover:text-white transition-all text-destructive border-destructive/20 shrink-0"
-                onClick={handleDeleteYear}
-              >
-                <Trash2 className="w-4 h-4" />
-              </Button>
-            </RoleGuard>
           </div>
           
           <RoleGuard allowedRoles={['Admin', 'Finance']}>
