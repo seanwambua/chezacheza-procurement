@@ -1,4 +1,3 @@
-
 "use client";
 
 import { useEffect, useState } from 'react';
@@ -554,7 +553,7 @@ export default function DashboardPage() {
               <AlertCircle className="w-5 h-5" /> 
               Purge Fiscal Period FY {yearToDelete}?
             </AlertDialogTitle>
-            <AlertDialogDescription className="text-xs space-y-3">
+            <div className="text-sm text-muted-foreground space-y-3">
               <p>This will **permanently delete** the entire fiscal period and all its associated data. This action cannot be undone.</p>
               <div className="p-3 bg-destructive/10 border border-destructive/20 rounded-lg space-y-1">
                 <p className="font-black uppercase text-[10px]">Cascading Impact:</p>
@@ -564,7 +563,7 @@ export default function DashboardPage() {
                   <li>All Local Purchase Orders (LPOs) and GRNs</li>
                 </ul>
               </div>
-            </AlertDialogDescription>
+            </div>
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel className="text-xs font-bold uppercase">Cancel</AlertDialogCancel>
