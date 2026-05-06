@@ -14,7 +14,8 @@ import {
   Settings,
   Wallet,
   UserRound,
-  ChevronDown
+  ChevronDown,
+  Building2
 } from 'lucide-react';
 import { useUserStore } from '@/lib/user-store';
 import { UserRole, User } from '@/lib/types';
@@ -31,6 +32,7 @@ import { ThemeToggle } from './ThemeToggle';
 
 const navItems = [
   { name: 'Dashboard', href: '/dashboard', icon: LayoutDashboard, roles: ['Admin', 'Manager', 'Staff', 'Finance'] as UserRole[] },
+  { name: 'Departments', href: '/departments', icon: Building2, roles: ['Admin', 'Finance', 'Manager'] as UserRole[] },
   { name: 'Budgets', href: '/budgets', icon: Wallet, roles: ['Admin', 'Finance', 'Manager'] as UserRole[] },
   { name: 'Requisitions', href: '/requisitions', icon: FileText, roles: ['Admin', 'Manager', 'Staff', 'Finance'] as UserRole[] },
   { name: 'Approvals', href: '/approvals', icon: CheckSquare, roles: ['Admin', 'Manager', 'Finance'] as UserRole[] },

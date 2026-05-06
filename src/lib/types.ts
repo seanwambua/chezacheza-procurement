@@ -1,4 +1,3 @@
-
 export type PRStatus = 'Draft' | 'Pending Finance' | 'Pending Manager' | 'Pending Committee' | 'Approved' | 'Rejected' | 'LPO Generated';
 
 export interface PurchaseRequisition {
@@ -97,6 +96,7 @@ export const ROLE_PERMISSIONS: Record<UserRole, string[]> = {
   Manager: [
     'view_dashboard',
     'view_budgets',
+    'view_departments',
     'view_requisitions',
     'create_requisitions',
     'approve_requisitions',
@@ -108,6 +108,7 @@ export const ROLE_PERMISSIONS: Record<UserRole, string[]> = {
   Finance: [
     'view_dashboard',
     'view_budgets',
+    'view_departments',
     'manage_budgets',
     'view_requisitions',
     'approve_requisitions',
