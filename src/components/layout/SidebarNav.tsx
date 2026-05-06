@@ -14,14 +14,12 @@ import {
   CreditCard,
   Wallet,
   UserRound,
-  ChevronDown,
   Building2,
   Maximize2,
   Minimize2,
-  ChevronRight,
-  ChevronLeft,
   PanelLeftClose,
-  PanelLeft
+  PanelLeft,
+  ChevronDown
 } from 'lucide-react';
 import { useUserStore } from '@/lib/user-store';
 import { UserRole, User } from '@/lib/types';
@@ -37,11 +35,6 @@ import { useEffect, useState } from 'react';
 import { ThemeToggle } from './ThemeToggle';
 import { Button } from '@/components/ui/button';
 import {
-  Collapsible,
-  CollapsibleContent,
-  CollapsibleTrigger,
-} from "@/components/ui/collapsible";
-import {
   Tooltip,
   TooltipContent,
   TooltipProvider,
@@ -52,7 +45,6 @@ const navGroups = [
   {
     id: 'workspace',
     label: 'Workspace',
-    collapsible: false,
     items: [
       { name: 'Dashboard', href: '/dashboard', icon: LayoutDashboard, roles: ['Admin', 'Manager', 'Staff', 'Finance'] as UserRole[] },
     ]
@@ -60,7 +52,6 @@ const navGroups = [
   {
     id: 'procurement',
     label: 'Procurement Cycle',
-    collapsible: true,
     items: [
       { name: 'Requisitions', href: '/requisitions', icon: FileText, roles: ['Admin', 'Manager', 'Staff', 'Finance'] as UserRole[] },
       { name: 'Approvals', href: '/approvals', icon: CheckSquare, roles: ['Admin', 'Manager', 'Finance'] as UserRole[] },
@@ -71,7 +62,6 @@ const navGroups = [
   {
     id: 'strategy',
     label: 'Strategic Assets',
-    collapsible: true,
     items: [
       { name: 'Budgets', href: '/budgets', icon: Wallet, roles: ['Admin', 'Finance', 'Manager'] as UserRole[] },
       { name: 'Departments', href: '/departments', icon: Building2, roles: ['Admin', 'Finance', 'Manager'] as UserRole[] },
@@ -81,7 +71,6 @@ const navGroups = [
   {
     id: 'admin',
     label: 'Administration',
-    collapsible: true,
     items: [
       { name: 'Users', href: '/users', icon: UserRound, roles: ['Admin'] as UserRole[] },
       { name: 'Payments', href: '/payments', icon: CreditCard, roles: ['Admin', 'Finance'] as UserRole[] },
@@ -102,12 +91,6 @@ export function SidebarNav() {
     setSidebarCollapsed
   } = useUserStore();
   const [mounted, setMounted] = useState(false);
-  const [openGroups, setOpenGroups] = useState<Record<string, boolean>>({
-    workspace: true,
-    procurement: false,
-    strategy: false,
-    admin: false
-  });
 
   useEffect(() => {
     setMounted(true);
@@ -139,10 +122,6 @@ export function SidebarNav() {
     setSidebarCollapsed(!isSidebarCollapsed);
   };
 
-  const toggleGroup = (id: string) => {
-    setOpenGroups(prev => ({ ...prev, [id]: !prev[id] }));
-  };
-
   return (
     <TooltipProvider delayDuration={0}>
       <div className={cn(
@@ -167,96 +146,53 @@ export function SidebarNav() {
           )}
         </div>
         
-        <div className="flex-1 px-4 space-y-4 overflow-hidden">
+        <div className="flex-1 px-4 space-y-6 overflow-hidden">
           {navGroups.map((group) => {
             const visibleItems = group.items.filter(item => item.roles.includes(currentUser.role));
             if (visibleItems.length === 0) return null;
 
-            if (!group.collapsible || isSidebarCollapsed) {
-              return (
-                <div key={group.id} className="space-y-1">
-                  {!isSidebarCollapsed && !group.collapsible && (
-                    <p className="px-3 text-[9px] font-bold uppercase text-muted-foreground tracking-widest mb-1">{group.label}</p>
-                  )}
-                  {visibleItems.map((item) => {
-                    const isActive = pathname === item.href;
-                    const linkContent = (
-                      <Link
-                        key={item.name}
-                        href={item.href}
-                        className={cn(
-                          "flex items-center gap-3 px-3 py-2 text-sm font-medium rounded-md transition-all duration-200",
-                          isActive 
-                            ? "bg-primary text-primary-foreground shadow-sm" 
-                            : "text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground",
-                          isSidebarCollapsed && "justify-center px-0 w-10 h-10"
-                        )}
-                      >
-                        <item.icon className={cn("w-4 h-4 shrink-0", isActive ? "text-primary-foreground" : "text-accent")} />
-                        {!isSidebarCollapsed && item.name}
-                      </Link>
-                    );
-
-                    if (isSidebarCollapsed) {
-                      return (
-                        <Tooltip key={item.name}>
-                          <TooltipTrigger asChild>
-                            {linkContent}
-                          </TooltipTrigger>
-                          <TooltipContent side="right" className="text-xs font-bold">
-                            {item.name}
-                          </TooltipContent>
-                        </Tooltip>
-                      );
-                    }
-
-                    return linkContent;
-                  })}
-                </div>
-              );
-            }
-
             return (
-              <Collapsible
-                key={group.id}
-                open={openGroups[group.id]}
-                onOpenChange={() => toggleGroup(group.id)}
-                className="space-y-1"
-              >
-                <CollapsibleTrigger asChild>
-                  <Button 
-                    variant="ghost" 
-                    className="w-full flex items-center justify-between px-3 py-2 h-auto text-[10px] font-bold uppercase tracking-widest text-muted-foreground hover:bg-sidebar-accent hover:text-primary transition-all group"
-                  >
+              <div key={group.id} className="space-y-1">
+                {!isSidebarCollapsed && (
+                  <p className="px-3 text-[9px] font-bold uppercase text-muted-foreground tracking-widest mb-2">
                     {group.label}
-                    {openGroups[group.id] ? (
-                      <ChevronDown className="w-3 h-3 transition-transform duration-200 group-hover:text-accent" />
-                    ) : (
-                      <ChevronRight className="w-3 h-3 transition-transform duration-200 group-hover:text-accent" />
-                    )}
-                  </Button>
-                </CollapsibleTrigger>
-                <CollapsibleContent className="space-y-1 animate-in slide-in-from-top-2 duration-300">
-                  {visibleItems.map((item) => {
-                    const isActive = pathname === item.href;
+                  </p>
+                )}
+                {visibleItems.map((item) => {
+                  const isActive = pathname === item.href;
+                  const linkContent = (
+                    <Link
+                      key={item.name}
+                      href={item.href}
+                      className={cn(
+                        "flex items-center gap-3 px-3 py-2 text-sm font-medium rounded-md transition-all duration-200",
+                        isActive 
+                          ? "bg-primary text-primary-foreground shadow-sm" 
+                          : "text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground",
+                        isSidebarCollapsed && "justify-center px-0 w-10 h-10"
+                      )}
+                    >
+                      <item.icon className={cn("w-4 h-4 shrink-0", isActive ? "text-primary-foreground" : "text-accent")} />
+                      {!isSidebarCollapsed && item.name}
+                    </Link>
+                  );
+
+                  if (isSidebarCollapsed) {
                     return (
-                      <Link
-                        key={item.name}
-                        href={item.href}
-                        className={cn(
-                          "flex items-center gap-3 px-3 py-2 text-sm font-medium rounded-md transition-all duration-200 ml-1",
-                          isActive 
-                            ? "bg-primary text-primary-foreground shadow-sm" 
-                            : "text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground"
-                        )}
-                      >
-                        <item.icon className={cn("w-4 h-4 shrink-0", isActive ? "text-primary-foreground" : "text-accent")} />
-                        {item.name}
-                      </Link>
+                      <Tooltip key={item.name}>
+                        <TooltipTrigger asChild>
+                          {linkContent}
+                        </TooltipTrigger>
+                        <TooltipContent side="right" className="text-xs font-bold">
+                          {item.name}
+                        </TooltipContent>
+                      </Tooltip>
                     );
-                  })}
-                </CollapsibleContent>
-              </Collapsible>
+                  }
+
+                  return linkContent;
+                })}
+              </div>
             );
           })}
         </div>
