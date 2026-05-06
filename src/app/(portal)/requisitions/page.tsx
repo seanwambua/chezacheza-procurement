@@ -13,6 +13,7 @@ import {
   TableHeader, 
   TableRow 
 } from '@/components/ui/table';
+import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Plus, Search, Filter, MoreVertical, Pencil, Trash2, CheckCircle, XCircle, AlertTriangle, PlusCircle, Trash } from 'lucide-react';
 import { Input } from '@/components/ui/input';
