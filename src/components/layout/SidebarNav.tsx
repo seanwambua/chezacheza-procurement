@@ -39,6 +39,12 @@ import {
   CollapsibleContent,
   CollapsibleTrigger,
 } from "@/components/ui/collapsible";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 
 const navGroups = [
   {
@@ -138,15 +144,23 @@ export function SidebarNav() {
           <p className="text-[10px] text-muted-foreground uppercase tracking-widest mt-1">Chezacheza Procurement</p>
         </div>
         <div className="flex items-center gap-1">
-          <Button 
-            variant="ghost" 
-            size="icon" 
-            className="w-8 h-8"
-            onClick={toggleView}
-            title={viewPreference === 'detailed' ? 'Switch to Simple View' : 'Switch to Detailed View'}
-          >
-            {viewPreference === 'detailed' ? <Minimize2 className="w-4 h-4" /> : <Maximize2 className="w-4 h-4" />}
-          </Button>
+          <TooltipProvider>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button 
+                  variant="ghost" 
+                  size="icon" 
+                  className="w-8 h-8"
+                  onClick={toggleView}
+                >
+                  {viewPreference === 'detailed' ? <Minimize2 className="w-4 h-4" /> : <Maximize2 className="w-4 h-4" />}
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent side="bottom" className="text-[10px] font-bold">
+                {viewPreference === 'detailed' ? 'Switch to Simple View' : 'Switch to Detailed View'}
+              </TooltipContent>
+            </Tooltip>
+          </TooltipProvider>
           <ThemeToggle />
         </div>
       </div>

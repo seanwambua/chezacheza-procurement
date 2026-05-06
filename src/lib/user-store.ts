@@ -27,7 +27,7 @@ export const useUserStore = create<UserState>()(
     (set, get) => ({
       users: MOCK_USERS,
       currentUser: MOCK_USERS[0],
-      viewPreference: 'detailed',
+      viewPreference: 'simple',
 
       addUser: (userData) => set((state) => {
         const id = `U-${Math.floor(Math.random() * 10000)}`;
