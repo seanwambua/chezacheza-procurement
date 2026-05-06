@@ -1,4 +1,3 @@
-
 "use client";
 
 import Link from 'next/link';
@@ -28,6 +27,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { useEffect, useState } from 'react';
+import { ThemeToggle } from './ThemeToggle';
 
 const navItems = [
   { name: 'Dashboard', href: '/dashboard', icon: LayoutDashboard, roles: ['Admin', 'Manager', 'Staff', 'Finance'] as UserRole[] },
@@ -51,8 +51,7 @@ export function SidebarNav() {
     setMounted(true);
   }, []);
 
-  // Use a loading state for SSR to avoid hydration mismatch
-  if (!mounted || !currentUser) {
+  if (!mounted) {
     return (
       <div className="flex flex-col h-full bg-sidebar border-r border-sidebar-border animate-pulse">
         <div className="p-6">
@@ -67,22 +66,26 @@ export function SidebarNav() {
     );
   }
 
+  if (!currentUser) return null;
+
   const filteredNavItems = navItems.filter(item => item.roles.includes(currentUser.role));
 
   const handleUserSwitch = (user: User) => {
     setCurrentUser(user);
-    // Force a fresh navigation to the dashboard to reset any role-specific state
     router.push('/dashboard');
     router.refresh();
   };
 
   return (
     <div className="flex flex-col h-full bg-sidebar border-r border-sidebar-border">
-      <div className="p-6">
-        <h1 className="text-xl font-headline font-bold text-primary tracking-tighter">
-          CPP <span className="text-accent">Portal</span>
-        </h1>
-        <p className="text-[10px] text-muted-foreground uppercase tracking-widest mt-1">Chezacheza Procurement</p>
+      <div className="p-6 flex items-center justify-between">
+        <div>
+          <h1 className="text-xl font-headline font-bold text-primary tracking-tighter">
+            CPP <span className="text-accent">Portal</span>
+          </h1>
+          <p className="text-[10px] text-muted-foreground uppercase tracking-widest mt-1">Chezacheza Procurement</p>
+        </div>
+        <ThemeToggle />
       </div>
       
       <nav className="flex-1 px-4 space-y-1">
@@ -143,8 +146,8 @@ export function SidebarNav() {
           <div className="w-8 h-8 rounded-full bg-accent flex items-center justify-center text-white text-xs font-bold shrink-0">
             {currentUser.name.charAt(0)}
           </div>
-          <div className="flex flex-col overflow-hidden">
-            <span className="text-xs font-semibold truncate text-sidebar-foreground">{currentUser.name}</span>
+          <div className="flex flex-col overflow-hidden text-sidebar-foreground">
+            <span className="text-xs font-semibold truncate">{currentUser.name}</span>
             <span className="text-[10px] text-muted-foreground truncate uppercase">{currentUser.role}</span>
           </div>
         </div>
