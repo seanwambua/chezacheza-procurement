@@ -11,8 +11,9 @@ import {
   CheckCircle2, 
   XCircle, 
   Search,
-  Filter,
   DollarSign,
+  Eye,
+  ArrowRight
 } from 'lucide-react';
 import { 
   Table, 
@@ -26,7 +27,7 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { getBudgetStats, calculatePRTotal } from '@/lib/types';
+import { getBudgetStats, calculatePRTotal, PurchaseRequisition } from '@/lib/types';
 import { useToast } from '@/hooks/use-toast';
 import {
   Tooltip,
@@ -34,6 +35,15 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter,
+  DialogDescription
+} from "@/components/ui/dialog";
+import { Separator } from '@/components/ui/separator';
 
 export default function ApprovalsPage() {
   const { prs, budgets, updatePRStatus } = useStore();
@@ -41,6 +51,7 @@ export default function ApprovalsPage() {
   const { toast } = useToast();
   const [mounted, setMounted] = useState(false);
   const [search, setSearch] = useState('');
+  const [selectedPr, setSelectedPr] = useState<PurchaseRequisition | null>(null);
 
   useEffect(() => {
     setMounted(true);
@@ -48,19 +59,13 @@ export default function ApprovalsPage() {
 
   if (!mounted || !currentUser) return null;
 
-  // Filter for pending items appropriate for the user's role
   const pendingPrs = prs.filter(pr => {
     const isPending = pr.status.startsWith('Pending');
     const matchesSearch = pr.items?.some(i => i.description.toLowerCase().includes(search.toLowerCase())) || 
                           pr.refNumber.toLowerCase().includes(search.toLowerCase());
     
-    // Admins see everything pending
     if (currentUser.role === 'Admin') return isPending && matchesSearch;
-    
-    // Managers see items pending manager
     if (currentUser.role === 'Manager') return pr.status === 'Pending Manager' && matchesSearch;
-    
-    // Finance see items pending finance
     if (currentUser.role === 'Finance') return pr.status === 'Pending Finance' && matchesSearch;
     
     return false;
@@ -69,10 +74,7 @@ export default function ApprovalsPage() {
   const totalPendingValue = pendingPrs.reduce((acc, pr) => acc + calculatePRTotal(pr), 0);
   const highValueRequests = pendingPrs.filter(pr => calculatePRTotal(pr) > 100000).length;
 
-  const handleApprove = (id: string) => {
-    const pr = prs.find(p => p.id === id);
-    if (!pr) return;
-
+  const handleApprove = (pr: PurchaseRequisition) => {
     const budget = budgets.find(b => b.name === pr.budgetLine);
     if (budget) {
       const stats = getBudgetStats(budget);
@@ -80,32 +82,33 @@ export default function ApprovalsPage() {
         toast({
           variant: "destructive",
           title: "Approval Blocked",
-          description: `The budget '${budget.name}' is currently exhausted for this quarter. Reallocate funds first.`,
+          description: `The budget '${budget.name}' is currently exhausted for this quarter.`,
         });
         return;
       }
     }
 
-    // Progression logic
     let nextStatus = pr.status;
     if (pr.status === 'Pending Manager') nextStatus = 'Pending Finance';
     else if (pr.status === 'Pending Finance') nextStatus = 'Approved';
     
-    updatePRStatus(id, nextStatus as any);
+    updatePRStatus(pr.id, nextStatus as any);
+    setSelectedPr(null);
     toast({
       title: "Requisition Advanced",
-      description: `Request ${pr.refNumber} has been successfully approved and moved to the next stage.`,
+      description: `Request ${pr.refNumber} has been successfully approved.`,
     });
   };
 
   const handleReject = (id: string) => {
     const reason = prompt('Please provide a reason for rejection:');
-    if (reason === null) return; // User cancelled
+    if (reason === null) return;
 
     updatePRStatus(id, 'Rejected');
+    setSelectedPr(null);
     toast({
       title: "Requisition Rejected",
-      description: "The requester has been notified of the rejection.",
+      description: "The requester has been notified.",
     });
   };
 
@@ -124,37 +127,32 @@ export default function ApprovalsPage() {
           value={pendingPrs.length} 
           icon={Clock} 
           description="Awaiting your authorization"
-          tooltip="Total number of requisitions currently requiring your role's approval to proceed."
         />
         <StatCard 
           title="Pending Exposure" 
           value={`Ksh ${totalPendingValue.toLocaleString()}`} 
           icon={DollarSign} 
           description="Total value of queue"
-          tooltip="The sum total of estimated costs for all items currently sitting in your approval queue."
         />
         <StatCard 
           title="High-Value Items" 
           value={highValueRequests} 
           icon={AlertCircle} 
           description="Above Ksh 100,000 threshold"
-          tooltip="Number of requests that exceed the standard spending threshold and may require extra scrutiny."
         />
       </div>
 
       <Card className="border-border shadow-none">
         <CardHeader className="flex flex-row items-center justify-between border-b border-border/50 py-4">
           <CardTitle className="text-lg">Review Queue</CardTitle>
-          <div className="flex items-center gap-4">
-            <div className="relative w-64">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-              <Input 
-                placeholder="Search requests..." 
-                className="pl-9 h-9 text-xs"
-                value={search}
-                onChange={(e) => setSearch(e.target.value)}
-              />
-            </div>
+          <div className="relative w-64">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+            <Input 
+              placeholder="Search requests..." 
+              className="pl-9 h-9 text-xs"
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+            />
           </div>
         </CardHeader>
         <CardContent className="p-0">
@@ -163,7 +161,7 @@ export default function ApprovalsPage() {
               <TableHeader>
                 <TableRow className="bg-muted/30">
                   <TableHead>Reference</TableHead>
-                  <TableHead>Description</TableHead>
+                  <TableHead>Summary</TableHead>
                   <TableHead>Requester</TableHead>
                   <TableHead>Budget Health</TableHead>
                   <TableHead className="text-right">Estimated Total</TableHead>
@@ -183,63 +181,34 @@ export default function ApprovalsPage() {
                         <TableCell className="font-bold text-primary">{pr.refNumber}</TableCell>
                         <TableCell>
                           <div className="flex flex-col">
-                            <span className="text-sm font-medium">{pr.items?.[0]?.description || 'Untitled Item'}</span>
+                            <span className="text-sm font-medium">{pr.items?.[0]?.description || 'Multi-item Request'}</span>
                             {pr.items?.length > 1 && (
                               <span className="text-[10px] text-muted-foreground uppercase">+{pr.items.length - 1} more items</span>
                             )}
                           </div>
                         </TableCell>
                         <TableCell>
-                          <div className="flex items-center gap-2">
-                            <div className="w-6 h-6 rounded-full bg-accent/10 flex items-center justify-center text-[10px] font-bold text-accent">
-                              {pr.requesterName?.charAt(0) || '?'}
-                            </div>
-                            <span className="text-xs">{pr.requesterName}</span>
-                          </div>
+                          <span className="text-xs">{pr.requesterName}</span>
                         </TableCell>
                         <TableCell>
-                          <TooltipProvider>
-                            <Tooltip>
-                              <TooltipTrigger asChild>
-                                <div className="flex items-center gap-2 cursor-help">
-                                  <div className={`w-2 h-2 rounded-full ${isPaused ? 'bg-destructive animate-pulse' : 'bg-green-500'}`} />
-                                  <span className="text-xs font-medium">
-                                    {isPaused ? 'Exhausted' : 'Healthy'}
-                                  </span>
-                                </div>
-                              </TooltipTrigger>
-                              <TooltipContent>
-                                {isPaused 
-                                  ? "This budget is paused. You cannot approve until funds are reallocated." 
-                                  : "Budget has sufficient funds for this quarter."}
-                              </TooltipContent>
-                            </Tooltip>
-                          </TooltipProvider>
+                          <div className={`flex items-center gap-2 ${isPaused ? 'text-destructive' : 'text-green-600'}`}>
+                            <div className={`w-2 h-2 rounded-full ${isPaused ? 'bg-destructive animate-pulse' : 'bg-green-600'}`} />
+                            <span className="text-xs font-bold uppercase">{isPaused ? 'Exhausted' : 'Healthy'}</span>
+                          </div>
                         </TableCell>
                         <TableCell className="text-right font-black">
                           Ksh {total.toLocaleString()}
                         </TableCell>
                         <TableCell className="text-right">
-                          <div className="flex items-center justify-end gap-2">
-                            <Button 
-                              variant="ghost" 
-                              size="sm" 
-                              className="h-8 text-destructive hover:text-destructive hover:bg-destructive/10"
-                              onClick={() => handleReject(pr.id)}
-                            >
-                              <XCircle className="w-4 h-4 mr-1.5" />
-                              Reject
-                            </Button>
-                            <Button 
-                              size="sm" 
-                              className="h-8 bg-green-600 hover:bg-green-700"
-                              disabled={isPaused}
-                              onClick={() => handleApprove(pr.id)}
-                            >
-                              <CheckCircle2 className="w-4 h-4 mr-1.5" />
-                              Approve
-                            </Button>
-                          </div>
+                          <Button 
+                            variant="outline" 
+                            size="sm" 
+                            className="h-8"
+                            onClick={() => setSelectedPr(pr)}
+                          >
+                            <Eye className="w-4 h-4 mr-1.5" />
+                            Review
+                          </Button>
                         </TableCell>
                       </TableRow>
                     );
@@ -247,10 +216,7 @@ export default function ApprovalsPage() {
                 ) : (
                   <TableRow>
                     <TableCell colSpan={6} className="h-32 text-center text-muted-foreground">
-                      <div className="flex flex-col items-center justify-center space-y-2">
-                        <CheckSquare className="w-8 h-8 opacity-20" />
-                        <p className="text-sm">Great job! Your approval queue is empty.</p>
-                      </div>
+                      <p className="text-sm">Your approval queue is empty.</p>
                     </TableCell>
                   </TableRow>
                 )}
@@ -259,6 +225,75 @@ export default function ApprovalsPage() {
           </div>
         </CardContent>
       </Card>
+
+      <Dialog open={!!selectedPr} onOpenChange={(open) => !open && setSelectedPr(null)}>
+        <DialogContent className="max-w-2xl">
+          <DialogHeader>
+            <DialogTitle className="flex items-center justify-between">
+              Review Requisition {selectedPr?.refNumber}
+              <Badge variant="outline">{selectedPr?.status}</Badge>
+            </DialogTitle>
+            <DialogDescription>
+              Check line items and budget availability before authorizing.
+            </DialogDescription>
+          </DialogHeader>
+          
+          {selectedPr && (
+            <div className="space-y-6">
+              <div className="grid grid-cols-2 gap-4 p-4 bg-muted/30 rounded-lg border">
+                <div>
+                  <p className="text-[10px] uppercase font-bold text-muted-foreground">Requester</p>
+                  <p className="text-sm font-bold">{selectedPr.requesterName}</p>
+                </div>
+                <div>
+                  <p className="text-[10px] uppercase font-bold text-muted-foreground">Budget Line</p>
+                  <p className="text-sm font-bold text-accent">{selectedPr.budgetLine}</p>
+                </div>
+              </div>
+
+              <div className="space-y-3">
+                <p className="text-[10px] uppercase font-bold text-muted-foreground">Items Requested</p>
+                <div className="border rounded-md divide-y">
+                  {selectedPr.items.map((item, idx) => (
+                    <div key={idx} className="flex items-center justify-between p-3 text-sm">
+                      <div className="flex flex-col">
+                        <span className="font-medium">{item.description}</span>
+                        <span className="text-[10px] text-muted-foreground">Qty: {item.quantity} × Ksh {item.estimatedUnitPrice.toLocaleString()}</span>
+                      </div>
+                      <span className="font-bold">Ksh {(item.quantity * item.estimatedUnitPrice).toLocaleString()}</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              <Separator />
+
+              <div className="flex justify-between items-center px-2">
+                <span className="text-sm font-bold">Total Commitment</span>
+                <span className="text-xl font-black text-primary">Ksh {calculatePRTotal(selectedPr).toLocaleString()}</span>
+              </div>
+
+              <DialogFooter className="gap-2 sm:gap-0">
+                <Button 
+                  variant="ghost" 
+                  className="text-destructive hover:bg-destructive/10"
+                  onClick={() => handleReject(selectedPr.id)}
+                >
+                  <XCircle className="w-4 h-4 mr-2" />
+                  Reject Request
+                </Button>
+                <Button 
+                  className="bg-green-600 hover:bg-green-700"
+                  onClick={() => handleApprove(selectedPr)}
+                >
+                  <CheckCircle2 className="w-4 h-4 mr-2" />
+                  Authorize Approval
+                </Button>
+              </DialogFooter>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

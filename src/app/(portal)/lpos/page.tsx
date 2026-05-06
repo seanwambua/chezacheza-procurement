@@ -14,9 +14,9 @@ import {
   Printer, 
   Truck, 
   CheckCircle, 
-  Clock,
   Building2,
-  Calendar
+  Calendar,
+  PackageCheck
 } from 'lucide-react';
 import { 
   Table, 
@@ -62,7 +62,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { useToast } from '@/hooks/use-toast';
-import { LPO, calculatePRTotal } from '@/lib/types';
+import { LPO, calculatePRTotal, GRN } from '@/lib/types';
 
 const lpoSchema = z.object({
   prId: z.string().min(1, "Requisition is required"),
@@ -74,12 +74,13 @@ const lpoSchema = z.object({
 type LPOFormValues = z.infer<typeof lpoSchema>;
 
 export default function LPOsPage() {
-  const { lpos, prs, vendors, addLPO, updatePRStatus } = useStore();
+  const { lpos, prs, vendors, addLPO, updatePRStatus, addGRN } = useStore();
   const { currentUser } = useUserStore();
   const { toast } = useToast();
   const [mounted, setMounted] = useState(false);
   const [search, setSearch] = useState('');
   const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [receivingLpo, setReceivingLpo] = useState<LPO | null>(null);
 
   const form = useForm<LPOFormValues>({
     resolver: zodResolver(lpoSchema),
@@ -103,18 +104,14 @@ export default function LPOsPage() {
   );
 
   const approvedPrs = prs.filter(pr => pr.status === 'Approved');
-  
   const totalValue = lpos.reduce((acc, lpo) => acc + lpo.totalValue, 0);
-  const pendingDeliveries = lpos.filter(lpo => lpo.status === 'Dispatched').length;
 
   const onSubmit = (values: LPOFormValues) => {
     const selectedPr = prs.find(p => p.id === values.prId);
     const selectedVendor = vendors.find(v => v.id === values.vendorId);
-
     if (!selectedPr || !selectedVendor) return;
 
     const prTotal = calculatePRTotal(selectedPr);
-
     const newLpo: LPO = {
       id: `LPO-${Math.floor(Math.random() * 10000)}`,
       lpoNumber: `LPO/2024/${String(lpos.length + 1).padStart(3, '0')}`,
@@ -136,14 +133,32 @@ export default function LPOsPage() {
 
     addLPO(newLpo);
     updatePRStatus(values.prId, 'LPO Generated');
-    
     setIsDialogOpen(false);
     form.reset();
-    
-    toast({
-      title: "LPO Generated",
-      description: `Order ${newLpo.lpoNumber} has been dispatched to ${selectedVendor.name}.`,
-    });
+    toast({ title: "LPO Dispatched", description: `Order ${newLpo.lpoNumber} sent to ${selectedVendor.name}.` });
+  };
+
+  const handleReceiveGoods = (lpo: LPO) => {
+    const newGrn: GRN = {
+      id: `GRN-${Math.floor(Math.random() * 10000)}`,
+      lpoId: lpo.id,
+      lpoNumber: lpo.lpoNumber,
+      receivedDate: new Date().toISOString().split('T')[0],
+      receivedBy: currentUser.name,
+      items: lpo.items.map(i => ({
+        description: i.description,
+        orderedQty: i.quantity,
+        receivedQty: i.quantity,
+        qualityRating: 5,
+        specificationMatch: true,
+        condition: 'Good'
+      })),
+      disputeFlag: false
+    };
+
+    addGRN(newGrn);
+    setReceivingLpo(null);
+    toast({ title: "Goods Received", description: `GRN generated for ${lpo.lpoNumber}.` });
   };
 
   return (
@@ -164,9 +179,7 @@ export default function LPOsPage() {
           <DialogContent className="max-w-xl">
             <DialogHeader>
               <DialogTitle>Convert Requisition to LPO</DialogTitle>
-              <DialogDescription>
-                Select an approved multi-item requisition to initiate the purchase order process.
-              </DialogDescription>
+              <DialogDescription>Assign a vendor and terms to an approved request.</DialogDescription>
             </DialogHeader>
             <Form {...form}>
               <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4 py-4">
@@ -177,94 +190,48 @@ export default function LPOsPage() {
                     <FormItem>
                       <FormLabel>Approved Requisition</FormLabel>
                       <Select onValueChange={field.onChange} value={field.value}>
-                        <FormControl>
-                          <SelectTrigger>
-                            <SelectValue placeholder="Select a request" />
-                          </SelectTrigger>
-                        </FormControl>
+                        <FormControl><SelectTrigger><SelectValue placeholder="Select" /></SelectTrigger></FormControl>
                         <SelectContent>
                           {approvedPrs.map(pr => (
-                            <SelectItem key={pr.id} value={pr.id}>
-                              {pr.refNumber} - {pr.items?.[0]?.description || 'Multi-item'}... (Ksh {calculatePRTotal(pr).toLocaleString()})
-                            </SelectItem>
+                            <SelectItem key={pr.id} value={pr.id}>{pr.refNumber} - Ksh {calculatePRTotal(pr).toLocaleString()}</SelectItem>
                           ))}
-                          {approvedPrs.length === 0 && (
-                            <div className="p-2 text-xs text-center text-muted-foreground">No approved requisitions available</div>
-                          )}
                         </SelectContent>
                       </Select>
-                      <FormMessage />
                     </FormItem>
                   )}
                 />
-
                 <FormField
                   control={form.control}
                   name="vendorId"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Assign Vendor</FormLabel>
+                      <FormLabel>Vendor</FormLabel>
                       <Select onValueChange={field.onChange} value={field.value}>
-                        <FormControl>
-                          <SelectTrigger>
-                            <SelectValue placeholder="Select vendor" />
-                          </SelectTrigger>
-                        </FormControl>
+                        <FormControl><SelectTrigger><SelectValue placeholder="Select vendor" /></SelectTrigger></FormControl>
                         <SelectContent>
-                          {vendors.map(v => (
-                            <SelectItem key={v.id} value={v.id}>{v.name} ({v.category})</SelectItem>
-                          ))}
+                          {vendors.map(v => <SelectItem key={v.id} value={v.id}>{v.name}</SelectItem>)}
                         </SelectContent>
                       </Select>
-                      <FormMessage />
                     </FormItem>
                   )}
                 />
-
                 <div className="grid grid-cols-2 gap-4">
-                  <FormField
-                    control={form.control}
-                    name="deliveryDate"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Expected Delivery</FormLabel>
-                        <FormControl>
-                          <Input type="date" {...field} />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                  <FormField
-                    control={form.control}
-                    name="paymentTerms"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Payment Terms</FormLabel>
-                        <Select onValueChange={field.onChange} value={field.value}>
-                          <FormControl>
-                            <SelectTrigger>
-                              <SelectValue placeholder="Terms" />
-                            </SelectTrigger>
-                          </FormControl>
-                          <SelectContent>
-                            <SelectItem value="Immediate">Immediate</SelectItem>
-                            <SelectItem value="7 Days Net">7 Days Net</SelectItem>
-                            <SelectItem value="15 Days Net">15 Days Net</SelectItem>
-                            <SelectItem value="30 Days Net">30 Days Net</SelectItem>
-                            <SelectItem value="60 Days Net">60 Days Net</SelectItem>
-                          </SelectContent>
-                        </Select>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
+                  <FormField control={form.control} name="deliveryDate" render={({ field }) => (
+                    <FormItem><FormLabel>Delivery Date</FormLabel><FormControl><Input type="date" {...field} /></FormControl></FormItem>
+                  )} />
+                  <FormField control={form.control} name="paymentTerms" render={({ field }) => (
+                    <FormItem><FormLabel>Terms</FormLabel>
+                      <Select onValueChange={field.onChange} value={field.value}>
+                        <FormControl><SelectTrigger><SelectValue /></SelectTrigger></FormControl>
+                        <SelectContent>
+                          <SelectItem value="30 Days Net">30 Days Net</SelectItem>
+                          <SelectItem value="Immediate">Immediate</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </FormItem>
+                  )} />
                 </div>
-
-                <DialogFooter className="pt-4">
-                  <Button type="button" variant="outline" onClick={() => setIsDialogOpen(false)}>Cancel</Button>
-                  <Button type="submit">Confirm & Dispatch</Button>
-                </DialogFooter>
+                <DialogFooter><Button type="submit">Dispatch LPO</Button></DialogFooter>
               </form>
             </Form>
           </DialogContent>
@@ -272,131 +239,80 @@ export default function LPOsPage() {
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        <StatCard 
-          title="Active Commitments" 
-          value={`Ksh ${totalValue.toLocaleString()}`} 
-          icon={ShoppingCart} 
-          description="Total value of open orders"
-          tooltip="The sum total of all purchase orders currently dispatched and awaiting fulfillment."
-        />
-        <StatCard 
-          title="Pending Deliveries" 
-          value={pendingDeliveries} 
-          icon={Truck} 
-          description="Orders in transit"
-          tooltip="Number of purchase orders that have been sent to vendors but are not yet received."
-        />
-        <StatCard 
-          title="Avg. Fulfillment" 
-          value="4.2 Days" 
-          icon={Clock} 
-          description="Order to delivery"
-          tooltip="Average time taken from LPO dispatch to full receipt of goods based on historical data."
-        />
+        <StatCard title="Active Commitments" value={`Ksh ${totalValue.toLocaleString()}`} icon={ShoppingCart} />
+        <StatCard title="Pending Fulfillment" value={lpos.filter(l => l.status === 'Dispatched').length} icon={Truck} />
+        <StatCard title="Cycle Time" value="4.2 Days" icon={Calendar} />
       </div>
 
       <Card className="border-border shadow-none">
-        <CardHeader className="flex flex-row items-center justify-between border-b border-border/50 py-4 px-6">
+        <CardHeader className="flex flex-row items-center justify-between border-b py-4">
           <CardTitle className="text-lg">LPO Pipeline</CardTitle>
-          <div className="flex items-center gap-4">
-            <div className="relative w-64">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-              <Input 
-                placeholder="Search LPOs or Vendors..." 
-                className="pl-9 h-9 text-xs"
-                value={search}
-                onChange={(e) => setSearch(e.target.value)}
-              />
-            </div>
+          <div className="relative w-64">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+            <Input placeholder="Search LPOs..." className="pl-9 h-9" value={search} onChange={(e) => setSearch(e.target.value)} />
           </div>
         </CardHeader>
         <CardContent className="p-0">
-          <div className="overflow-x-auto">
-            <Table>
-              <TableHeader>
-                <TableRow className="bg-muted/30">
-                  <TableHead>LPO Number</TableHead>
-                  <TableHead>Vendor</TableHead>
-                  <TableHead>Items</TableHead>
-                  <TableHead>Delivery Date</TableHead>
-                  <TableHead>Status</TableHead>
-                  <TableHead className="text-right">Total Value</TableHead>
-                  <TableHead className="w-[50px]"></TableHead>
+          <Table>
+            <TableHeader>
+              <TableRow className="bg-muted/30">
+                <TableHead>LPO #</TableHead>
+                <TableHead>Vendor</TableHead>
+                <TableHead>Status</TableHead>
+                <TableHead className="text-right">Total</TableHead>
+                <TableHead className="w-[50px]"></TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {filteredLpos.map((lpo) => (
+                <TableRow key={lpo.id} className="group hover:bg-muted/5">
+                  <TableCell className="font-bold text-primary">{lpo.lpoNumber}</TableCell>
+                  <TableCell>{lpo.vendorName}</TableCell>
+                  <TableCell>
+                    <Badge variant={lpo.status === 'Fulfilled' ? 'secondary' : 'outline'} className="text-[10px]">
+                      {lpo.status.toUpperCase()}
+                    </Badge>
+                  </TableCell>
+                  <TableCell className="text-right font-black">Ksh {lpo.totalValue.toLocaleString()}</TableCell>
+                  <TableCell>
+                    <DropdownMenu>
+                      <DropdownMenuTrigger asChild><Button variant="ghost" size="icon"><MoreVertical className="w-4 h-4" /></Button></DropdownMenuTrigger>
+                      <DropdownMenuContent align="end">
+                        <DropdownMenuItem><Printer className="w-4 h-4 mr-2" /> Print PDF</DropdownMenuItem>
+                        {lpo.status !== 'Fulfilled' && (
+                          <DropdownMenuItem className="text-green-600" onClick={() => setReceivingLpo(lpo)}>
+                            <PackageCheck className="w-4 h-4 mr-2" /> Receive Goods
+                          </DropdownMenuItem>
+                        )}
+                      </DropdownMenuContent>
+                    </DropdownMenu>
+                  </TableCell>
                 </TableRow>
-              </TableHeader>
-              <TableBody>
-                {filteredLpos.length > 0 ? (
-                  filteredLpos.map((lpo) => (
-                    <TableRow key={lpo.id} className="group hover:bg-muted/5">
-                      <TableCell className="font-bold text-primary">{lpo.lpoNumber}</TableCell>
-                      <TableCell>
-                        <div className="flex items-center gap-2">
-                          <Building2 className="w-3.5 h-3.5 text-muted-foreground" />
-                          <span className="text-xs font-medium">{lpo.vendorName}</span>
-                        </div>
-                      </TableCell>
-                      <TableCell>
-                        <div className="flex flex-col">
-                          <span className="text-xs truncate max-w-[200px]">{lpo.items?.[0]?.description || 'Untitled Item'}</span>
-                          {lpo.items?.length > 1 && (
-                            <span className="text-[10px] text-muted-foreground">+{lpo.items.length - 1} more items</span>
-                          )}
-                        </div>
-                      </TableCell>
-                      <TableCell>
-                        <div className="flex items-center gap-2 text-xs">
-                          <Calendar className="w-3.5 h-3.5 text-muted-foreground" />
-                          {new Date(lpo.deliveryDate).toLocaleDateString()}
-                        </div>
-                      </TableCell>
-                      <TableCell>
-                        <Badge variant={
-                          lpo.status === 'Fulfilled' ? 'secondary' : 
-                          lpo.status === 'Dispatched' ? 'outline' : 'default'
-                        } className="text-[10px] px-2 py-0">
-                          {lpo.status.toUpperCase()}
-                        </Badge>
-                      </TableCell>
-                      <TableCell className="text-right font-black">
-                        Ksh {lpo.totalValue.toLocaleString()}
-                      </TableCell>
-                      <TableCell>
-                        <DropdownMenu>
-                          <DropdownMenuTrigger asChild>
-                            <Button variant="ghost" size="icon" className="h-8 w-8">
-                              <MoreVertical className="w-4 h-4" />
-                            </Button>
-                          </DropdownMenuTrigger>
-                          <DropdownMenuContent align="end">
-                            <DropdownMenuItem>
-                              <Printer className="w-4 h-4 mr-2" /> Print LPO
-                            </DropdownMenuItem>
-                            <DropdownMenuItem>
-                              <Truck className="w-4 h-4 mr-2" /> Track Shipment
-                            </DropdownMenuItem>
-                            <DropdownMenuItem className="text-green-600">
-                              <CheckCircle className="w-4 h-4 mr-2" /> Mark Received
-                            </DropdownMenuItem>
-                          </DropdownMenuContent>
-                        </DropdownMenu>
-                      </TableCell>
-                    </TableRow>
-                  ))
-                ) : (
-                  <TableRow>
-                    <TableCell colSpan={7} className="h-32 text-center text-muted-foreground">
-                      <div className="flex flex-col items-center justify-center space-y-2">
-                        <ShoppingCart className="w-8 h-8 opacity-20" />
-                        <p className="text-sm">No purchase orders found.</p>
-                      </div>
-                    </TableCell>
-                  </TableRow>
-                )}
-              </TableBody>
-            </Table>
-          </div>
+              ))}
+            </TableBody>
+          </Table>
         </CardContent>
       </Card>
+
+      <Dialog open={!!receivingLpo} onOpenChange={(open) => !open && setReceivingLpo(null)}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Confirm Goods Receipt</DialogTitle>
+            <DialogDescription>
+              Marking {receivingLpo?.lpoNumber} as fulfilled will generate a GRN and finalize the transaction.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="p-4 bg-muted/30 rounded-lg text-sm space-y-2">
+            <div className="flex justify-between"><span>Vendor:</span><span className="font-bold">{receivingLpo?.vendorName}</span></div>
+            <div className="flex justify-between"><span>Total Items:</span><span className="font-bold">{receivingLpo?.items.length}</span></div>
+            <div className="flex justify-between"><span>Value:</span><span className="font-bold">Ksh {receivingLpo?.totalValue.toLocaleString()}</span></div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setReceivingLpo(null)}>Cancel</Button>
+            <Button onClick={() => receivingLpo && handleReceiveGoods(receivingLpo)}>Confirm Receipt</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

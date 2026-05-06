@@ -1,6 +1,6 @@
 import { create } from 'zustand';
 import { persist, createJSONStorage } from 'zustand/middleware';
-import { PurchaseRequisition, Vendor, LPO, Budget, GRN, PRStatus, getBudgetStats, calculatePRTotal } from './types';
+import { PurchaseRequisition, Vendor, LPO, Budget, GRN, PRStatus, calculatePRTotal } from './types';
 import { MOCK_PRS, MOCK_VENDORS, MOCK_LPOS, MOCK_BUDGETS, MOCK_GRNS } from './mock-data';
 
 interface ProcurementState {
@@ -17,6 +17,7 @@ interface ProcurementState {
   updatePRStatus: (id: string, status: PurchaseRequisition['status']) => void;
   addVendor: (vendor: Vendor) => void;
   addLPO: (lpo: LPO) => void;
+  updateLPOStatus: (id: string, status: LPO['status']) => void;
   addGRN: (grn: GRN) => void;
   addBudget: (budget: Omit<Budget, 'id' | 'spent' | 'committed'>) => void;
   updateBudget: (id: string, updates: Partial<Budget>) => void;
@@ -144,9 +145,36 @@ export const useStore = create<ProcurementState>()(
         lpos: [...state.lpos, lpo]
       })),
 
-      addGRN: (grn) => set((state) => ({
-        grns: [grn, ...state.grns]
+      updateLPOStatus: (id, status) => set((state) => ({
+        lpos: state.lpos.map(lpo => lpo.id === id ? { ...lpo, status } : lpo)
       })),
+
+      addGRN: (grn) => set((state) => {
+        // Find LPO and update status
+        const updatedLpos = state.lpos.map(lpo => 
+          lpo.id === grn.lpoId ? { ...lpo, status: grn.disputeFlag ? 'Partially Fulfilled' : 'Fulfilled' as any } : lpo
+        );
+
+        // Update budget actuals if fulfilled
+        const lpo = state.lpos.find(l => l.id === grn.lpoId);
+        const updatedBudgets = state.budgets.map(b => {
+          if (lpo && b.id === state.prs.find(p => p.id === lpo.prId)?.budgetLine) {
+            // Simplified: moving commitment to actual spent
+            return {
+              ...b,
+              committed: Math.max(0, b.committed - lpo.totalValue),
+              spent: b.spent + lpo.totalValue
+            };
+          }
+          return b;
+        });
+
+        return {
+          grns: [grn, ...state.grns],
+          lpos: updatedLpos,
+          budgets: updatedBudgets
+        };
+      }),
 
       addBudget: (bData) => set((state) => {
         const newBudget: Budget = {
