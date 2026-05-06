@@ -239,8 +239,10 @@ export default function DashboardPage() {
                           {isDetailed && <p className="text-[10px] text-muted-foreground uppercase">{req.refNumber} • {req.budgetLine}</p>}
                         </div>
                       </div>
-                      <div className="text-right shrink-0 ml-4">
-                        <p className={isDetailed ? "text-sm font-black" : "text-lg font-bold"}>Ksh {calculatePRTotal(req).toLocaleString()}</p>
+                      <div className="text-right shrink-0 ml-4 flex flex-col items-end gap-1">
+                        <p className={isDetailed ? "text-sm font-black" : "text-lg font-bold"}>
+                          Ksh {calculatePRTotal(req).toLocaleString()}
+                        </p>
                         <Badge variant={req.status === 'Approved' ? 'secondary' : 'outline'} className="text-[9px] px-1.5 py-0">
                           {req.status}
                         </Badge>
