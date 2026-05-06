@@ -1,8 +1,8 @@
 
-import { PurchaseRequisition, Vendor, LPO, BudgetLine, GRN, User } from './types';
+import { PurchaseRequisition, Vendor, LPO, Budget, GRN, User } from './types';
 
 // Synchronized mock data: Committed totals reflect the sum of non-rejected/non-draft PRs
-export const MOCK_BUDGET_LINES: BudgetLine[] = [
+export const MOCK_BUDGETS: Budget[] = [
   { 
     id: 'BL-001', 
     name: 'Office Equipment', 

@@ -8,6 +8,7 @@ import {
   FileCheck, 
   Clock, 
   AlertCircle,
+  Landmark,
   TrendingUp,
 } from 'lucide-react';
 import { 
@@ -27,7 +28,7 @@ import { Badge } from '@/components/ui/badge';
 import { useStore } from '@/lib/store';
 
 export default function DashboardPage() {
-  const { prs, budgetLines, vendors, lpos, grns } = useStore();
+  const { prs, budgets, vendors, lpos, grns } = useStore();
   const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
@@ -37,13 +38,13 @@ export default function DashboardPage() {
   if (!mounted) return null;
 
   // Dynamic calculations
-  const totalSpendVal = budgetLines.reduce((acc, bl) => acc + bl.spent, 0);
+  const totalSpendVal = budgets.reduce((acc, bl) => acc + bl.spent, 0);
   const pendingApprovals = prs.filter(pr => pr.status.includes('Pending')).length;
   const activeLposCount = lpos.filter(lpo => lpo.status !== 'Closed').length;
   const awaitingDelivery = lpos.filter(lpo => lpo.status === 'Dispatched').length;
   const activeDisputes = grns.filter(grn => grn.disputeFlag).length;
 
-  const budgetData = budgetLines.map(bl => ({
+  const budgetData = budgets.map(bl => ({
     name: bl.name,
     spent: bl.spent,
     budget: bl.allocation

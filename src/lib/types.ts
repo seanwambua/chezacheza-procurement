@@ -8,7 +8,7 @@ export interface PurchaseRequisition {
   itemDescription: string;
   quantity: number;
   estimatedCost: number;
-  budgetLine: string;
+  budgetLine: string; // Keeping property name to avoid data migration issues, but will display as "Budget"
   status: PRStatus;
   createdAt: string;
   rejectionReason?: string;
@@ -63,7 +63,7 @@ export interface GRN {
   disputeReason?: string;
 }
 
-export interface BudgetLine {
+export interface Budget {
   id: string;
   name: string;
   allocation: number;

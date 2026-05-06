@@ -59,7 +59,7 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 import { RoleGuard } from '@/components/auth/RoleGuard';
-import { BudgetLine } from '@/lib/types';
+import { Budget } from '@/lib/types';
 import { Badge } from '@/components/ui/badge';
 
 const budgetSchema = z.object({
@@ -73,11 +73,11 @@ const budgetSchema = z.object({
 type BudgetFormValues = z.infer<typeof budgetSchema>;
 
 export default function BudgetsPage() {
-  const { budgetLines, addBudgetLine, updateBudgetLine, deleteBudgetLine } = useStore();
+  const { budgets, addBudget, updateBudget, deleteBudget } = useStore();
   const { currentUser } = useUserStore();
   const [mounted, setMounted] = useState(false);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
-  const [editingBudget, setEditingBudget] = useState<BudgetLine | null>(null);
+  const [editingBudget, setEditingBudget] = useState<Budget | null>(null);
 
   const form = useForm<BudgetFormValues>({
     resolver: zodResolver(budgetSchema),
@@ -130,30 +130,30 @@ export default function BudgetsPage() {
     );
   }
 
-  const totalAllocation = budgetLines.reduce((acc, bl) => acc + bl.allocation, 0);
-  const totalSpent = budgetLines.reduce((acc, bl) => acc + bl.spent, 0);
-  const totalCommitted = budgetLines.reduce((acc, bl) => acc + bl.committed, 0);
+  const totalAllocation = budgets.reduce((acc, bl) => acc + bl.allocation, 0);
+  const totalSpent = budgets.reduce((acc, bl) => acc + bl.spent, 0);
+  const totalCommitted = budgets.reduce((acc, bl) => acc + bl.committed, 0);
   const remainingTotal = totalAllocation - totalSpent - totalCommitted;
   const utilizationPercentage = totalAllocation > 0 ? Math.round(((totalSpent + totalCommitted) / totalAllocation) * 100) : 0;
 
   const onSubmit = (values: BudgetFormValues) => {
     if (editingBudget) {
-      updateBudgetLine(editingBudget.id, values);
+      updateBudget(editingBudget.id, values);
     } else {
-      addBudgetLine(values);
+      addBudget(values);
     }
     setIsDialogOpen(false);
     setEditingBudget(null);
   };
 
-  const handleEdit = (bl: BudgetLine) => {
+  const handleEdit = (bl: Budget) => {
     setEditingBudget(bl);
     setIsDialogOpen(true);
   };
 
   const handleDelete = (id: string) => {
-    if (confirm('Are you sure you want to delete this budget line? Historical data may be lost.')) {
-      deleteBudgetLine(id);
+    if (confirm('Are you sure you want to delete this budget? Historical data may be lost.')) {
+      deleteBudget(id);
     }
   };
 
@@ -161,7 +161,7 @@ export default function BudgetsPage() {
     <div className="space-y-8 animate-in fade-in duration-500">
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
-          <h2 className="text-3xl font-headline font-bold text-primary">Financial Management</h2>
+          <h2 className="text-3xl font-headline font-bold text-primary">Budget Management</h2>
           <p className="text-muted-foreground">Comprehensive tracking of departmental allocations and expenditure.</p>
         </div>
         
@@ -173,12 +173,12 @@ export default function BudgetsPage() {
             <DialogTrigger asChild>
               <Button className="bg-primary hover:bg-primary/90">
                 <Plus className="w-4 h-4 mr-2" />
-                New Budget Line
+                New Budget
               </Button>
             </DialogTrigger>
             <DialogContent className="max-w-2xl">
               <DialogHeader>
-                <DialogTitle>{editingBudget ? 'Update Budget Plan' : 'Establish New Budget Line'}</DialogTitle>
+                <DialogTitle>{editingBudget ? 'Update Budget' : 'Establish New Budget'}</DialogTitle>
                 <DialogDescription>
                   Configure financial boundaries for departmental spending. All values in Ksh.
                 </DialogDescription>
@@ -359,7 +359,7 @@ export default function BudgetsPage() {
 
       <Card className="shadow-none border border-border overflow-hidden bg-white">
         <CardHeader className="flex flex-row items-center justify-between border-b border-border/50 py-4">
-          <CardTitle className="text-lg font-headline">Budget Lines Analysis</CardTitle>
+          <CardTitle className="text-lg font-headline">Budget Analysis</CardTitle>
           <div className="flex items-center gap-4 text-xs text-muted-foreground">
              <div className="flex items-center gap-1"><div className="w-2 h-2 bg-primary rounded-full" /> Spent</div>
              <div className="flex items-center gap-1"><div className="w-2 h-2 bg-accent rounded-full" /> Committed</div>
@@ -370,7 +370,7 @@ export default function BudgetsPage() {
           <Table className="min-w-[1000px]">
             <TableHeader>
               <TableRow className="bg-muted/30">
-                <TableHead className="font-bold">Budget Plan</TableHead>
+                <TableHead className="font-bold">Budget</TableHead>
                 <TableHead className="font-bold">Department</TableHead>
                 <TableHead className="text-right font-bold">Allocation (Ksh)</TableHead>
                 <TableHead className="text-right font-bold">Spent (Ksh)</TableHead>
@@ -381,7 +381,7 @@ export default function BudgetsPage() {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {budgetLines.map((bl) => {
+              {budgets.map((bl) => {
                 const totalUsed = bl.spent + bl.committed;
                 const spentPercentage = (bl.spent / bl.allocation) * 100;
                 const committedPercentage = (bl.committed / bl.allocation) * 100;
@@ -448,11 +448,11 @@ export default function BudgetsPage() {
                           <DropdownMenuContent align="end">
                             <DropdownMenuItem onClick={() => handleEdit(bl)}>
                               <Pencil className="w-4 h-4 mr-2" />
-                              Edit Plan
+                              Edit Budget
                             </DropdownMenuItem>
                             <DropdownMenuItem onClick={() => handleDelete(bl.id)} className="text-destructive focus:text-destructive">
                               <Trash2 className="w-4 h-4 mr-2" />
-                              Archive Line
+                              Archive
                             </DropdownMenuItem>
                           </DropdownMenuContent>
                         </DropdownMenu>

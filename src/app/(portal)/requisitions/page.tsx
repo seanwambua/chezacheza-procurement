@@ -50,13 +50,13 @@ const requisitionSchema = z.object({
   itemDescription: z.string().min(3, "Description must be at least 3 characters"),
   quantity: z.coerce.number().min(1, "Quantity must be at least 1"),
   estimatedCost: z.coerce.number().min(0.01, "Cost must be greater than 0"),
-  budgetLine: z.string().min(1, "Please select a budget line"),
+  budgetLine: z.string().min(1, "Please select a budget"),
 });
 
 type RequisitionFormValues = z.infer<typeof requisitionSchema>;
 
 export default function RequisitionsPage() {
-  const { prs, budgetLines, addPR, updatePR, deletePR, updatePRStatus } = useStore();
+  const { prs, budgets, addPR, updatePR, deletePR, updatePRStatus } = useStore();
   const { currentUser } = useUserStore();
   const [search, setSearch] = useState('');
   const [isDialogOpen, setIsDialogOpen] = useState(false);
@@ -220,15 +220,15 @@ export default function RequisitionsPage() {
                         name="budgetLine"
                         render={({ field }) => (
                           <FormItem>
-                            <FormLabel>Budget Line</FormLabel>
+                            <FormLabel>Budget</FormLabel>
                             <Select onValueChange={field.onChange} value={field.value}>
                               <FormControl>
                                 <SelectTrigger>
-                                  <SelectValue placeholder="Select budget line" />
+                                  <SelectValue placeholder="Select budget" />
                                 </SelectTrigger>
                               </FormControl>
                               <SelectContent>
-                                {budgetLines.map(bl => (
+                                {budgets.map(bl => (
                                   <SelectItem key={bl.id} value={bl.name}>{bl.name}</SelectItem>
                                 ))}
                               </SelectContent>
@@ -272,7 +272,7 @@ export default function RequisitionsPage() {
               <TableHead>REF Number</TableHead>
               <TableHead>Description</TableHead>
               <TableHead>Requested By</TableHead>
-              <TableHead>Budget Line</TableHead>
+              <TableHead>Budget</TableHead>
               <TableHead>Status</TableHead>
               <TableHead className="text-right">Est. Total</TableHead>
               <TableHead className="w-[50px]"></TableHead>
