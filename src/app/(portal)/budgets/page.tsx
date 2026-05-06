@@ -307,7 +307,7 @@ export default function BudgetsPage() {
                       <p className="text-[9px] uppercase font-bold text-muted-foreground">Paused Budgets</p>
                    </div>
                    <div>
-                      <p className="text-sm font-bold text-accent">Q{new Date().getMonth() / 3 + 1 | 0 + 1}</p>
+                      <p className="text-sm font-bold text-accent">Q{Math.floor(new Date().getMonth() / 3) + 1}</p>
                       <p className="text-[9px] uppercase font-bold text-muted-foreground">Active Quarter</p>
                    </div>
                 </div>
@@ -336,139 +336,141 @@ export default function BudgetsPage() {
           <CardTitle className="text-lg">Budget Analysis & Quarterly Health</CardTitle>
         </CardHeader>
         <CardContent className="p-0">
-          <Table>
-            <TableHeader>
-              <TableRow className="bg-muted/30">
-                <TableHead>Budget</TableHead>
-                <TableHead>Current Q Health</TableHead>
-                <TableHead className="text-right">Q Allocation</TableHead>
-                <TableHead className="text-right">Available in Q</TableHead>
-                <TableHead className="text-right">Total Annual Pool</TableHead>
-                <TableHead className="w-[50px]"></TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {budgets.map((b) => {
-                const stats = getBudgetStats(b);
-                const details = getBudgetDetails(b.name);
-                return (
-                  <TableRow key={b.id} className="group hover:bg-muted/10">
-                    <TableCell>
-                      <TooltipProvider>
-                        <Tooltip delayDuration={0}>
-                          <TooltipTrigger asChild>
-                            <div className="flex flex-col cursor-help">
-                              <span className="font-bold text-primary flex items-center gap-2">
-                                {b.name}
-                                <Info className="w-3.5 h-3.5 text-muted-foreground opacity-50 group-hover:opacity-100" />
-                                {stats.isPaused ? (
-                                  <PauseCircle className="w-3.5 h-3.5 text-destructive" />
-                                ) : (
-                                  <PlayCircle className="w-3.5 h-3.5 text-green-500" />
-                                )}
-                              </span>
-                              <span className="text-[10px] text-muted-foreground uppercase">{b.department}</span>
-                            </div>
-                          </TooltipTrigger>
-                          <TooltipContent side="right" className="w-80 p-0 overflow-hidden border-primary/20 shadow-2xl bg-white text-foreground">
-                            <div className="bg-primary p-4 text-primary-foreground">
-                              <h4 className="font-bold text-sm uppercase tracking-tight">{b.name} Metrics</h4>
-                              <p className="text-[10px] opacity-70 mt-1 line-clamp-2">{b.description}</p>
-                            </div>
-                            <div className="p-4 space-y-4">
-                              <div className="grid grid-cols-2 gap-4">
-                                <div className="space-y-1">
-                                  <p className="text-[9px] uppercase font-bold text-muted-foreground">Requisitions</p>
-                                  <div className="flex items-center gap-2 text-xs font-semibold">
-                                    <FileText className="w-3 h-3 text-accent" />
-                                    <span>{details.prsRequested} Requested</span>
+          <div className="overflow-x-auto">
+            <Table>
+              <TableHeader>
+                <TableRow className="bg-muted/30">
+                  <TableHead>Budget</TableHead>
+                  <TableHead>Current Q Health</TableHead>
+                  <TableHead className="text-right">Q Allocation</TableHead>
+                  <TableHead className="text-right">Available in Q</TableHead>
+                  <TableHead className="text-right">Total Annual Pool</TableHead>
+                  <TableHead className="w-[50px]"></TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {budgets.map((b) => {
+                  const stats = getBudgetStats(b);
+                  const details = getBudgetDetails(b.name);
+                  return (
+                    <TableRow key={b.id} className="group hover:bg-muted/10">
+                      <TableCell>
+                        <TooltipProvider>
+                          <Tooltip delayDuration={0}>
+                            <TooltipTrigger asChild>
+                              <div className="flex flex-col cursor-help">
+                                <span className="font-bold text-primary flex items-center gap-2">
+                                  {b.name}
+                                  <Info className="w-3.5 h-3.5 text-muted-foreground opacity-50 group-hover:opacity-100" />
+                                  {stats.isPaused ? (
+                                    <PauseCircle className="w-3.5 h-3.5 text-destructive" />
+                                  ) : (
+                                    <PlayCircle className="w-3.5 h-3.5 text-green-500" />
+                                  )}
+                                </span>
+                                <span className="text-[10px] text-muted-foreground uppercase">{b.department}</span>
+                              </div>
+                            </TooltipTrigger>
+                            <TooltipContent side="right" className="w-80 p-0 overflow-hidden border-primary/20 shadow-2xl bg-white text-foreground">
+                              <div className="bg-primary p-4 text-primary-foreground">
+                                <h4 className="font-bold text-sm uppercase tracking-tight">{b.name} Metrics</h4>
+                                <p className="text-[10px] opacity-70 mt-1 line-clamp-2">{b.description}</p>
+                              </div>
+                              <div className="p-4 space-y-4">
+                                <div className="grid grid-cols-2 gap-4">
+                                  <div className="space-y-1">
+                                    <p className="text-[9px] uppercase font-bold text-muted-foreground">Requisitions</p>
+                                    <div className="flex items-center gap-2 text-xs font-semibold">
+                                      <FileText className="w-3 h-3 text-accent" />
+                                      <span>{details.prsRequested} Requested</span>
+                                    </div>
+                                    <div className="flex items-center gap-2 text-[10px] text-muted-foreground pl-5">
+                                      <CheckCircle2 className="w-2.5 h-2.5 text-green-500" />
+                                      <span>{details.prsApproved} Approved</span>
+                                    </div>
                                   </div>
-                                  <div className="flex items-center gap-2 text-[10px] text-muted-foreground pl-5">
-                                    <CheckCircle2 className="w-2.5 h-2.5 text-green-500" />
-                                    <span>{details.prsApproved} Approved</span>
+                                  <div className="space-y-1">
+                                    <p className="text-[9px] uppercase font-bold text-muted-foreground">LPO Status</p>
+                                    <div className="flex items-center gap-2 text-xs font-semibold">
+                                      <ShoppingCart className="w-3 h-3 text-accent" />
+                                      <span>{details.lposPending + details.lposDelivered} Total</span>
+                                    </div>
+                                    <div className="flex items-center gap-2 text-[10px] text-muted-foreground pl-5">
+                                      <Clock className="w-2.5 h-2.5 text-orange-400" />
+                                      <span>{details.lposPending} Pending</span>
+                                    </div>
                                   </div>
                                 </div>
-                                <div className="space-y-1">
-                                  <p className="text-[9px] uppercase font-bold text-muted-foreground">LPO Status</p>
-                                  <div className="flex items-center gap-2 text-xs font-semibold">
-                                    <ShoppingCart className="w-3 h-3 text-accent" />
-                                    <span>{details.lposPending + details.lposDelivered} Total</span>
+                                <Separator />
+                                <div className="space-y-2">
+                                  <div className="flex justify-between items-center text-[10px] font-bold">
+                                    <span className="uppercase text-muted-foreground">Fulfillment Rate</span>
+                                    <span>{details.prsRequested > 0 ? Math.round((details.prsFulfilled / details.prsRequested) * 100) : 0}%</span>
                                   </div>
-                                  <div className="flex items-center gap-2 text-[10px] text-muted-foreground pl-5">
-                                    <Clock className="w-2.5 h-2.5 text-orange-400" />
-                                    <span>{details.lposPending} Pending</span>
+                                  <div className="h-1.5 w-full bg-muted rounded-full overflow-hidden">
+                                    <div 
+                                      className="h-full bg-accent transition-all duration-500"
+                                      style={{ width: `${details.prsRequested > 0 ? (details.prsFulfilled / details.prsRequested) * 100 : 0}%` }}
+                                    />
                                   </div>
                                 </div>
                               </div>
-                              <Separator />
-                              <div className="space-y-2">
-                                <div className="flex justify-between items-center text-[10px] font-bold">
-                                  <span className="uppercase text-muted-foreground">Fulfillment Rate</span>
-                                  <span>{details.prsRequested > 0 ? Math.round((details.prsFulfilled / details.prsRequested) * 100) : 0}%</span>
-                                </div>
-                                <div className="h-1.5 w-full bg-muted rounded-full overflow-hidden">
-                                  <div 
-                                    className="h-full bg-accent transition-all duration-500"
-                                    style={{ width: `${details.prsRequested > 0 ? (details.prsFulfilled / details.prsRequested) * 100 : 0}%` }}
-                                  />
-                                </div>
-                              </div>
-                            </div>
-                          </TooltipContent>
-                        </Tooltip>
-                      </TooltipProvider>
-                    </TableCell>
-                    <TableCell>
-                      <div className="flex items-center gap-2">
-                         <div className="h-1.5 flex-1 bg-muted rounded-full overflow-hidden flex">
-                            <div 
-                              className={`h-full transition-all duration-500 ${stats.isPaused ? 'bg-destructive' : 'bg-accent'}`}
-                              style={{ width: `${Math.min(100, (stats.totalUsed / stats.cumulativeAllocation) * 100)}%` }}
-                            />
-                         </div>
-                         <Badge variant={stats.isPaused ? "destructive" : "secondary"} className="text-[9px] px-1.5 py-0">
-                            {stats.isPaused ? "EXHAUSTED" : "HEALTHY"}
-                         </Badge>
-                      </div>
-                    </TableCell>
-                    <TableCell className="text-right font-medium">
-                      Ksh {(b as any)[`q${stats.currentQ}Allocation`].toLocaleString()}
-                    </TableCell>
-                    <TableCell className="text-right">
-                      <div className="flex flex-col items-end">
-                        <span className={`font-black ${stats.isPaused ? 'text-destructive' : 'text-primary'}`}>
-                          Ksh {stats.remainingInQuarter.toLocaleString()}
-                        </span>
-                        {stats.isPaused && (
-                           <span className="text-[9px] text-muted-foreground uppercase flex items-center gap-1">
-                             Forwarding to Q{stats.currentQ + 1} <ArrowRight className="w-2 h-2" />
-                           </span>
-                        )}
-                      </div>
-                    </TableCell>
-                    <TableCell className="text-right text-muted-foreground text-xs">
-                      Ksh {stats.totalAllocation.toLocaleString()}
-                    </TableCell>
-                    <TableCell>
-                      <DropdownMenu>
-                        <DropdownMenuTrigger asChild>
-                          <Button variant="ghost" size="icon"><MoreVertical className="w-4 h-4" /></Button>
-                        </DropdownMenuTrigger>
-                        <DropdownMenuContent align="end">
-                          <DropdownMenuItem onClick={() => {setEditingBudget(b); setIsDialogOpen(true);}}>
-                            <Pencil className="w-4 h-4 mr-2" /> Edit Plan
-                          </DropdownMenuItem>
-                          <DropdownMenuItem onClick={() => handleDelete(b.id)} className="text-destructive">
-                            <Trash2 className="w-4 h-4 mr-2" /> Delete
-                          </DropdownMenuItem>
-                        </DropdownMenuContent>
-                      </DropdownMenu>
-                    </TableCell>
-                  </TableRow>
-                );
-              })}
-            </TableBody>
-          </Table>
+                            </TooltipContent>
+                          </Tooltip>
+                        </TooltipProvider>
+                      </TableCell>
+                      <TableCell>
+                        <div className="flex items-center gap-2 min-w-[120px]">
+                           <div className="h-1.5 flex-1 bg-muted rounded-full overflow-hidden flex">
+                              <div 
+                                className={`h-full transition-all duration-500 ${stats.isPaused ? 'bg-destructive' : 'bg-accent'}`}
+                                style={{ width: `${Math.min(100, (stats.totalUsed / stats.cumulativeAllocation) * 100)}%` }}
+                              />
+                           </div>
+                           <Badge variant={stats.isPaused ? "destructive" : "secondary"} className="text-[9px] px-1.5 py-0 whitespace-nowrap">
+                              {stats.isPaused ? "EXHAUSTED" : "HEALTHY"}
+                           </Badge>
+                        </div>
+                      </TableCell>
+                      <TableCell className="text-right font-medium whitespace-nowrap">
+                        Ksh {(b as any)[`q${stats.currentQ}Allocation`].toLocaleString()}
+                      </TableCell>
+                      <TableCell className="text-right">
+                        <div className="flex flex-col items-end">
+                          <span className={`font-black whitespace-nowrap ${stats.isPaused ? 'text-destructive' : 'text-primary'}`}>
+                            Ksh {stats.remainingInQuarter.toLocaleString()}
+                          </span>
+                          {stats.isPaused && (
+                             <span className="text-[9px] text-muted-foreground uppercase flex items-center gap-1 whitespace-nowrap">
+                               Forwarding to Q{stats.currentQ + 1} <ArrowRight className="w-2 h-2" />
+                             </span>
+                          )}
+                        </div>
+                      </TableCell>
+                      <TableCell className="text-right text-muted-foreground text-xs whitespace-nowrap">
+                        Ksh {stats.totalAllocation.toLocaleString()}
+                      </TableCell>
+                      <TableCell>
+                        <DropdownMenu>
+                          <DropdownMenuTrigger asChild>
+                            <Button variant="ghost" size="icon"><MoreVertical className="w-4 h-4" /></Button>
+                          </DropdownMenuTrigger>
+                          <DropdownMenuContent align="end">
+                            <DropdownMenuItem onClick={() => {setEditingBudget(b); setIsDialogOpen(true);}}>
+                              <Pencil className="w-4 h-4 mr-2" /> Edit Plan
+                            </DropdownMenuItem>
+                            <DropdownMenuItem onClick={() => handleDelete(b.id)} className="text-destructive">
+                              <Trash2 className="w-4 h-4 mr-2" /> Delete
+                            </DropdownMenuItem>
+                          </DropdownMenuContent>
+                        </DropdownMenu>
+                      </TableCell>
+                    </TableRow>
+                  );
+                })}
+              </TableBody>
+            </Table>
+          </div>
         </CardContent>
       </Card>
     </div>
