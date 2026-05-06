@@ -1,0 +1,23 @@
+
+{
+  "placeholderImages": [
+    {
+      "id": "vendor-1",
+      "description": "Office Supplies Vendor",
+      "imageUrl": "https://picsum.photos/seed/vendor1/400/400",
+      "imageHint": "office supplies"
+    },
+    {
+      "id": "vendor-2",
+      "description": "IT Hardware Vendor",
+      "imageUrl": "https://picsum.photos/seed/vendor2/400/400",
+      "imageHint": "technology computers"
+    },
+    {
+      "id": "staff-1",
+      "description": "Staff Portrait",
+      "imageUrl": "https://picsum.photos/seed/staff1/100/100",
+      "imageHint": "business person"
+    }
+  ]
+}
