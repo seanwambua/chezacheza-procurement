@@ -13,6 +13,8 @@ interface ProcurementState {
   
   // Actions
   addPR: (pr: Omit<PurchaseRequisition, 'id' | 'createdAt' | 'refNumber'>) => void;
+  updatePR: (id: string, updates: Partial<PurchaseRequisition>) => void;
+  deletePR: (id: string) => void;
   updatePRStatus: (id: string, status: PurchaseRequisition['status']) => void;
   addVendor: (vendor: Vendor) => void;
   addLPO: (lpo: LPO) => void;
@@ -40,6 +42,14 @@ export const useStore = create<ProcurementState>()(
         };
         return { prs: [newPR, ...state.prs] };
       }),
+
+      updatePR: (id, updates) => set((state) => ({
+        prs: state.prs.map(pr => pr.id === id ? { ...pr, ...updates } : pr)
+      })),
+
+      deletePR: (id) => set((state) => ({
+        prs: state.prs.filter(pr => pr.id !== id)
+      })),
 
       updatePRStatus: (id, status) => set((state) => ({
         prs: state.prs.map(pr => pr.id === id ? { ...pr, status } : pr)

@@ -15,7 +15,7 @@ import {
   TableRow 
 } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
-import { Plus, Search, Filter, Loader2 } from 'lucide-react';
+import { Plus, Search, Filter, MoreVertical, Pencil, Trash2 } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import {
   Dialog,
@@ -25,8 +25,12 @@ import {
   DialogTrigger,
   DialogFooter
 } from "@/components/ui/dialog";
-import { Label } from '@/components/ui/label';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import {
   Form,
   FormControl,
@@ -35,9 +39,10 @@ import {
   FormLabel,
   FormMessage,
 } from "@/components/ui/form";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useStore } from '@/lib/store';
+import { PurchaseRequisition } from '@/lib/types';
 
-// Define the schema with Zod
 const requisitionSchema = z.object({
   itemDescription: z.string().min(3, "Description must be at least 3 characters"),
   quantity: z.coerce.number().min(1, "Quantity must be at least 1"),
@@ -48,9 +53,10 @@ const requisitionSchema = z.object({
 type RequisitionFormValues = z.infer<typeof requisitionSchema>;
 
 export default function RequisitionsPage() {
-  const { prs, budgetLines, addPR } = useStore();
+  const { prs, budgetLines, addPR, updatePR, deletePR } = useStore();
   const [search, setSearch] = useState('');
   const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [editingPr, setEditingPr] = useState<PurchaseRequisition | null>(null);
   const [mounted, setMounted] = useState(false);
 
   const form = useForm<RequisitionFormValues>({
@@ -67,6 +73,24 @@ export default function RequisitionsPage() {
     setMounted(true);
   }, []);
 
+  useEffect(() => {
+    if (editingPr) {
+      form.reset({
+        itemDescription: editingPr.itemDescription,
+        quantity: editingPr.quantity,
+        estimatedCost: editingPr.estimatedCost,
+        budgetLine: editingPr.budgetLine,
+      });
+    } else {
+      form.reset({
+        itemDescription: '',
+        quantity: 1,
+        estimatedCost: 0,
+        budgetLine: '',
+      });
+    }
+  }, [editingPr, form]);
+
   if (!mounted) return null;
 
   const filteredPrs = prs.filter(pr => 
@@ -75,13 +99,28 @@ export default function RequisitionsPage() {
   );
 
   const onSubmit = (values: RequisitionFormValues) => {
-    addPR({
-      ...values,
-      requesterName: 'Jane Doe',
-      status: 'Pending Manager',
-    });
+    if (editingPr) {
+      updatePR(editingPr.id, values);
+    } else {
+      addPR({
+        ...values,
+        requesterName: 'Jane Doe',
+        status: 'Pending Manager',
+      });
+    }
     setIsDialogOpen(false);
-    form.reset();
+    setEditingPr(null);
+  };
+
+  const handleEdit = (pr: PurchaseRequisition) => {
+    setEditingPr(pr);
+    setIsDialogOpen(true);
+  };
+
+  const handleDelete = (id: string) => {
+    if (confirm('Are you sure you want to delete this requisition?')) {
+      deletePR(id);
+    }
   };
 
   return (
@@ -94,17 +133,17 @@ export default function RequisitionsPage() {
         
         <Dialog open={isDialogOpen} onOpenChange={(open) => {
           setIsDialogOpen(open);
-          if (!open) form.reset();
+          if (!open) setEditingPr(null);
         }}>
           <DialogTrigger asChild>
-            <Button className="bg-primary hover:bg-primary/90">
+            <Button className="bg-primary hover:bg-primary/90" onClick={() => setEditingPr(null)}>
               <Plus className="w-4 h-4 mr-2" />
               New Requisition
             </Button>
           </DialogTrigger>
           <DialogContent className="max-w-2xl">
             <DialogHeader>
-              <DialogTitle>Submit New PR</DialogTitle>
+              <DialogTitle>{editingPr ? 'Edit Requisition' : 'Submit New PR'}</DialogTitle>
             </DialogHeader>
             <Form {...form}>
               <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4 py-4">
@@ -160,7 +199,7 @@ export default function RequisitionsPage() {
                       render={({ field }) => (
                         <FormItem>
                           <FormLabel>Budget Line</FormLabel>
-                          <Select onValueChange={field.onChange} defaultValue={field.value}>
+                          <Select onValueChange={field.onChange} value={field.value}>
                             <FormControl>
                               <SelectTrigger>
                                 <SelectValue placeholder="Select budget line" />
@@ -180,7 +219,7 @@ export default function RequisitionsPage() {
                 </div>
                 <DialogFooter className="pt-4">
                   <Button type="button" variant="outline" onClick={() => setIsDialogOpen(false)}>Cancel</Button>
-                  <Button type="submit">Submit for Approval</Button>
+                  <Button type="submit">{editingPr ? 'Update Requisition' : 'Submit for Approval'}</Button>
                 </DialogFooter>
               </form>
             </Form>
@@ -213,12 +252,13 @@ export default function RequisitionsPage() {
               <TableHead>Budget Line</TableHead>
               <TableHead>Status</TableHead>
               <TableHead className="text-right">Est. Total</TableHead>
+              <TableHead className="w-[50px]"></TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
             {filteredPrs.length > 0 ? (
               filteredPrs.map((pr) => (
-                <TableRow key={pr.id} className="cursor-pointer hover:bg-muted/30">
+                <TableRow key={pr.id}>
                   <TableCell className="font-medium">{pr.refNumber}</TableCell>
                   <TableCell>{pr.itemDescription}</TableCell>
                   <TableCell>{pr.requesterName}</TableCell>
@@ -232,11 +272,30 @@ export default function RequisitionsPage() {
                     </Badge>
                   </TableCell>
                   <TableCell className="text-right font-semibold">Ksh {(pr.estimatedCost * pr.quantity).toLocaleString()}</TableCell>
+                  <TableCell>
+                    <DropdownMenu>
+                      <DropdownMenuTrigger asChild>
+                        <Button variant="ghost" size="icon">
+                          <MoreVertical className="w-4 h-4" />
+                        </Button>
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent align="end">
+                        <DropdownMenuItem onClick={() => handleEdit(pr)}>
+                          <Pencil className="w-4 h-4 mr-2" />
+                          Edit
+                        </DropdownMenuItem>
+                        <DropdownMenuItem onClick={() => handleDelete(pr.id)} className="text-destructive focus:text-destructive">
+                          <Trash2 className="w-4 h-4 mr-2" />
+                          Delete
+                        </DropdownMenuItem>
+                      </DropdownMenuContent>
+                    </DropdownMenu>
+                  </TableCell>
                 </TableRow>
               ))
             ) : (
               <TableRow>
-                <TableCell colSpan={6} className="h-24 text-center text-muted-foreground">
+                <TableCell colSpan={7} className="h-24 text-center text-muted-foreground">
                   No requisitions found.
                 </TableCell>
               </TableRow>
