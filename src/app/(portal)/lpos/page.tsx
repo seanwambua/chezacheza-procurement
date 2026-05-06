@@ -52,6 +52,7 @@ import {
   FormItem,
   FormLabel,
   FormMessage,
+  FormDescription,
 } from "@/components/ui/form";
 import {
   Select,
@@ -223,16 +224,16 @@ export default function LPOsPage() {
   };
 
   return (
-    <div className="space-y-8 animate-in fade-in duration-500 pb-10">
+    <div className="space-y-6 md:space-y-8 animate-in fade-in duration-500 pb-10">
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-        <div>
+        <div className="space-y-1">
           <h2 className={cn(
-            "font-headline font-bold text-primary",
-            isDetailed ? "text-3xl" : "text-4xl"
+            "font-headline font-bold text-primary tracking-tighter leading-tight",
+            isDetailed ? "text-2xl md:text-3xl" : "text-3xl md:text-4xl"
           )}>
             Purchase Orders
           </h2>
-          <p className="text-muted-foreground">Manage official vendor commitments, documented terms, and logistics.</p>
+          <p className="text-sm text-muted-foreground font-medium">Manage official vendor commitments, documented terms, and logistics.</p>
         </div>
         
         <Dialog open={isDialogOpen} onOpenChange={(open) => {
@@ -240,17 +241,17 @@ export default function LPOsPage() {
           if (!open) setEditingLpo(null);
         }}>
           <DialogTrigger asChild>
-            <Button className="bg-primary font-bold uppercase text-xs" onClick={() => setEditingLpo(null)}>
+            <Button className="w-full md:w-auto bg-primary font-bold uppercase text-xs h-10 shadow-sm" onClick={() => setEditingLpo(null)}>
               <Plus className="w-4 h-4 mr-2" />
               Generate LPO
             </Button>
           </DialogTrigger>
-          <DialogContent className="max-w-xl max-h-[90vh] overflow-y-auto">
+          <DialogContent className="max-w-xl w-[95vw] max-h-[90vh] overflow-y-auto">
             <DialogHeader>
-              <DialogTitle className="text-xl font-bold">
+              <DialogTitle className="text-xl md:text-2xl font-black tracking-tight">
                 {editingLpo ? `Revise Order ${editingLpo.lpoNumber}` : 'Convert Requisition to LPO'}
               </DialogTitle>
-              <DialogDescription>
+              <DialogDescription className="text-xs font-medium">
                 Establish vendor commitments and document specific terms of engagement.
               </DialogDescription>
             </DialogHeader>
@@ -267,10 +268,10 @@ export default function LPOsPage() {
                         value={field.value}
                         disabled={!!editingLpo}
                       >
-                        <FormControl><SelectTrigger className="bg-background"><SelectValue placeholder="Select approved request" /></SelectTrigger></FormControl>
+                        <FormControl><SelectTrigger className="bg-background h-10"><SelectValue placeholder="Select approved request" /></SelectTrigger></FormControl>
                         <SelectContent>
                           {approvedPrs.map(pr => (
-                            <SelectItem key={pr.id} value={pr.id}>
+                            <SelectItem key={pr.id} value={pr.id} className="text-xs">
                               {pr.refNumber} - Ksh {calculatePRTotal(pr).toLocaleString()}
                             </SelectItem>
                           ))}
@@ -288,9 +289,9 @@ export default function LPOsPage() {
                     <FormItem>
                       <FormLabel className="text-[10px] uppercase font-bold text-muted-foreground">Assign Vendor</FormLabel>
                       <Select onValueChange={field.onChange} value={field.value}>
-                        <FormControl><SelectTrigger className="bg-background"><SelectValue placeholder="Select authorized vendor" /></SelectTrigger></FormControl>
+                        <FormControl><SelectTrigger className="bg-background h-10"><SelectValue placeholder="Select authorized vendor" /></SelectTrigger></FormControl>
                         <SelectContent>
-                          {vendors.map(v => <SelectItem key={v.id} value={v.id}>{v.name} ({v.category})</SelectItem>)}
+                          {vendors.map(v => <SelectItem key={v.id} value={v.id} className="text-xs">{v.name} ({v.category})</SelectItem>)}
                         </SelectContent>
                       </Select>
                       <FormMessage />
@@ -298,19 +299,19 @@ export default function LPOsPage() {
                   )}
                 />
 
-                <div className="grid grid-cols-2 gap-4">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <FormField control={form.control} name="deliveryDate" render={({ field }) => (
-                    <FormItem><FormLabel className="text-[10px] uppercase font-bold text-muted-foreground">Expected Delivery</FormLabel><FormControl><Input type="date" {...field} className="bg-background" /></FormControl><FormMessage /></FormItem>
+                    <FormItem><FormLabel className="text-[10px] uppercase font-bold text-muted-foreground">Expected Delivery</FormLabel><FormControl><Input type="date" {...field} className="bg-background h-10 text-xs" /></FormControl><FormMessage /></FormItem>
                   )} />
                   <FormField control={form.control} name="paymentTerms" render={({ field }) => (
                     <FormItem><FormLabel className="text-[10px] uppercase font-bold text-muted-foreground">Payment Window</FormLabel>
                       <Select onValueChange={field.onChange} value={field.value}>
-                        <FormControl><SelectTrigger className="bg-background"><SelectValue /></SelectTrigger></FormControl>
+                        <FormControl><SelectTrigger className="bg-background h-10"><SelectValue /></SelectTrigger></FormControl>
                         <SelectContent>
-                          <SelectItem value="Immediate">Immediate Payment</SelectItem>
-                          <SelectItem value="30 Days Net">30 Days Net</SelectItem>
-                          <SelectItem value="45 Days Net">45 Days Net</SelectItem>
-                          <SelectItem value="60 Days Net">60 Days Net</SelectItem>
+                          <SelectItem value="Immediate" className="text-xs">Immediate Payment</SelectItem>
+                          <SelectItem value="30 Days Net" className="text-xs">30 Days Net</SelectItem>
+                          <SelectItem value="45 Days Net" className="text-xs">45 Days Net</SelectItem>
+                          <SelectItem value="60 Days Net" className="text-xs">60 Days Net</SelectItem>
                         </SelectContent>
                       </Select>
                       <FormMessage />
@@ -331,7 +332,7 @@ export default function LPOsPage() {
                           {...field} 
                         />
                       </FormControl>
-                      <FormDescription className="text-[10px]">
+                      <FormDescription className="text-[10px] font-medium leading-tight">
                         These terms will be appended to the official Purchase Order document.
                       </FormDescription>
                       <FormMessage />
@@ -339,9 +340,9 @@ export default function LPOsPage() {
                   )}
                 />
 
-                <DialogFooter className="gap-2 sm:gap-0 border-t pt-6">
-                  <Button type="button" variant="outline" onClick={() => setIsDialogOpen(false)}>Cancel</Button>
-                  <Button type="submit" className="bg-primary shadow-sm">
+                <DialogFooter className="gap-2 sm:gap-0 border-t pt-6 flex-col sm:flex-row">
+                  <Button type="button" variant="outline" onClick={() => setIsDialogOpen(false)} className="w-full sm:w-auto font-bold uppercase text-xs h-10">Cancel</Button>
+                  <Button type="submit" className="w-full sm:w-auto bg-primary shadow-md font-bold uppercase text-xs h-10">
                     {editingLpo ? 'Authorize Revisions' : 'Dispatch Official Order'}
                   </Button>
                 </DialogFooter>
@@ -351,7 +352,7 @@ export default function LPOsPage() {
         </Dialog>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6">
         <StatCard 
           title="Active Commitments" 
           value={`Ksh ${totalValue.toLocaleString()}`} 
@@ -370,29 +371,29 @@ export default function LPOsPage() {
         />
       </div>
 
-      <Card className="border-border shadow-none overflow-hidden">
-        <CardHeader className="flex flex-row items-center justify-between border-b py-4">
+      <Card className="border-border shadow-none overflow-hidden bg-card">
+        <CardHeader className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between border-b py-4 px-4 sm:px-6 gap-4">
           <CardTitle className="text-lg font-headline">LPO Pipeline</CardTitle>
-          <div className="relative w-64">
+          <div className="relative w-full sm:w-64">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
             <Input 
               placeholder="Search LPOs or Vendors..." 
-              className="pl-9 h-9 text-xs" 
+              className="w-full pl-9 h-10 text-xs bg-muted/30 border-none shadow-none focus-visible:ring-1" 
               value={search} 
               onChange={(e) => setSearch(e.target.value)} 
             />
           </div>
         </CardHeader>
         <CardContent className="p-0">
-          <div className="overflow-x-auto">
+          <div className="overflow-x-auto w-full">
             <Table>
               <TableHeader>
-                <TableRow className="bg-muted/30">
-                  {isDetailed && <TableHead className="w-[120px]">Reference</TableHead>}
-                  <TableHead>Vendor</TableHead>
-                  <TableHead>Status</TableHead>
-                  {isDetailed && <TableHead>Terms</TableHead>}
-                  <TableHead className="text-right">Total Commitment</TableHead>
+                <TableRow className="bg-muted/30 border-none">
+                  {isDetailed && <TableHead className="w-[120px] font-bold uppercase text-[10px]">Reference</TableHead>}
+                  <TableHead className="min-w-[150px] font-bold uppercase text-[10px]">Vendor</TableHead>
+                  <TableHead className="font-bold uppercase text-[10px]">Status</TableHead>
+                  {isDetailed && <TableHead className="font-bold uppercase text-[10px]">Terms</TableHead>}
+                  <TableHead className="text-right font-bold uppercase text-[10px]">Commitment</TableHead>
                   <TableHead className="w-[50px]"></TableHead>
                 </TableRow>
               </TableHeader>
@@ -400,56 +401,58 @@ export default function LPOsPage() {
                 {filteredLpos.length > 0 ? (
                   filteredLpos.map((lpo) => (
                     <TableRow key={lpo.id} className="group hover:bg-muted/5">
-                      {isDetailed && <TableCell className="font-bold text-primary text-xs">{lpo.lpoNumber}</TableCell>}
+                      {isDetailed && <TableCell className="font-black text-primary text-xs">{lpo.lpoNumber}</TableCell>}
                       <TableCell>
-                        <div className="flex flex-col">
+                        <div className="flex flex-col min-w-0">
                           <span className={cn(
-                            "font-bold",
-                            isDetailed ? "text-sm" : "text-base text-primary"
+                            "font-bold truncate",
+                            isDetailed ? "text-xs" : "text-sm text-primary"
                           )}>
                             {lpo.vendorName}
                           </span>
                           {lpo.items.length > 0 && !isDetailed && (
-                            <span className="text-[10px] text-muted-foreground truncate max-w-[200px]">{lpo.items[0].description}</span>
+                            <span className="text-[10px] text-muted-foreground truncate max-w-[160px] font-medium uppercase tracking-tight">
+                              {lpo.items[0].description}
+                            </span>
                           )}
                         </div>
                       </TableCell>
                       <TableCell>
-                        <Badge variant={lpo.status === 'Fulfilled' ? 'secondary' : 'outline'} className="text-[9px] uppercase px-1.5 py-0 h-4">
+                        <Badge variant={lpo.status === 'Fulfilled' ? 'secondary' : 'outline'} className="text-[9px] uppercase px-1.5 py-0 h-4 tracking-tighter">
                           {lpo.status}
                         </Badge>
                       </TableCell>
                       {isDetailed && (
-                        <TableCell className="text-[10px] font-medium text-muted-foreground">
+                        <TableCell className="text-[10px] font-bold uppercase text-muted-foreground">
                           {lpo.paymentTerms}
                         </TableCell>
                       )}
                       <TableCell className={cn(
-                        "text-right font-black tracking-tighter",
-                        isDetailed ? "text-sm" : "text-lg text-primary"
+                        "text-right font-black tracking-tighter whitespace-nowrap",
+                        isDetailed ? "text-xs" : "text-base text-primary"
                       )}>
                         Ksh {lpo.totalValue.toLocaleString()}
                       </TableCell>
                       <TableCell>
                         <DropdownMenu>
                           <DropdownMenuTrigger asChild>
-                            <Button variant="ghost" size="icon" className="h-8 w-8">
+                            <Button variant="ghost" size="icon" className="h-8 w-8 md:opacity-0 group-hover:opacity-100 transition-opacity">
                               <MoreVertical className="w-4 h-4" />
                             </Button>
                           </DropdownMenuTrigger>
                           <DropdownMenuContent align="end">
-                            <DropdownMenuItem className="text-xs">
+                            <DropdownMenuItem className="text-xs font-bold">
                               <Printer className="w-4 h-4 mr-2" /> Print PDF
                             </DropdownMenuItem>
-                            <DropdownMenuItem onClick={() => { setEditingLpo(lpo); setIsDialogOpen(true); }} className="text-xs">
-                              <Pencil className="w-4 h-4 mr-2" /> Review / Edit Details
+                            <DropdownMenuItem onClick={() => { setEditingLpo(lpo); setIsDialogOpen(true); }} className="text-xs font-bold">
+                              <Pencil className="w-4 h-4 mr-2" /> Review / Edit
                             </DropdownMenuItem>
                             {lpo.status !== 'Fulfilled' && (
-                              <DropdownMenuItem className="text-green-600 text-xs font-bold" onClick={() => setReceivingLpo(lpo)}>
+                              <DropdownMenuItem className="text-accent text-xs font-bold" onClick={() => setReceivingLpo(lpo)}>
                                 <PackageCheck className="w-4 h-4 mr-2" /> Confirm Receipt
                               </DropdownMenuItem>
                             )}
-                            <DropdownMenuItem className="text-destructive text-xs" onClick={() => handleDeleteLPO(lpo)}>
+                            <DropdownMenuItem className="text-destructive text-xs font-bold" onClick={() => handleDeleteLPO(lpo)}>
                               <Trash2 className="w-4 h-4 mr-2" /> Void LPO
                             </DropdownMenuItem>
                           </DropdownMenuContent>
@@ -459,10 +462,12 @@ export default function LPOsPage() {
                   ))
                 ) : (
                   <TableRow>
-                    <TableCell colSpan={isDetailed ? 6 : 4} className="h-32 text-center text-muted-foreground">
-                      <div className="flex flex-col items-center justify-center space-y-2 opacity-50">
-                        <ShoppingCart className="w-8 h-8" />
-                        <p className="text-sm">No active purchase orders found.</p>
+                    <TableCell colSpan={isDetailed ? 6 : 4} className="h-48 text-center text-muted-foreground">
+                      <div className="flex flex-col items-center justify-center space-y-3 opacity-50">
+                        <div className="p-4 bg-muted rounded-full">
+                          <ShoppingCart className="w-8 h-8" />
+                        </div>
+                        <p className="text-sm font-medium">No active purchase orders found.</p>
                       </div>
                     </TableCell>
                   </TableRow>
@@ -474,33 +479,33 @@ export default function LPOsPage() {
       </Card>
 
       <Dialog open={!!receivingLpo} onOpenChange={(open) => !open && setReceivingLpo(null)}>
-        <DialogContent className="max-w-md">
+        <DialogContent className="max-w-md w-[90vw]">
           <DialogHeader>
-            <DialogTitle className="flex items-center gap-2">
-              <PackageCheck className="w-5 h-5 text-green-600" />
+            <DialogTitle className="flex items-center gap-2 text-xl font-black tracking-tight">
+              <PackageCheck className="w-5 h-5 text-accent" />
               Confirm Goods Receipt
             </DialogTitle>
-            <DialogDescription>
+            <DialogDescription className="text-xs font-medium">
               Marking {receivingLpo?.lpoNumber} as fulfilled will generate a GRN and finalize the transaction for audit.
             </DialogDescription>
           </DialogHeader>
-          <div className="p-4 bg-muted/30 rounded-lg text-xs space-y-3 border">
-            <div className="flex justify-between items-center pb-2 border-b">
-              <span className="text-muted-foreground uppercase font-bold">Vendor</span>
-              <span className="font-bold">{receivingLpo?.vendorName}</span>
+          <div className="p-4 bg-muted/30 rounded-lg text-xs space-y-3 border border-border/50">
+            <div className="flex justify-between items-center pb-2 border-b border-border/50">
+              <span className="text-muted-foreground uppercase font-bold tracking-tight">Vendor</span>
+              <span className="font-bold text-primary">{receivingLpo?.vendorName}</span>
             </div>
             <div className="flex justify-between items-center">
-              <span className="text-muted-foreground">Total Line Items</span>
+              <span className="text-muted-foreground uppercase font-bold tracking-tight">Total Line Items</span>
               <span className="font-bold">{receivingLpo?.items.length}</span>
             </div>
             <div className="flex justify-between items-center">
-              <span className="text-muted-foreground">Settlement Value</span>
-              <span className="font-bold text-primary">Ksh {receivingLpo?.totalValue.toLocaleString()}</span>
+              <span className="text-muted-foreground uppercase font-bold tracking-tight">Settlement Value</span>
+              <span className="font-black text-primary tracking-tighter">Ksh {receivingLpo?.totalValue.toLocaleString()}</span>
             </div>
           </div>
-          <DialogFooter className="gap-2 sm:gap-0">
-            <Button variant="outline" onClick={() => setReceivingLpo(null)}>Cancel</Button>
-            <Button className="bg-green-600 hover:bg-green-700" onClick={() => receivingLpo && handleReceiveGoods(receivingLpo)}>
+          <DialogFooter className="gap-2 sm:gap-0 pt-4 flex-col sm:flex-row">
+            <Button variant="outline" onClick={() => setReceivingLpo(null)} className="w-full sm:w-auto font-bold uppercase text-xs">Cancel</Button>
+            <Button className="bg-accent hover:bg-accent/90 w-full sm:w-auto font-bold uppercase text-xs shadow-md" onClick={() => receivingLpo && handleReceiveGoods(receivingLpo)}>
               Confirm Delivery
             </Button>
           </DialogFooter>

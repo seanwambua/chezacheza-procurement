@@ -1,4 +1,3 @@
-
 "use client";
 
 import { useState, useEffect } from 'react';
@@ -119,20 +118,20 @@ export default function ApprovalsPage() {
   };
 
   return (
-    <div className="space-y-8 animate-in fade-in duration-500 pb-10 max-w-full overflow-hidden">
+    <div className="space-y-6 md:space-y-8 animate-in fade-in duration-500 pb-10 max-w-full overflow-hidden">
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div className="min-w-0 flex-1">
           <h2 className={cn(
             "font-headline font-bold text-primary tracking-tighter truncate",
-            isDetailed ? "text-3xl" : "text-4xl"
+            isDetailed ? "text-2xl md:text-3xl" : "text-3xl md:text-4xl"
           )}>
             Approval Pipeline
           </h2>
-          <p className="text-muted-foreground text-sm">Verify and authorize departmental procurement requests.</p>
+          <p className="text-muted-foreground text-sm font-medium">Verify and authorize departmental procurement requests.</p>
         </div>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 md:gap-6">
         <StatCard 
           title="Pending Actions" 
           value={pendingPrs.length} 
@@ -140,7 +139,7 @@ export default function ApprovalsPage() {
           description={isDetailed ? "Awaiting your authorization" : undefined}
         />
         <StatCard 
-          title="Pending Exposure" 
+          title="Exposure Value" 
           value={`Ksh ${totalPendingValue.toLocaleString()}`} 
           icon={DollarSign} 
           description={isDetailed ? "Total value of queue" : undefined}
@@ -154,42 +153,42 @@ export default function ApprovalsPage() {
       </div>
 
       <Tabs defaultValue="queue" className="w-full">
-        <div className="flex flex-col sm:flex-row items-center justify-between gap-4 mb-6">
-          <TabsList className="grid w-full sm:w-[400px] grid-cols-2">
-            <TabsTrigger value="queue" className="flex items-center gap-2">
-              <ListTodo className="w-4 h-4" />
+        <div className="flex flex-col lg:flex-row items-stretch lg:items-center justify-between gap-4 mb-6">
+          <TabsList className="grid w-full lg:w-[400px] grid-cols-2 bg-muted/50 p-1">
+            <TabsTrigger value="queue" className="flex items-center justify-center gap-2 py-2 text-xs font-bold uppercase tracking-tight">
+              <ListTodo className="w-3.5 h-3.5" />
               Active Queue ({pendingPrs.length})
             </TabsTrigger>
-            <TabsTrigger value="history" className="flex items-center gap-2">
-              <History className="w-4 h-4" />
+            <TabsTrigger value="history" className="flex items-center justify-center gap-2 py-2 text-xs font-bold uppercase tracking-tight">
+              <History className="w-3.5 h-3.5" />
               History
             </TabsTrigger>
           </TabsList>
 
-          <div className="relative w-full sm:w-64">
+          <div className="relative w-full lg:w-64">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
             <Input 
               placeholder="Search requests..." 
-              className="pl-9 h-9 text-xs"
+              className="pl-9 h-10 text-xs bg-card border-none shadow-sm"
               value={search}
               onChange={(e) => setSearch(e.target.value)}
             />
           </div>
         </div>
 
-        <TabsContent value="queue" className="mt-0">
-          <Card className="border-border shadow-none overflow-hidden">
+        <TabsContent value="queue" className="mt-0 focus-visible:ring-0">
+          <Card className="border-border shadow-none overflow-hidden bg-card">
             <CardContent className="p-0">
               <div className="overflow-x-auto w-full">
                 <Table>
                   <TableHeader>
-                    <TableRow className="bg-muted/30">
-                      {isDetailed && <TableHead className="min-w-[120px]">Reference</TableHead>}
-                      <TableHead className="min-w-[200px]">Summary</TableHead>
-                      {isDetailed && <TableHead className="min-w-[150px]">Requester</TableHead>}
-                      <TableHead className="min-w-[140px]">Budget Health</TableHead>
-                      {isDetailed && <TableHead className="text-right min-w-[120px]">Estimated Total</TableHead>}
-                      <TableHead className="text-right min-w-[100px]">Actions</TableHead>
+                    <TableRow className="bg-muted/30 border-none">
+                      {isDetailed && <TableHead className="min-w-[120px] font-bold uppercase text-[10px]">Reference</TableHead>}
+                      <TableHead className="min-w-[200px] font-bold uppercase text-[10px]">Summary</TableHead>
+                      {isDetailed && <TableHead className="min-w-[150px] font-bold uppercase text-[10px]">Requester</TableHead>}
+                      <TableHead className="min-w-[140px] font-bold uppercase text-[10px]">Budget Health</TableHead>
+                      {isDetailed && <TableHead className="text-right min-w-[120px] font-bold uppercase text-[10px]">Est. Total</TableHead>}
+                      <TableHead className="text-right min-w-[100px] font-bold uppercase text-[10px]">Actions</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
@@ -202,33 +201,33 @@ export default function ApprovalsPage() {
 
                         return (
                           <TableRow key={pr.id} className="group hover:bg-muted/5">
-                            {isDetailed && <TableCell className="font-bold text-primary text-xs">{pr.refNumber}</TableCell>}
+                            {isDetailed && <TableCell className="font-black text-primary text-xs">{pr.refNumber}</TableCell>}
                             <TableCell>
                               <div className="flex flex-col min-w-0">
                                 <span className={cn(
                                   "font-bold truncate",
-                                  isDetailed ? "text-sm" : "text-base text-primary"
+                                  isDetailed ? "text-xs" : "text-sm text-primary"
                                 )}>
                                   {pr.items?.[0]?.description || 'Multi-item Request'}
                                 </span>
                                 {pr.items?.length > 1 && (
-                                  <span className="text-[10px] text-muted-foreground uppercase">+{pr.items.length - 1} more items</span>
+                                  <span className="text-[10px] text-muted-foreground uppercase font-medium">+{pr.items.length - 1} more items</span>
                                 )}
                               </div>
                             </TableCell>
                             {isDetailed && (
                               <TableCell>
-                                <span className="text-xs truncate">{pr.requesterName}</span>
+                                <span className="text-xs truncate font-medium">{pr.requesterName}</span>
                               </TableCell>
                             )}
                             <TableCell>
                               <div className={cn(
                                 "flex items-center gap-2",
-                                isPaused ? "text-destructive" : "text-green-600"
+                                isPaused ? "text-destructive" : "text-accent"
                               )}>
                                 <div className={cn(
                                   "w-2 h-2 rounded-full shrink-0",
-                                  isPaused ? "bg-destructive animate-pulse" : "bg-green-600"
+                                  isPaused ? "bg-destructive animate-pulse" : "bg-accent"
                                 )} />
                                 <span className="text-[10px] font-bold uppercase tracking-tight">
                                   {isPaused ? 'Exhausted' : 'Healthy'}
@@ -236,18 +235,18 @@ export default function ApprovalsPage() {
                               </div>
                             </TableCell>
                             {isDetailed && (
-                              <TableCell className="text-right font-black tracking-tighter text-sm whitespace-nowrap">
+                              <TableCell className="text-right font-black tracking-tighter text-xs whitespace-nowrap">
                                 Ksh {total.toLocaleString()}
                               </TableCell>
                             )}
                             <TableCell className="text-right">
                               <Button 
                                 variant="outline" 
-                                size={isDetailed ? "sm" : "default"}
-                                className="h-8 font-bold uppercase text-[10px]"
+                                size="sm"
+                                className="h-8 font-bold uppercase text-[10px] shadow-sm"
                                 onClick={() => setSelectedPr(pr)}
                               >
-                                <Eye className="w-4 h-4 mr-1.5" />
+                                <Eye className="w-3.5 h-3.5 mr-1.5" />
                                 Review
                               </Button>
                             </TableCell>
@@ -256,8 +255,13 @@ export default function ApprovalsPage() {
                       })
                     ) : (
                       <TableRow>
-                        <TableCell colSpan={isDetailed ? 6 : 4} className="h-32 text-center text-muted-foreground">
-                          <p className="text-sm">Your approval queue is empty.</p>
+                        <TableCell colSpan={isDetailed ? 6 : 4} className="h-48 text-center text-muted-foreground">
+                           <div className="flex flex-col items-center justify-center space-y-3 opacity-50">
+                            <div className="p-4 bg-muted rounded-full">
+                              <ListTodo className="w-8 h-8" />
+                            </div>
+                            <p className="text-sm font-medium">Your approval queue is empty.</p>
+                          </div>
                         </TableCell>
                       </TableRow>
                     )}
@@ -268,19 +272,19 @@ export default function ApprovalsPage() {
           </Card>
         </TabsContent>
 
-        <TabsContent value="history" className="mt-0">
-          <Card className="border-border shadow-none overflow-hidden">
+        <TabsContent value="history" className="mt-0 focus-visible:ring-0">
+          <Card className="border-border shadow-none overflow-hidden bg-card">
             <CardContent className="p-0">
               <div className="overflow-x-auto w-full">
                 <Table>
                   <TableHeader>
-                    <TableRow className="bg-muted/30">
-                      {isDetailed && <TableHead className="min-w-[120px]">Reference</TableHead>}
-                      <TableHead className="min-w-[200px]">Summary</TableHead>
-                      <TableHead className="min-w-[100px]">Status</TableHead>
-                      {isDetailed && <TableHead className="min-w-[150px]">Budget Line</TableHead>}
-                      {isDetailed && <TableHead className="text-right min-w-[120px]">Final Total</TableHead>}
-                      <TableHead className="text-right min-w-[100px]">Date</TableHead>
+                    <TableRow className="bg-muted/30 border-none">
+                      {isDetailed && <TableHead className="min-w-[120px] font-bold uppercase text-[10px]">Reference</TableHead>}
+                      <TableHead className="min-w-[200px] font-bold uppercase text-[10px]">Summary</TableHead>
+                      <TableHead className="min-w-[100px] font-bold uppercase text-[10px]">Status</TableHead>
+                      {isDetailed && <TableHead className="min-w-[150px] font-bold uppercase text-[10px]">Budget Line</TableHead>}
+                      {isDetailed && <TableHead className="text-right min-w-[120px] font-bold uppercase text-[10px]">Final Total</TableHead>}
+                      <TableHead className="text-right min-w-[100px] font-bold uppercase text-[10px]">Date</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
@@ -297,7 +301,7 @@ export default function ApprovalsPage() {
                             </div>
                           </TableCell>
                           <TableCell>
-                            <Badge variant={pr.status === 'Approved' || pr.status === 'LPO Generated' ? 'secondary' : 'destructive'} className="text-[9px] uppercase px-1.5 py-0 h-4">
+                            <Badge variant={pr.status === 'Approved' || pr.status === 'LPO Generated' ? 'secondary' : 'destructive'} className="text-[9px] uppercase px-1.5 py-0 h-4 tracking-tighter">
                               {pr.status}
                             </Badge>
                           </TableCell>
@@ -307,19 +311,24 @@ export default function ApprovalsPage() {
                             </TableCell>
                           )}
                           {isDetailed && (
-                            <TableCell className="text-right font-black text-xs whitespace-nowrap">
+                            <TableCell className="text-right font-black text-xs whitespace-nowrap tracking-tighter">
                               Ksh {calculatePRTotal(pr).toLocaleString()}
                             </TableCell>
                           )}
-                          <TableCell className="text-right text-[10px] text-muted-foreground whitespace-nowrap">
+                          <TableCell className="text-right text-[10px] text-muted-foreground whitespace-nowrap font-medium">
                             {new Date(pr.createdAt).toLocaleDateString()}
                           </TableCell>
                         </TableRow>
                       ))
                     ) : (
                       <TableRow>
-                        <TableCell colSpan={isDetailed ? 6 : 4} className="h-32 text-center text-muted-foreground">
-                          <p className="text-sm">No historical records found.</p>
+                        <TableCell colSpan={isDetailed ? 6 : 4} className="h-48 text-center text-muted-foreground">
+                          <div className="flex flex-col items-center justify-center space-y-3 opacity-50">
+                            <div className="p-4 bg-muted rounded-full">
+                              <History className="w-8 h-8" />
+                            </div>
+                            <p className="text-sm font-medium">No historical records found.</p>
+                          </div>
                         </TableCell>
                       </TableRow>
                     )}
@@ -332,23 +341,23 @@ export default function ApprovalsPage() {
       </Tabs>
 
       <Dialog open={!!selectedPr} onOpenChange={(open) => !open && setSelectedPr(null)}>
-        <DialogContent className="max-w-2xl w-[95vw]">
+        <DialogContent className="max-w-2xl w-[95vw] max-h-[90vh] overflow-y-auto">
           <DialogHeader>
-            <DialogTitle className="flex items-center justify-between text-xl font-bold">
+            <DialogTitle className="flex flex-col sm:flex-row sm:items-center justify-between text-xl font-black tracking-tight gap-2">
               Review Requisition {selectedPr?.refNumber}
-              <Badge variant="outline" className="ml-2">{selectedPr?.status}</Badge>
+              <Badge variant="outline" className="text-[10px] uppercase w-fit">{selectedPr?.status}</Badge>
             </DialogTitle>
-            <DialogDescription>
+            <DialogDescription className="text-xs">
               Check line items and budget availability before authorizing.
             </DialogDescription>
           </DialogHeader>
           
           {selectedPr && (
             <div className="space-y-6">
-              <div className="grid grid-cols-2 gap-4 p-4 bg-muted/30 rounded-lg border">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 p-4 bg-muted/30 rounded-lg border border-border/50">
                 <div>
                   <p className="text-[10px] uppercase font-bold text-muted-foreground">Requester</p>
-                  <p className="text-sm font-bold truncate">{selectedPr.requesterName}</p>
+                  <p className="text-sm font-bold truncate text-primary">{selectedPr.requesterName}</p>
                 </div>
                 <div>
                   <p className="text-[10px] uppercase font-bold text-muted-foreground">Budget Line</p>
@@ -358,37 +367,37 @@ export default function ApprovalsPage() {
 
               <div className="space-y-3">
                 <p className="text-[10px] uppercase font-bold text-muted-foreground">Items Requested</p>
-                <div className="border rounded-md divide-y max-h-[30vh] overflow-y-auto bg-card">
+                <div className="border border-border/50 rounded-md divide-y max-h-[30vh] overflow-y-auto bg-card shadow-sm">
                   {selectedPr.items.map((item, idx) => (
-                    <div key={idx} className="flex items-center justify-between p-3 text-sm">
+                    <div key={idx} className="flex items-center justify-between p-3 text-xs sm:text-sm">
                       <div className="flex flex-col mr-4 min-w-0">
-                        <span className="font-medium truncate">{item.description}</span>
-                        <span className="text-[10px] text-muted-foreground">Qty: {item.quantity} × Ksh {item.estimatedUnitPrice.toLocaleString()}</span>
+                        <span className="font-bold truncate text-primary">{item.description}</span>
+                        <span className="text-[10px] text-muted-foreground font-medium uppercase">Qty: {item.quantity} × Ksh {item.estimatedUnitPrice.toLocaleString()}</span>
                       </div>
-                      <span className="font-bold whitespace-nowrap">Ksh {(item.quantity * item.estimatedUnitPrice).toLocaleString()}</span>
+                      <span className="font-black whitespace-nowrap tracking-tighter">Ksh {(item.quantity * item.estimatedUnitPrice).toLocaleString()}</span>
                     </div>
                   ))}
                 </div>
               </div>
 
-              <Separator />
+              <Separator className="opacity-50" />
 
               <div className="flex justify-between items-center px-2">
-                <span className="text-sm font-bold">Total Commitment</span>
-                <span className="text-xl font-black text-primary">Ksh {calculatePRTotal(selectedPr).toLocaleString()}</span>
+                <span className="text-[10px] uppercase font-bold text-muted-foreground">Total Commitment</span>
+                <span className="text-xl font-black text-primary tracking-tighter">Ksh {calculatePRTotal(selectedPr).toLocaleString()}</span>
               </div>
 
-              <DialogFooter className="gap-2 flex-col sm:flex-row">
+              <DialogFooter className="gap-2 flex-col sm:flex-row border-t pt-6">
                 <Button 
                   variant="ghost" 
-                  className="text-destructive hover:bg-destructive/10 w-full sm:w-auto"
+                  className="text-destructive hover:bg-destructive/10 w-full sm:w-auto font-bold uppercase text-xs"
                   onClick={() => handleReject(selectedPr.id)}
                 >
                   <XCircle className="w-4 h-4 mr-2" />
                   Reject Request
                 </Button>
                 <Button 
-                  className="bg-green-600 hover:bg-green-700 w-full sm:w-auto"
+                  className="bg-primary hover:bg-primary/90 w-full sm:w-auto font-bold uppercase text-xs shadow-md"
                   onClick={() => handleApprove(selectedPr)}
                 >
                   <CheckCircle2 className="w-4 h-4 mr-2" />
