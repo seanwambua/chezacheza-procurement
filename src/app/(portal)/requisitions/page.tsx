@@ -374,7 +374,7 @@ export default function RequisitionsPage() {
                     {isDetailed && <TableCell className="text-xs">{pr.requesterName}</TableCell>}
                     <TableCell>
                       <div className="flex flex-col">
-                        <span className="text-xs font-semibold">{pr.budgetLine}</span>
+                        <span className={isDetailed ? "text-xs font-semibold" : "text-sm font-bold"}>{pr.budgetLine}</span>
                         {isPaused && <Badge variant="destructive" className="text-[8px] h-3.5 px-1 py-0 w-fit">PAUSED</Badge>}
                       </div>
                     </TableCell>
@@ -386,7 +386,7 @@ export default function RequisitionsPage() {
                         {pr.status}
                       </Badge>
                     </TableCell>
-                    <TableCell className={isDetailed ? "text-right font-black text-xs" : "text-right font-black text-base"}>
+                    <TableCell className={isDetailed ? "text-right font-black text-xs" : "text-right font-black text-lg text-primary"}>
                       Ksh {total.toLocaleString()}
                     </TableCell>
                     <TableCell>
