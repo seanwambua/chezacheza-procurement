@@ -27,8 +27,6 @@ export default function PortalLayout({
     setMounted(true);
   }, []);
 
-  // Defaults for server and initial client render to prevent hydration mismatch
-  // Updated to match the new collapsed default
   const defaultSidebarWidth = "w-20";
   const defaultMainMargin = "md:ml-20";
 
@@ -44,11 +42,11 @@ export default function PortalLayout({
         </h1>
         <Sheet>
           <SheetTrigger asChild>
-            <Button variant="ghost" size="icon">
-              <Menu className="w-6 h-6" />
+            <Button variant="ghost" size="icon" className="hover:bg-accent/10">
+              <Menu className="w-6 h-6 text-primary" />
             </Button>
           </SheetTrigger>
-          <SheetContent side="left" className="p-0 w-72">
+          <SheetContent side="left" className="p-0 w-[280px] sm:w-[320px] border-r-primary/10">
             <SheetHeader className="sr-only">
               <SheetTitle>Navigation Menu</SheetTitle>
             </SheetHeader>

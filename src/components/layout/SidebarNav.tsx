@@ -123,17 +123,17 @@ export function SidebarNav({ forceExpanded = false }: { forceExpanded?: boolean 
         "flex flex-col h-full bg-sidebar transition-all duration-300",
         collapsed ? "items-center" : "w-full"
       )}>
-        {/* Header - Fixed */}
+        {/* Header */}
         <div className={cn(
-          "px-4 pt-6 pb-4 flex items-center justify-between w-full shrink-0",
-          collapsed && "flex-col gap-2 px-2 pt-4 pb-4"
+          "px-5 pt-8 pb-6 flex items-center justify-between w-full shrink-0 border-b border-sidebar-border/30",
+          collapsed && "flex-col gap-2 px-2 pt-6 pb-4 border-none"
         )}>
           {!collapsed ? (
             <div>
               <h1 className="text-xl font-headline font-bold text-primary tracking-tighter leading-none">
                 CPP <span className="text-accent">Portal</span>
               </h1>
-              <p className="text-[10px] text-muted-foreground uppercase font-bold tracking-widest mt-1 opacity-70">Chezacheza</p>
+              <p className="text-[10px] text-muted-foreground uppercase font-black tracking-widest mt-1.5 opacity-60">Chezacheza</p>
             </div>
           ) : (
             <div className="text-center">
@@ -142,21 +142,21 @@ export function SidebarNav({ forceExpanded = false }: { forceExpanded?: boolean 
           )}
         </div>
         
-        {/* Navigation Items - Scrollable */}
-        <div className="flex-1 overflow-y-auto px-3 py-2 space-y-1.5 scrollbar-thin scrollbar-thumb-muted-foreground/20 hover:scrollbar-thumb-muted-foreground/40">
-          <div className="space-y-0.5">
+        {/* Navigation Items */}
+        <div className="flex-1 overflow-y-auto px-4 py-6 space-y-6 scrollbar-thin scrollbar-thumb-muted-foreground/20 hover:scrollbar-thumb-muted-foreground/40">
+          <div className="space-y-1">
             <Link
               href="/dashboard"
               className={cn(
-                "flex items-center gap-3 px-3 py-1.5 text-sm font-medium rounded-md transition-all duration-200",
+                "flex items-center gap-3 px-3 py-2.5 text-sm font-medium rounded-xl transition-all duration-200",
                 pathname === '/dashboard' 
-                  ? "bg-primary text-primary-foreground shadow-sm" 
+                  ? "bg-primary text-primary-foreground shadow-lg shadow-primary/20" 
                   : "text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground",
-                collapsed && "justify-center px-0 w-9 h-9"
+                collapsed && "justify-center px-0 w-10 h-10 rounded-lg"
               )}
             >
               <LayoutDashboard className={cn("w-4 h-4 shrink-0", pathname === '/dashboard' ? "text-primary-foreground" : "text-accent")} />
-              {!collapsed && <span className="truncate font-bold">Dashboard</span>}
+              {!collapsed && <span className="truncate font-bold tracking-tight">Dashboard</span>}
             </Link>
           </div>
 
@@ -165,9 +165,9 @@ export function SidebarNav({ forceExpanded = false }: { forceExpanded?: boolean 
             if (visibleItems.length === 0) return null;
 
             return (
-              <div key={group.id} className="space-y-0.5">
+              <div key={group.id} className="space-y-1">
                 {!collapsed && (
-                  <p className="px-3 text-[9px] font-black uppercase text-muted-foreground/60 tracking-widest mb-1.5 mt-3.5 first:mt-1">
+                  <p className="px-3 text-[9px] font-black uppercase text-muted-foreground/40 tracking-[0.15em] mb-2.5">
                     {group.label}
                   </p>
                 )}
@@ -178,15 +178,15 @@ export function SidebarNav({ forceExpanded = false }: { forceExpanded?: boolean 
                       key={item.name}
                       href={item.href}
                       className={cn(
-                        "flex items-center gap-3 px-3 py-1.5 text-sm font-medium rounded-md transition-all duration-200",
+                        "flex items-center gap-3 px-3 py-2.5 text-sm font-medium rounded-xl transition-all duration-200",
                         isActive 
-                          ? "bg-primary text-primary-foreground shadow-sm" 
+                          ? "bg-primary text-primary-foreground shadow-lg shadow-primary/20" 
                           : "text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground",
-                        collapsed && "justify-center px-0 w-9 h-9"
+                        collapsed && "justify-center px-0 w-10 h-10 rounded-lg"
                       )}
                     >
                       <item.icon className={cn("w-4 h-4 shrink-0", isActive ? "text-primary-foreground" : "text-accent")} />
-                      {!collapsed && <span className="truncate">{item.name}</span>}
+                      {!collapsed && <span className="truncate font-medium">{item.name}</span>}
                     </Link>
                   );
 
@@ -210,19 +210,19 @@ export function SidebarNav({ forceExpanded = false }: { forceExpanded?: boolean 
           })}
         </div>
 
-        {/* Footer - Pinned */}
+        {/* Footer */}
         <div className={cn(
-          "p-3 mt-auto border-t border-sidebar-border space-y-3 bg-sidebar w-full shrink-0 shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.05)]",
-          collapsed && "p-1.5 items-center"
+          "p-4 mt-auto border-t border-sidebar-border bg-sidebar w-full shrink-0 shadow-[0_-4px_12px_-4px_rgba(0,0,0,0.05)]",
+          collapsed && "p-2 items-center"
         )}>
-          <div className={cn("flex items-center gap-1 justify-center", collapsed && "flex-col")}>
+          <div className={cn("flex items-center gap-2 justify-center mb-4", collapsed && "flex-col gap-1 mb-2")}>
             {!forceExpanded && (
               <Tooltip>
                 <TooltipTrigger asChild>
                   <Button 
                     variant="ghost" 
                     size="icon" 
-                    className="w-8 h-8"
+                    className="w-9 h-9 rounded-lg hover:bg-accent/10"
                     onClick={toggleSidebar}
                   >
                     {collapsed ? <PanelLeft className="w-4 h-4" /> : <PanelLeftClose className="w-4 h-4" />}
@@ -239,7 +239,7 @@ export function SidebarNav({ forceExpanded = false }: { forceExpanded?: boolean 
                 <Button 
                   variant="ghost" 
                   size="icon" 
-                  className="w-8 h-8"
+                  className="w-9 h-9 rounded-lg hover:bg-accent/10"
                   onClick={toggleView}
                 >
                   {viewPreference === 'detailed' ? <Minimize2 className="w-4 h-4" /> : <Maximize2 className="w-4 h-4" />}
@@ -256,33 +256,37 @@ export function SidebarNav({ forceExpanded = false }: { forceExpanded?: boolean 
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <button className={cn(
-                "flex items-center justify-between p-1.5 bg-muted/50 rounded-md text-xs hover:bg-muted transition-colors border border-transparent hover:border-sidebar-border w-full",
-                collapsed && "justify-center"
+                "flex items-center justify-between p-2 bg-muted/40 rounded-xl text-xs hover:bg-muted/60 transition-all border border-transparent hover:border-sidebar-border w-full group",
+                collapsed && "justify-center p-1.5"
               )}>
                 {!collapsed ? (
                   <>
-                    <div className="flex flex-col items-start min-w-0">
-                      <span className="truncate font-bold text-primary">{currentUser.name.split(' ')[0]}</span>
-                      <span className="text-[9px] text-muted-foreground uppercase">{currentUser.role}</span>
+                    <div className="flex flex-col items-start min-w-0 text-left">
+                      <span className="truncate font-bold text-primary group-hover:text-accent transition-colors">{currentUser.name}</span>
+                      <span className="text-[9px] text-muted-foreground uppercase font-black tracking-tight">{currentUser.role}</span>
                     </div>
-                    <ChevronDown className="w-3 h-3 ml-2 opacity-50" />
+                    <ChevronDown className="w-3.5 h-3.5 ml-2 opacity-40 group-hover:opacity-100 transition-opacity" />
                   </>
                 ) : (
-                  <UserRound className="w-4 h-4 text-accent" />
+                  <div className="w-8 h-8 rounded-lg bg-accent/10 flex items-center justify-center text-accent">
+                    <UserRound className="w-4 h-4" />
+                  </div>
                 )}
               </button>
             </DropdownMenuTrigger>
-            <DropdownMenuContent align={collapsed ? "right" : "end"} className="w-56">
-              <DropdownMenuLabel className="text-[10px] uppercase text-muted-foreground">Switch Perspective</DropdownMenuLabel>
-              <DropdownMenuSeparator />
-              {users.map(user => (
-                <DropdownMenuItem key={user.id} onClick={() => handleUserSwitch(user)} className="cursor-pointer">
-                  <div className="flex flex-col">
-                    <span className="font-bold text-xs">{user.name}</span>
-                    <span className="text-[9px] text-muted-foreground uppercase">{user.role} • {user.department}</span>
-                  </div>
-                </DropdownMenuItem>
-              ))}
+            <DropdownMenuContent align={collapsed ? "right" : "end"} className="w-64 p-2 rounded-xl shadow-xl border-primary/10">
+              <DropdownMenuLabel className="text-[10px] uppercase font-black text-muted-foreground/60 tracking-widest px-2 py-1.5">Switch Perspective</DropdownMenuLabel>
+              <DropdownMenuSeparator className="my-1 bg-primary/5" />
+              <div className="space-y-1">
+                {users.map(user => (
+                  <DropdownMenuItem key={user.id} onClick={() => handleUserSwitch(user)} className="cursor-pointer rounded-lg px-2 py-2 focus:bg-accent/10">
+                    <div className="flex flex-col min-w-0">
+                      <span className="font-bold text-xs text-primary">{user.name}</span>
+                      <span className="text-[9px] text-muted-foreground uppercase font-bold truncate opacity-70">{user.role} • {user.department}</span>
+                    </div>
+                  </DropdownMenuItem>
+                ))}
+              </div>
             </DropdownMenuContent>
           </DropdownMenu>
         </div>
