@@ -30,7 +30,7 @@ export const useUserStore = create<UserState>()(
       users: MOCK_USERS,
       currentUser: MOCK_USERS[0],
       viewPreference: 'simple',
-      isSidebarCollapsed: true,
+      isSidebarCollapsed: false,
 
       addUser: (userData) => set((state) => {
         const id = `U-${Math.floor(Math.random() * 10000)}`;
