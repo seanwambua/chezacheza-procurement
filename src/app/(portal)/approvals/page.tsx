@@ -5,7 +5,6 @@ import { useStore } from '@/lib/store';
 import { useUserStore } from '@/lib/user-store';
 import { StatCard } from '@/components/dashboard/StatCard';
 import { 
-  CheckSquare, 
   Clock, 
   AlertCircle, 
   CheckCircle2, 
@@ -27,7 +26,7 @@ import {
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent } from '@/components/ui/card';
 import { getBudgetStats, calculatePRTotal, PurchaseRequisition } from '@/lib/types';
 import { useToast } from '@/hooks/use-toast';
 import {
@@ -119,16 +118,16 @@ export default function ApprovalsPage() {
   };
 
   return (
-    <div className="space-y-8 animate-in fade-in duration-500 pb-10">
+    <div className="space-y-8 animate-in fade-in duration-500 pb-10 max-w-full overflow-hidden">
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-        <div>
+        <div className="min-w-0 flex-1">
           <h2 className={cn(
-            "font-headline font-bold text-primary tracking-tighter",
+            "font-headline font-bold text-primary tracking-tighter truncate",
             isDetailed ? "text-3xl" : "text-4xl"
           )}>
             Approval Pipeline
           </h2>
-          <p className="text-muted-foreground">Verify and authorize departmental procurement requests.</p>
+          <p className="text-muted-foreground text-sm">Verify and authorize departmental procurement requests.</p>
         </div>
       </div>
 
@@ -180,16 +179,16 @@ export default function ApprovalsPage() {
         <TabsContent value="queue" className="mt-0">
           <Card className="border-border shadow-none overflow-hidden">
             <CardContent className="p-0">
-              <div className="overflow-x-auto">
+              <div className="overflow-x-auto w-full">
                 <Table>
                   <TableHeader>
                     <TableRow className="bg-muted/30">
-                      {isDetailed && <TableHead>Reference</TableHead>}
-                      <TableHead>Summary</TableHead>
-                      {isDetailed && <TableHead>Requester</TableHead>}
-                      <TableHead>Budget Health</TableHead>
-                      {isDetailed && <TableHead className="text-right">Estimated Total</TableHead>}
-                      <TableHead className="text-right">Actions</TableHead>
+                      {isDetailed && <TableHead className="min-w-[120px]">Reference</TableHead>}
+                      <TableHead className="min-w-[200px]">Summary</TableHead>
+                      {isDetailed && <TableHead className="min-w-[150px]">Requester</TableHead>}
+                      <TableHead className="min-w-[140px]">Budget Health</TableHead>
+                      {isDetailed && <TableHead className="text-right min-w-[120px]">Estimated Total</TableHead>}
+                      <TableHead className="text-right min-w-[100px]">Actions</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
@@ -202,12 +201,12 @@ export default function ApprovalsPage() {
 
                         return (
                           <TableRow key={pr.id} className="group hover:bg-muted/5">
-                            {isDetailed && <TableCell className="font-bold text-primary">{pr.refNumber}</TableCell>}
+                            {isDetailed && <TableCell className="font-bold text-primary text-xs">{pr.refNumber}</TableCell>}
                             <TableCell>
-                              <div className="flex flex-col">
+                              <div className="flex flex-col min-w-0">
                                 <span className={cn(
-                                  "font-bold",
-                                  isDetailed ? "text-sm" : "text-lg text-primary"
+                                  "font-bold truncate",
+                                  isDetailed ? "text-sm" : "text-base text-primary"
                                 )}>
                                   {pr.items?.[0]?.description || 'Multi-item Request'}
                                 </span>
@@ -218,7 +217,7 @@ export default function ApprovalsPage() {
                             </TableCell>
                             {isDetailed && (
                               <TableCell>
-                                <span className="text-xs">{pr.requesterName}</span>
+                                <span className="text-xs truncate">{pr.requesterName}</span>
                               </TableCell>
                             )}
                             <TableCell>
@@ -227,17 +226,16 @@ export default function ApprovalsPage() {
                                 isPaused ? "text-destructive" : "text-green-600"
                               )}>
                                 <div className={cn(
-                                  "w-2.5 h-2.5 rounded-full",
+                                  "w-2 h-2 rounded-full shrink-0",
                                   isPaused ? "bg-destructive animate-pulse" : "bg-green-600"
                                 )} />
-                                {isDetailed && <span className="text-xs font-bold uppercase">{isPaused ? 'Exhausted' : 'Healthy'}</span>}
+                                <span className="text-[10px] font-bold uppercase tracking-tight">
+                                  {isPaused ? 'Exhausted' : 'Healthy'}
+                                </span>
                               </div>
                             </TableCell>
                             {isDetailed && (
-                              <TableCell className={cn(
-                                "text-right font-black tracking-tighter",
-                                isDetailed ? "text-base" : "text-xl text-primary"
-                              )}>
+                              <TableCell className="text-right font-black tracking-tighter text-sm whitespace-nowrap">
                                 Ksh {total.toLocaleString()}
                               </TableCell>
                             )}
@@ -245,7 +243,7 @@ export default function ApprovalsPage() {
                               <Button 
                                 variant="outline" 
                                 size={isDetailed ? "sm" : "default"}
-                                className="h-9 font-bold uppercase text-[10px]"
+                                className="h-8 font-bold uppercase text-[10px]"
                                 onClick={() => setSelectedPr(pr)}
                               >
                                 <Eye className="w-4 h-4 mr-1.5" />
@@ -272,47 +270,47 @@ export default function ApprovalsPage() {
         <TabsContent value="history" className="mt-0">
           <Card className="border-border shadow-none overflow-hidden">
             <CardContent className="p-0">
-              <div className="overflow-x-auto">
+              <div className="overflow-x-auto w-full">
                 <Table>
                   <TableHeader>
                     <TableRow className="bg-muted/30">
-                      {isDetailed && <TableHead>Reference</TableHead>}
-                      <TableHead>Summary</TableHead>
-                      <TableHead>Status</TableHead>
-                      {isDetailed && <TableHead>Budget Line</TableHead>}
-                      {isDetailed && <TableHead className="text-right">Final Total</TableHead>}
-                      <TableHead className="text-right">Date</TableHead>
+                      {isDetailed && <TableHead className="min-w-[120px]">Reference</TableHead>}
+                      <TableHead className="min-w-[200px]">Summary</TableHead>
+                      <TableHead className="min-w-[100px]">Status</TableHead>
+                      {isDetailed && <TableHead className="min-w-[150px]">Budget Line</TableHead>}
+                      {isDetailed && <TableHead className="text-right min-w-[120px]">Final Total</TableHead>}
+                      <TableHead className="text-right min-w-[100px]">Date</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
                     {historyPrs.length > 0 ? (
                       historyPrs.map((pr) => (
                         <TableRow key={pr.id} className="group hover:bg-muted/5 opacity-80 hover:opacity-100 transition-opacity">
-                          {isDetailed && <TableCell className="font-bold text-primary text-xs">{pr.refNumber}</TableCell>}
+                          {isDetailed && <TableCell className="font-bold text-primary text-[10px]">{pr.refNumber}</TableCell>}
                           <TableCell>
-                            <div className="flex flex-col">
+                            <div className="flex flex-col min-w-0">
                               <span className={cn(
-                                "font-medium",
+                                "font-medium truncate",
                                 isDetailed ? "text-xs" : "text-sm"
                               )}>{pr.items?.[0]?.description || 'Multi-item Request'}</span>
                             </div>
                           </TableCell>
                           <TableCell>
-                            <Badge variant={pr.status === 'Approved' || pr.status === 'LPO Generated' ? 'secondary' : 'destructive'} className="text-[9px] uppercase">
+                            <Badge variant={pr.status === 'Approved' || pr.status === 'LPO Generated' ? 'secondary' : 'destructive'} className="text-[9px] uppercase px-1.5 py-0 h-4">
                               {pr.status}
                             </Badge>
                           </TableCell>
                           {isDetailed && (
-                            <TableCell className="text-[10px] font-bold uppercase text-muted-foreground">
+                            <TableCell className="text-[10px] font-bold uppercase text-muted-foreground truncate">
                               {pr.budgetLine}
                             </TableCell>
                           )}
                           {isDetailed && (
-                            <TableCell className="text-right font-black text-xs">
+                            <TableCell className="text-right font-black text-xs whitespace-nowrap">
                               Ksh {calculatePRTotal(pr).toLocaleString()}
                             </TableCell>
                           )}
-                          <TableCell className="text-right text-[10px] text-muted-foreground">
+                          <TableCell className="text-right text-[10px] text-muted-foreground whitespace-nowrap">
                             {new Date(pr.createdAt).toLocaleDateString()}
                           </TableCell>
                         </TableRow>
@@ -333,11 +331,11 @@ export default function ApprovalsPage() {
       </Tabs>
 
       <Dialog open={!!selectedPr} onOpenChange={(open) => !open && setSelectedPr(null)}>
-        <DialogContent className="max-w-2xl">
+        <DialogContent className="max-w-2xl w-[95vw]">
           <DialogHeader>
-            <DialogTitle className="flex items-center justify-between">
+            <DialogTitle className="flex items-center justify-between text-xl font-bold">
               Review Requisition {selectedPr?.refNumber}
-              <Badge variant="outline">{selectedPr?.status}</Badge>
+              <Badge variant="outline" className="ml-2">{selectedPr?.status}</Badge>
             </DialogTitle>
             <DialogDescription>
               Check line items and budget availability before authorizing.
@@ -349,24 +347,24 @@ export default function ApprovalsPage() {
               <div className="grid grid-cols-2 gap-4 p-4 bg-muted/30 rounded-lg border">
                 <div>
                   <p className="text-[10px] uppercase font-bold text-muted-foreground">Requester</p>
-                  <p className="text-sm font-bold">{selectedPr.requesterName}</p>
+                  <p className="text-sm font-bold truncate">{selectedPr.requesterName}</p>
                 </div>
                 <div>
                   <p className="text-[10px] uppercase font-bold text-muted-foreground">Budget Line</p>
-                  <p className="text-sm font-bold text-accent">{selectedPr.budgetLine}</p>
+                  <p className="text-sm font-bold text-accent truncate">{selectedPr.budgetLine}</p>
                 </div>
               </div>
 
               <div className="space-y-3">
                 <p className="text-[10px] uppercase font-bold text-muted-foreground">Items Requested</p>
-                <div className="border rounded-md divide-y">
+                <div className="border rounded-md divide-y max-h-[30vh] overflow-y-auto bg-card">
                   {selectedPr.items.map((item, idx) => (
                     <div key={idx} className="flex items-center justify-between p-3 text-sm">
-                      <div className="flex flex-col">
-                        <span className="font-medium">{item.description}</span>
+                      <div className="flex flex-col mr-4 min-w-0">
+                        <span className="font-medium truncate">{item.description}</span>
                         <span className="text-[10px] text-muted-foreground">Qty: {item.quantity} × Ksh {item.estimatedUnitPrice.toLocaleString()}</span>
                       </div>
-                      <span className="font-bold">Ksh {(item.quantity * item.estimatedUnitPrice).toLocaleString()}</span>
+                      <span className="font-bold whitespace-nowrap">Ksh {(item.quantity * item.estimatedUnitPrice).toLocaleString()}</span>
                     </div>
                   ))}
                 </div>
@@ -379,17 +377,17 @@ export default function ApprovalsPage() {
                 <span className="text-xl font-black text-primary">Ksh {calculatePRTotal(selectedPr).toLocaleString()}</span>
               </div>
 
-              <DialogFooter className="gap-2 sm:gap-0">
+              <DialogFooter className="gap-2 flex-col sm:flex-row">
                 <Button 
                   variant="ghost" 
-                  className="text-destructive hover:bg-destructive/10"
+                  className="text-destructive hover:bg-destructive/10 w-full sm:w-auto"
                   onClick={() => handleReject(selectedPr.id)}
                 >
                   <XCircle className="w-4 h-4 mr-2" />
                   Reject Request
                 </Button>
                 <Button 
-                  className="bg-green-600 hover:bg-green-700"
+                  className="bg-green-600 hover:bg-green-700 w-full sm:w-auto"
                   onClick={() => handleApprove(selectedPr)}
                 >
                   <CheckCircle2 className="w-4 h-4 mr-2" />
