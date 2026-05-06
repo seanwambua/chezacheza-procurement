@@ -22,12 +22,12 @@
     --secondary: 346 84% 61%;
     --secondary-foreground: 210 40% 98%;
     
-    /* Muted */
+    /* Muted: Soft Cool Grey */
     --muted: 210 40% 96.1%;
     --muted-foreground: 215.4 16.3% 46.9%;
     
-    /* Accent: Energizing Amber */
-    --accent: 38 92% 50%;
+    /* Accent: Vibrant Teal (Replacing Amber for better contrast on white) */
+    --accent: 174 84% 41%;
     --accent-foreground: 210 40% 98%;
     
     /* Status Colors */
@@ -40,21 +40,21 @@
     
     --radius: 0.75rem;
 
-    /* Sidebar - Matching the new Indigo theme */
+    /* Sidebar */
     --sidebar-background: 0 0% 100%;
     --sidebar-foreground: 215.4 16.3% 46.9%;
     --sidebar-primary: 262 83% 58%;
     --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 262 83% 95%;
-    --sidebar-accent-foreground: 262 83% 40%;
+    --sidebar-accent: 210 40% 96.1%;
+    --sidebar-accent-foreground: 262 83% 58%;
     --sidebar-border: 214.3 31.8% 91.4%;
     --sidebar-ring: 262 83% 58%;
 
-    /* 5-Palette Chart Theme */
+    /* 5-Palette Chart Theme (Lively & Distinct) */
     --chart-1: 262 83% 58%;  /* Indigo */
     --chart-2: 346 84% 61%;  /* Rose */
-    --chart-3: 142 71% 45%;  /* Emerald */
-    --chart-4: 38 92% 50%;   /* Amber */
+    --chart-3: 174 84% 41%;  /* Teal */
+    --chart-4: 38 92% 45%;   /* Golden Amber (Darkened for contrast) */
     --chart-5: 271 91% 65%;  /* Violet */
   }
 
@@ -77,7 +77,7 @@
     --muted: 217.2 32.6% 17.5%;
     --muted-foreground: 215 20.2% 65.1%;
     
-    --accent: 38 92% 50%;
+    --accent: 174 84% 41%;
     --accent-foreground: 210 40% 98%;
     
     --destructive: 0 62.8% 30.6%;
