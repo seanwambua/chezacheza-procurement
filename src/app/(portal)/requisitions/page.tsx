@@ -57,7 +57,7 @@ type RequisitionFormValues = z.infer<typeof requisitionSchema>;
 
 export default function RequisitionsPage() {
   const { prs, budgetLines, addPR, updatePR, deletePR, updatePRStatus } = useStore();
-  const { currentUser, hasPermission } = useUserStore();
+  const { currentUser } = useUserStore();
   const [search, setSearch] = useState('');
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [editingPr, setEditingPr] = useState<PurchaseRequisition | null>(null);
@@ -101,7 +101,6 @@ export default function RequisitionsPage() {
     const matchesSearch = pr.itemDescription.toLowerCase().includes(search.toLowerCase()) || 
                           pr.refNumber.toLowerCase().includes(search.toLowerCase());
     
-    // Staff can only see their own PRs if they don't have global view permission
     if (currentUser.role === 'Staff') {
       return matchesSearch && pr.requesterName === currentUser.name;
     }
@@ -304,7 +303,6 @@ export default function RequisitionsPage() {
                         </Button>
                       </DropdownMenuTrigger>
                       <DropdownMenuContent align="end">
-                        {/* Manager/Admin Approvals */}
                         <RoleGuard permission="approve_requisitions">
                           {pr.status === 'Pending Manager' && (
                             <>
@@ -321,7 +319,6 @@ export default function RequisitionsPage() {
                           )}
                         </RoleGuard>
 
-                        {/* Edit/Delete (Only if Draft or user is Admin) */}
                         <RoleGuard allowedRoles={['Admin', 'Staff']}>
                           {(pr.status === 'Draft' || currentUser.role === 'Admin') && (
                              <DropdownMenuItem onClick={() => handleEdit(pr)}>

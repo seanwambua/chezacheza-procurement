@@ -1,11 +1,12 @@
 
 import { PurchaseRequisition, Vendor, LPO, BudgetLine, GRN, User } from './types';
 
+// Synchronized mock data: Committed totals reflect the sum of non-rejected/non-draft PRs
 export const MOCK_BUDGET_LINES: BudgetLine[] = [
-  { id: 'BL-001', name: 'Office Equipment', allocation: 500000, spent: 120000, committed: 50000 },
-  { id: 'BL-002', name: 'IT Infrastructure', allocation: 1500000, spent: 450000, committed: 200000 },
-  { id: 'BL-003', name: 'Marketing Supplies', allocation: 300000, spent: 80000, committed: 25000 },
-  { id: 'BL-004', name: 'General Stationery', allocation: 100000, spent: 40000, committed: 5000 },
+  { id: 'BL-001', name: 'Office Equipment', allocation: 1000000, spent: 120000, committed: 420000 },
+  { id: 'BL-002', name: 'IT Infrastructure', allocation: 2500000, spent: 450000, committed: 750000 },
+  { id: 'BL-003', name: 'Marketing Supplies', allocation: 500000, spent: 80000, committed: 0 },
+  { id: 'BL-004', name: 'General Stationery', allocation: 200000, spent: 40000, committed: 0 },
 ];
 
 export const MOCK_VENDORS: Vendor[] = [

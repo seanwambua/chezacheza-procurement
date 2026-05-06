@@ -1,7 +1,7 @@
 
 import { create } from 'zustand';
 import { persist, createJSONStorage } from 'zustand/middleware';
-import { PurchaseRequisition, Vendor, LPO, BudgetLine, GRN } from './types';
+import { PurchaseRequisition, Vendor, LPO, BudgetLine, GRN, PRStatus } from './types';
 import { MOCK_PRS, MOCK_VENDORS, MOCK_LPOS, MOCK_BUDGET_LINES, MOCK_GRNS } from './mock-data';
 
 interface ProcurementState {
@@ -22,6 +22,8 @@ interface ProcurementState {
   updateBudgetLine: (id: string, updates: Partial<BudgetLine>) => void;
 }
 
+const isCommitted = (status: PRStatus) => status !== 'Draft' && status !== 'Rejected';
+
 export const useStore = create<ProcurementState>()(
   persist(
     (set) => ({
@@ -40,20 +42,94 @@ export const useStore = create<ProcurementState>()(
           refNumber,
           createdAt: new Date().toISOString(),
         };
-        return { prs: [newPR, ...state.prs] };
+
+        const updatedBudgetLines = state.budgetLines.map(bl => {
+          if (bl.name === newPR.budgetLine && isCommitted(newPR.status)) {
+            return { ...bl, committed: bl.committed + (newPR.estimatedCost * newPR.quantity) };
+          }
+          return bl;
+        });
+
+        return { 
+          prs: [newPR, ...state.prs],
+          budgetLines: updatedBudgetLines
+        };
       }),
 
-      updatePR: (id, updates) => set((state) => ({
-        prs: state.prs.map(pr => pr.id === id ? { ...pr, ...updates } : pr)
-      })),
+      updatePR: (id, updates) => set((state) => {
+        const oldPR = state.prs.find(p => p.id === id);
+        if (!oldPR) return state;
 
-      deletePR: (id) => set((state) => ({
-        prs: state.prs.filter(pr => pr.id !== id)
-      })),
+        const newPR = { ...oldPR, ...updates };
+        const oldVal = oldPR.estimatedCost * oldPR.quantity;
+        const newVal = newPR.estimatedCost * newPR.quantity;
 
-      updatePRStatus: (id, status) => set((state) => ({
-        prs: state.prs.map(pr => pr.id === id ? { ...pr, status } : pr)
-      })),
+        const wasCommitted = isCommitted(oldPR.status);
+        const isNowCommitted = isCommitted(newPR.status);
+
+        const updatedBudgetLines = state.budgetLines.map(bl => {
+          let committed = bl.committed;
+          if (bl.name === oldPR.budgetLine && wasCommitted) {
+            committed -= oldVal;
+          }
+          if (bl.name === newPR.budgetLine && isNowCommitted) {
+            committed += newVal;
+          }
+          return { ...bl, committed: Math.max(0, committed) };
+        });
+
+        return {
+          prs: state.prs.map(pr => pr.id === id ? newPR : pr),
+          budgetLines: updatedBudgetLines
+        };
+      }),
+
+      deletePR: (id) => set((state) => {
+        const prToDelete = state.prs.find(p => p.id === id);
+        if (!prToDelete) return state;
+
+        const updatedBudgetLines = state.budgetLines.map(bl => {
+          if (bl.name === prToDelete.budgetLine && isCommitted(prToDelete.status)) {
+            return { 
+              ...bl, 
+              committed: Math.max(0, bl.committed - (prToDelete.estimatedCost * prToDelete.quantity)) 
+            };
+          }
+          return bl;
+        });
+
+        return { 
+          prs: state.prs.filter(pr => pr.id !== id),
+          budgetLines: updatedBudgetLines
+        };
+      }),
+
+      updatePRStatus: (id, status) => set((state) => {
+        const pr = state.prs.find(p => p.id === id);
+        if (!pr) return state;
+
+        const oldVal = pr.estimatedCost * pr.quantity;
+        const wasCommitted = isCommitted(pr.status);
+        const isNowCommitted = isCommitted(status);
+
+        const updatedBudgetLines = state.budgetLines.map(bl => {
+          if (bl.name === pr.budgetLine) {
+            let committed = bl.committed;
+            if (wasCommitted && !isNowCommitted) {
+              committed -= oldVal;
+            } else if (!wasCommitted && isNowCommitted) {
+              committed += oldVal;
+            }
+            return { ...bl, committed: Math.max(0, committed) };
+          }
+          return bl;
+        });
+
+        return {
+          prs: state.prs.map(p => p.id === id ? { ...p, status } : p),
+          budgetLines: updatedBudgetLines
+        };
+      }),
 
       addVendor: (vendor) => set((state) => ({
         vendors: [...state.vendors, vendor]

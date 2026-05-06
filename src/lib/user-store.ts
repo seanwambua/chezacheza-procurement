@@ -1,7 +1,7 @@
 
 import { create } from 'zustand';
 import { persist, createJSONStorage } from 'zustand/middleware';
-import { User, UserRole } from './types';
+import { User, UserRole, ROLE_PERMISSIONS } from './types';
 import { MOCK_USERS } from './mock-data';
 
 interface UserState {
@@ -57,10 +57,6 @@ export const useUserStore = create<UserState>()(
         if (!user) return false;
         if (user.role === 'Admin') return true;
         
-        // This is a simple implementation. In a real app, 
-        // you'd check a dedicated permissions list.
-        // For now, we'll use the ROLE_PERMISSIONS mapping from types.ts
-        const { ROLE_PERMISSIONS } = require('./types');
         const permissions = ROLE_PERMISSIONS[user.role] || [];
         return permissions.includes(permission) || permissions.includes('*');
       },
