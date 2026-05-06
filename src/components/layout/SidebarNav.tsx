@@ -51,6 +51,7 @@ export function SidebarNav() {
     setMounted(true);
   }, []);
 
+  // Use a loading state for SSR to avoid hydration mismatch
   if (!mounted || !currentUser) {
     return (
       <div className="flex flex-col h-full bg-sidebar border-r border-sidebar-border animate-pulse">
@@ -106,7 +107,6 @@ export function SidebarNav() {
       </nav>
 
       <div className="p-4 mt-auto border-t border-sidebar-border space-y-4">
-        {/* Role Switcher for Testing */}
         <div className="px-3">
            <p className="text-[9px] text-muted-foreground uppercase font-bold mb-2">Impersonate User (Demo)</p>
            <DropdownMenu>
