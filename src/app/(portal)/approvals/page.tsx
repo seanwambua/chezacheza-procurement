@@ -1,4 +1,3 @@
-
 "use client";
 
 import { useState, useEffect } from 'react';
@@ -14,7 +13,6 @@ import {
   Search,
   Filter,
   DollarSign,
-  Info
 } from 'lucide-react';
 import { 
   Table, 
@@ -28,7 +26,7 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { getBudgetStats } from '@/lib/types';
+import { getBudgetStats, calculatePRTotal } from '@/lib/types';
 import { useToast } from '@/hooks/use-toast';
 import {
   Tooltip,
@@ -53,7 +51,7 @@ export default function ApprovalsPage() {
   // Filter for pending items appropriate for the user's role
   const pendingPrs = prs.filter(pr => {
     const isPending = pr.status.startsWith('Pending');
-    const matchesSearch = pr.itemDescription.toLowerCase().includes(search.toLowerCase()) || 
+    const matchesSearch = pr.items.some(i => i.description.toLowerCase().includes(search.toLowerCase())) || 
                           pr.refNumber.toLowerCase().includes(search.toLowerCase());
     
     // Admins see everything pending
@@ -68,8 +66,8 @@ export default function ApprovalsPage() {
     return false;
   });
 
-  const totalPendingValue = pendingPrs.reduce((acc, pr) => acc + (pr.estimatedCost * pr.quantity), 0);
-  const highValueRequests = pendingPrs.filter(pr => (pr.estimatedCost * pr.quantity) > 100000).length;
+  const totalPendingValue = pendingPrs.reduce((acc, pr) => acc + calculatePRTotal(pr), 0);
+  const highValueRequests = pendingPrs.filter(pr => calculatePRTotal(pr) > 100000).length;
 
   const handleApprove = (id: string) => {
     const pr = prs.find(p => p.id === id);
@@ -157,9 +155,6 @@ export default function ApprovalsPage() {
                 onChange={(e) => setSearch(e.target.value)}
               />
             </div>
-            <Button variant="outline" size="icon" className="h-9 w-9">
-              <Filter className="w-4 h-4" />
-            </Button>
           </div>
         </CardHeader>
         <CardContent className="p-0">
@@ -181,14 +176,17 @@ export default function ApprovalsPage() {
                     const budget = budgets.find(b => b.name === pr.budgetLine);
                     const stats = budget ? getBudgetStats(budget) : null;
                     const isPaused = stats?.isPaused;
+                    const total = calculatePRTotal(pr);
 
                     return (
                       <TableRow key={pr.id} className="group hover:bg-muted/5">
                         <TableCell className="font-bold text-primary">{pr.refNumber}</TableCell>
                         <TableCell>
                           <div className="flex flex-col">
-                            <span className="text-sm font-medium">{pr.itemDescription}</span>
-                            <span className="text-[10px] text-muted-foreground uppercase">{pr.budgetLine}</span>
+                            <span className="text-sm font-medium">{pr.items[0]?.description}</span>
+                            {pr.items.length > 1 && (
+                              <span className="text-[10px] text-muted-foreground uppercase">+{pr.items.length - 1} more items</span>
+                            )}
                           </div>
                         </TableCell>
                         <TableCell>
@@ -219,7 +217,7 @@ export default function ApprovalsPage() {
                           </TooltipProvider>
                         </TableCell>
                         <TableCell className="text-right font-black">
-                          Ksh {(pr.estimatedCost * pr.quantity).toLocaleString()}
+                          Ksh {total.toLocaleString()}
                         </TableCell>
                         <TableCell className="text-right">
                           <div className="flex items-center justify-end gap-2">

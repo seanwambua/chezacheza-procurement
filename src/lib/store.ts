@@ -1,7 +1,6 @@
-
 import { create } from 'zustand';
 import { persist, createJSONStorage } from 'zustand/middleware';
-import { PurchaseRequisition, Vendor, LPO, Budget, GRN, PRStatus, getBudgetStats } from './types';
+import { PurchaseRequisition, Vendor, LPO, Budget, GRN, PRStatus, getBudgetStats, calculatePRTotal } from './types';
 import { MOCK_PRS, MOCK_VENDORS, MOCK_LPOS, MOCK_BUDGETS, MOCK_GRNS } from './mock-data';
 
 interface ProcurementState {
@@ -45,9 +44,11 @@ export const useStore = create<ProcurementState>()(
           createdAt: new Date().toISOString(),
         };
 
+        const prTotal = calculatePRTotal(newPR);
+
         const updatedBudgets = state.budgets.map(b => {
           if (b.name === newPR.budgetLine && isCommitted(newPR.status)) {
-            return { ...b, committed: b.committed + (newPR.estimatedCost * newPR.quantity) };
+            return { ...b, committed: b.committed + prTotal };
           }
           return b;
         });
@@ -63,8 +64,8 @@ export const useStore = create<ProcurementState>()(
         if (!oldPR) return state;
 
         const newPR = { ...oldPR, ...updates };
-        const oldVal = oldPR.estimatedCost * oldPR.quantity;
-        const newVal = newPR.estimatedCost * newPR.quantity;
+        const oldTotal = calculatePRTotal(oldPR);
+        const newTotal = calculatePRTotal(newPR);
 
         const wasCommitted = isCommitted(oldPR.status);
         const isNowCommitted = isCommitted(newPR.status);
@@ -72,10 +73,10 @@ export const useStore = create<ProcurementState>()(
         const updatedBudgets = state.budgets.map(b => {
           let committed = b.committed;
           if (b.name === oldPR.budgetLine && wasCommitted) {
-            committed -= oldVal;
+            committed -= oldTotal;
           }
           if (b.name === newPR.budgetLine && isNowCommitted) {
-            committed += newVal;
+            committed += newTotal;
           }
           return { ...b, committed: Math.max(0, committed) };
         });
@@ -90,11 +91,13 @@ export const useStore = create<ProcurementState>()(
         const prToDelete = state.prs.find(p => p.id === id);
         if (!prToDelete) return state;
 
+        const prTotal = calculatePRTotal(prToDelete);
+
         const updatedBudgets = state.budgets.map(b => {
           if (b.name === prToDelete.budgetLine && isCommitted(prToDelete.status)) {
             return { 
               ...b, 
-              committed: Math.max(0, b.committed - (prToDelete.estimatedCost * prToDelete.quantity)) 
+              committed: Math.max(0, b.committed - prTotal) 
             };
           }
           return b;
@@ -110,7 +113,7 @@ export const useStore = create<ProcurementState>()(
         const pr = state.prs.find(p => p.id === id);
         if (!pr) return state;
 
-        const oldVal = pr.estimatedCost * pr.quantity;
+        const prTotal = calculatePRTotal(pr);
         const wasCommitted = isCommitted(pr.status);
         const isNowCommitted = isCommitted(status);
 
@@ -118,9 +121,9 @@ export const useStore = create<ProcurementState>()(
           if (b.name === pr.budgetLine) {
             let committed = b.committed;
             if (wasCommitted && !isNowCommitted) {
-              committed -= oldVal;
+              committed -= prTotal;
             } else if (!wasCommitted && isNowCommitted) {
-              committed += oldVal;
+              committed += prTotal;
             }
             return { ...b, committed: Math.max(0, committed) };
           }

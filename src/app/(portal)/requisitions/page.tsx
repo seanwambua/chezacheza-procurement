@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from 'react';
-import { useForm } from 'react-hook-form';
+import { useForm, useFieldArray } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
 import { Button } from '@/components/ui/button';
@@ -14,7 +14,7 @@ import {
   TableRow 
 } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
-import { Plus, Search, Filter, MoreVertical, Pencil, Trash2, CheckCircle, XCircle, AlertTriangle } from 'lucide-react';
+import { Plus, Search, Filter, MoreVertical, Pencil, Trash2, CheckCircle, XCircle, AlertTriangle, PlusCircle, Trash } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import {
   Dialog,
@@ -43,15 +43,18 @@ import {
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useStore } from '@/lib/store';
 import { useUserStore } from '@/lib/user-store';
-import { PurchaseRequisition, getBudgetStats } from '@/lib/types';
+import { PurchaseRequisition, getBudgetStats, calculatePRTotal } from '@/lib/types';
 import { RoleGuard } from '@/components/auth/RoleGuard';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
+import { Separator } from '@/components/ui/separator';
 
 const requisitionSchema = z.object({
-  itemDescription: z.string().min(3, "Description must be at least 3 characters"),
-  quantity: z.coerce.number().min(1, "Quantity must be at least 1"),
-  estimatedCost: z.coerce.number().min(0.01, "Cost must be greater than 0"),
   budgetLine: z.string().min(1, "Please select a budget"),
+  items: z.array(z.object({
+    description: z.string().min(3, "Description required"),
+    quantity: z.coerce.number().min(1, "Qty >= 1"),
+    estimatedUnitPrice: z.coerce.number().min(0.01, "Cost required"),
+  })).min(1, "At least one item is required"),
 });
 
 type RequisitionFormValues = z.infer<typeof requisitionSchema>;
@@ -67,11 +70,14 @@ export default function RequisitionsPage() {
   const form = useForm<RequisitionFormValues>({
     resolver: zodResolver(requisitionSchema),
     defaultValues: {
-      itemDescription: '',
-      quantity: 1,
-      estimatedCost: 0,
       budgetLine: '',
+      items: [{ description: '', quantity: 1, estimatedUnitPrice: 0 }],
     },
+  });
+
+  const { fields, append, remove } = useFieldArray({
+    control: form.control,
+    name: "items",
   });
 
   useEffect(() => {
@@ -81,17 +87,13 @@ export default function RequisitionsPage() {
   useEffect(() => {
     if (editingPr) {
       form.reset({
-        itemDescription: editingPr.itemDescription,
-        quantity: editingPr.quantity,
-        estimatedCost: editingPr.estimatedCost,
         budgetLine: editingPr.budgetLine,
+        items: editingPr.items,
       });
     } else {
       form.reset({
-        itemDescription: '',
-        quantity: 1,
-        estimatedCost: 0,
         budgetLine: '',
+        items: [{ description: '', quantity: 1, estimatedUnitPrice: 0 }],
       });
     }
   }, [editingPr, form]);
@@ -99,8 +101,9 @@ export default function RequisitionsPage() {
   if (!mounted || !currentUser) return null;
 
   const filteredPrs = prs.filter(pr => {
-    const matchesSearch = pr.itemDescription.toLowerCase().includes(search.toLowerCase()) || 
-                          pr.refNumber.toLowerCase().includes(search.toLowerCase());
+    const searchLower = search.toLowerCase();
+    const matchesSearch = pr.items.some(item => item.description.toLowerCase().includes(searchLower)) || 
+                          pr.refNumber.toLowerCase().includes(searchLower);
     
     if (currentUser.role === 'Staff') {
       return matchesSearch && pr.requesterName === currentUser.name;
@@ -109,20 +112,26 @@ export default function RequisitionsPage() {
     return matchesSearch;
   });
 
-  // Check if selected budget is paused
   const selectedBudgetName = form.watch('budgetLine');
   const selectedBudget = budgets.find(b => b.name === selectedBudgetName);
   const budgetStats = selectedBudget ? getBudgetStats(selectedBudget) : null;
   const isBudgetPaused = budgetStats?.isPaused;
 
+  const formItems = form.watch('items');
+  const currentTotal = formItems.reduce((acc, item) => acc + (item.quantity * item.estimatedUnitPrice), 0);
+
   const onSubmit = (values: RequisitionFormValues) => {
-    if (isBudgetPaused && !editingPr) return; // Block submission if paused
+    if (isBudgetPaused && !editingPr) return;
 
     if (editingPr) {
-      updatePR(editingPr.id, values);
+      updatePR(editingPr.id, {
+        budgetLine: values.budgetLine,
+        items: values.items.map((item, idx) => ({ ...item, id: editingPr.items[idx]?.id || `item-${Math.random()}` }))
+      });
     } else {
       addPR({
-        ...values,
+        budgetLine: values.budgetLine,
+        items: values.items.map(item => ({ ...item, id: `item-${Math.random()}` })),
         requesterName: currentUser.name,
         status: 'Pending Manager',
       });
@@ -142,29 +151,12 @@ export default function RequisitionsPage() {
     }
   };
 
-  const handleApprove = (id: string) => {
-    const pr = prs.find(p => p.id === id);
-    const budget = budgets.find(b => b.name === pr?.budgetLine);
-    if (budget && getBudgetStats(budget).isPaused) {
-      alert("Cannot approve: This budget is currently exhausted for the quarter.");
-      return;
-    }
-    updatePRStatus(id, 'Approved');
-  };
-
-  const handleReject = (id: string) => {
-    const reason = prompt('Please enter rejection reason:');
-    if (reason) {
-      updatePRStatus(id, 'Rejected');
-    }
-  };
-
   return (
-    <div className="space-y-6 animate-in fade-in duration-500">
+    <div className="space-y-6 animate-in fade-in duration-500 pb-10">
       <div className="flex items-center justify-between">
         <div>
-          <h2 className="text-2xl font-headline font-bold text-primary">Purchase Requisitions</h2>
-          <p className="text-muted-foreground">Manage and track internal purchase requests.</p>
+          <h2 className="text-3xl font-headline font-bold text-primary">Purchase Requisitions</h2>
+          <p className="text-muted-foreground">Submit and track multi-item internal purchase requests.</p>
         </div>
         
         <RoleGuard permission="create_requisitions">
@@ -173,106 +165,129 @@ export default function RequisitionsPage() {
             if (!open) setEditingPr(null);
           }}>
             <DialogTrigger asChild>
-              <Button className="bg-primary" onClick={() => setEditingPr(null)}>
+              <Button className="bg-primary shadow-sm" onClick={() => setEditingPr(null)}>
                 <Plus className="w-4 h-4 mr-2" />
                 New Requisition
               </Button>
             </DialogTrigger>
-            <DialogContent className="max-w-2xl">
+            <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
               <DialogHeader>
-                <DialogTitle>{editingPr ? 'Edit Requisition' : 'Submit New PR'}</DialogTitle>
+                <DialogTitle className="text-2xl font-black">{editingPr ? 'Update Requisition' : 'Draft New Requisition'}</DialogTitle>
                 <DialogDescription>
-                  Procurements are subject to quarterly budget availability.
+                  List all required items for this procurement. Total cost is subject to quarterly budget limits.
                 </DialogDescription>
               </DialogHeader>
               <Form {...form}>
-                <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4 py-4">
-                  {isBudgetPaused && (
-                    <Alert variant="destructive" className="bg-destructive/10">
-                      <AlertTriangle className="h-4 w-4" />
-                      <AlertTitle>Budget Exhausted</AlertTitle>
-                      <AlertDescription>
-                        The selected budget ({selectedBudgetName}) has exhausted its allocation for the current quarter. Submissions are paused.
-                      </AlertDescription>
-                    </Alert>
-                  )}
-                  
-                  <div className="grid grid-cols-2 gap-4">
-                    <div className="col-span-2">
-                      <FormField
-                        control={form.control}
-                        name="itemDescription"
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormLabel>Item Description</FormLabel>
+                <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6 py-4">
+                  <div className="p-4 bg-muted/30 rounded-lg border border-border/50 space-y-4">
+                    <FormField
+                      control={form.control}
+                      name="budgetLine"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel className="text-[10px] uppercase font-bold text-muted-foreground">Target Budget Line</FormLabel>
+                          <Select onValueChange={field.onChange} value={field.value}>
                             <FormControl>
-                              <Input placeholder="e.g. 10x Office Keyboards" {...field} />
+                              <SelectTrigger className="bg-background">
+                                <SelectValue placeholder="Select budget" />
+                              </SelectTrigger>
                             </FormControl>
-                            <FormMessage />
-                          </FormItem>
-                        )}
-                      />
+                            <SelectContent>
+                              {budgets.map(b => (
+                                <SelectItem key={b.id} value={b.name}>
+                                  {b.name} ({b.department})
+                                </SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+
+                    {isBudgetPaused && (
+                      <Alert variant="destructive" className="bg-destructive/10 border-destructive/20">
+                        <AlertTriangle className="h-4 w-4" />
+                        <AlertTitle className="text-xs font-bold uppercase">Budget Cap Reached</AlertTitle>
+                        <AlertDescription className="text-xs">
+                          The selected budget line has exhausted its quarterly allocation. Submissions are temporarily paused.
+                        </AlertDescription>
+                      </Alert>
+                    )}
+                  </div>
+
+                  <div className="space-y-4">
+                    <div className="flex items-center justify-between">
+                      <h3 className="text-xs font-bold uppercase tracking-widest text-muted-foreground">Line Items</h3>
+                      <Button type="button" variant="outline" size="sm" onClick={() => append({ description: '', quantity: 1, estimatedUnitPrice: 0 })} className="h-8 text-[11px] font-bold uppercase">
+                        <PlusCircle className="w-3.5 h-3.5 mr-1.5" />
+                        Add Item
+                      </Button>
                     </div>
                     
-                    <FormField
-                      control={form.control}
-                      name="quantity"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Quantity</FormLabel>
-                          <FormControl>
-                            <Input type="number" {...field} />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-
-                    <FormField
-                      control={form.control}
-                      name="estimatedCost"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Estimated Unit Cost (Ksh)</FormLabel>
-                          <FormControl>
-                            <Input type="number" step="0.01" {...field} />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-
-                    <div className="col-span-2">
-                      <FormField
-                        control={form.control}
-                        name="budgetLine"
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormLabel>Budget</FormLabel>
-                            <Select onValueChange={field.onChange} value={field.value}>
-                              <FormControl>
-                                <SelectTrigger>
-                                  <SelectValue placeholder="Select budget" />
-                                </SelectTrigger>
-                              </FormControl>
-                              <SelectContent>
-                                {budgets.map(b => (
-                                  <SelectItem key={b.id} value={b.name}>{b.name}</SelectItem>
-                                ))}
-                              </SelectContent>
-                            </Select>
-                            <FormMessage />
-                          </FormItem>
-                        )}
-                      />
+                    <div className="space-y-3">
+                      {fields.map((field, index) => (
+                        <div key={field.id} className="grid grid-cols-12 gap-3 items-start bg-muted/10 p-3 rounded-md border border-border/40 group">
+                          <div className="col-span-6">
+                            <FormField
+                              control={form.control}
+                              name={`items.${index}.description`}
+                              render={({ field }) => (
+                                <FormItem>
+                                  <FormControl><Input placeholder="Item Description" {...field} className="h-9 text-sm" /></FormControl>
+                                  <FormMessage className="text-[10px]" />
+                                </FormItem>
+                              )}
+                            />
+                          </div>
+                          <div className="col-span-2">
+                            <FormField
+                              control={form.control}
+                              name={`items.${index}.quantity`}
+                              render={({ field }) => (
+                                <FormItem>
+                                  <FormControl><Input type="number" {...field} className="h-9 text-sm" placeholder="Qty" /></FormControl>
+                                  <FormMessage className="text-[10px]" />
+                                </FormItem>
+                              )}
+                            />
+                          </div>
+                          <div className="col-span-3">
+                            <FormField
+                              control={form.control}
+                              name={`items.${index}.estimatedUnitPrice`}
+                              render={({ field }) => (
+                                <FormItem>
+                                  <FormControl><Input type="number" step="0.01" {...field} className="h-9 text-sm" placeholder="Unit Price" /></FormControl>
+                                  <FormMessage className="text-[10px]" />
+                                </FormItem>
+                              )}
+                            />
+                          </div>
+                          <div className="col-span-1 pt-1.5">
+                            {fields.length > 1 && (
+                              <Button type="button" variant="ghost" size="icon" onClick={() => remove(index)} className="h-6 w-6 text-destructive opacity-0 group-hover:opacity-100 transition-opacity">
+                                <Trash className="w-3.5 h-3.5" />
+                              </Button>
+                            )}
+                          </div>
+                        </div>
+                      ))}
                     </div>
                   </div>
-                  <DialogFooter className="pt-4">
-                    <Button type="button" variant="outline" onClick={() => setIsDialogOpen(false)}>Cancel</Button>
-                    <Button type="submit" disabled={isBudgetPaused && !editingPr}>
-                      {editingPr ? 'Update Requisition' : 'Submit for Approval'}
-                    </Button>
-                  </DialogFooter>
+
+                  <div className="flex flex-col gap-4 border-t border-border/50 pt-6">
+                    <div className="flex justify-between items-center px-2">
+                      <span className="text-[10px] uppercase font-bold text-muted-foreground">Cumulative Estimate</span>
+                      <span className="text-xl font-black text-primary">Ksh {currentTotal.toLocaleString()}</span>
+                    </div>
+                    <DialogFooter className="gap-2 sm:gap-0">
+                      <Button type="button" variant="outline" onClick={() => setIsDialogOpen(false)}>Cancel</Button>
+                      <Button type="submit" disabled={isBudgetPaused && !editingPr} className="bg-primary">
+                        {editingPr ? 'Save Revisions' : 'Launch for Approval'}
+                      </Button>
+                    </DialogFooter>
+                  </div>
                 </form>
               </Form>
             </DialogContent>
@@ -280,31 +295,31 @@ export default function RequisitionsPage() {
         </RoleGuard>
       </div>
 
-      <div className="flex items-center gap-4 bg-card p-4 rounded-lg border border-border">
+      <div className="flex items-center gap-4 bg-card p-4 rounded-xl border border-border shadow-sm">
         <div className="relative flex-1">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
           <Input 
-            placeholder="Search by description or REF#" 
-            className="pl-9" 
+            placeholder="Search by item name or REF#" 
+            className="pl-9 bg-muted/30 border-none shadow-none focus-visible:ring-1" 
             value={search}
             onChange={(e) => setSearch(e.target.value)}
           />
         </div>
-        <Button variant="outline" size="icon">
+        <Button variant="outline" size="icon" className="shrink-0">
           <Filter className="w-4 h-4" />
         </Button>
       </div>
 
-      <div className="bg-card rounded-lg border border-border overflow-hidden">
+      <Card className="border-border shadow-none overflow-hidden">
         <Table>
           <TableHeader>
-            <TableRow>
-              <TableHead>REF Number</TableHead>
-              <TableHead>Description</TableHead>
-              <TableHead>Requested By</TableHead>
-              <TableHead>Budget</TableHead>
-              <TableHead>Status</TableHead>
-              <TableHead className="text-right">Est. Total</TableHead>
+            <TableRow className="bg-muted/30 border-none">
+              <TableHead className="font-bold uppercase text-[10px]">Reference</TableHead>
+              <TableHead className="font-bold uppercase text-[10px]">Description Summary</TableHead>
+              <TableHead className="font-bold uppercase text-[10px]">Originator</TableHead>
+              <TableHead className="font-bold uppercase text-[10px]">Budget Line</TableHead>
+              <TableHead className="font-bold uppercase text-[10px]">Progress</TableHead>
+              <TableHead className="text-right font-bold uppercase text-[10px]">Net Total</TableHead>
               <TableHead className="w-[50px]"></TableHead>
             </TableRow>
           </TableHeader>
@@ -313,31 +328,39 @@ export default function RequisitionsPage() {
               filteredPrs.map((pr) => {
                 const budget = budgets.find(b => b.name === pr.budgetLine);
                 const isPaused = budget ? getBudgetStats(budget).isPaused : false;
+                const total = calculatePRTotal(pr);
                 
                 return (
-                  <TableRow key={pr.id}>
-                    <TableCell className="font-medium">{pr.refNumber}</TableCell>
-                    <TableCell>{pr.itemDescription}</TableCell>
-                    <TableCell>{pr.requesterName}</TableCell>
+                  <TableRow key={pr.id} className="group hover:bg-muted/5">
+                    <TableCell className="font-black text-primary text-xs">{pr.refNumber}</TableCell>
                     <TableCell>
                       <div className="flex flex-col">
-                        <span className="text-xs">{pr.budgetLine}</span>
-                        {isPaused && <span className="text-[9px] text-destructive font-bold uppercase">Budget Paused</span>}
+                        <span className="text-sm font-medium">{pr.items[0]?.description}</span>
+                        {pr.items.length > 1 && (
+                          <span className="text-[10px] text-muted-foreground italic">+ {pr.items.length - 1} more line items</span>
+                        )}
+                      </div>
+                    </TableCell>
+                    <TableCell className="text-xs">{pr.requesterName}</TableCell>
+                    <TableCell>
+                      <div className="flex flex-col">
+                        <span className="text-xs font-semibold">{pr.budgetLine}</span>
+                        {isPaused && <Badge variant="destructive" className="text-[8px] h-3.5 px-1 py-0 w-fit">PAUSED</Badge>}
                       </div>
                     </TableCell>
                     <TableCell>
                       <Badge variant={
                         pr.status === 'Approved' ? 'secondary' : 
                         pr.status === 'Rejected' ? 'destructive' : 'outline'
-                      }>
+                      } className="text-[9px] uppercase tracking-tighter">
                         {pr.status}
                       </Badge>
                     </TableCell>
-                    <TableCell className="text-right font-semibold">Ksh {(pr.estimatedCost * pr.quantity).toLocaleString()}</TableCell>
+                    <TableCell className="text-right font-black text-xs">Ksh {total.toLocaleString()}</TableCell>
                     <TableCell>
                       <DropdownMenu>
                         <DropdownMenuTrigger asChild>
-                          <Button variant="ghost" size="icon">
+                          <Button variant="ghost" size="icon" className="h-8 w-8 opacity-0 group-hover:opacity-100 transition-opacity">
                             <MoreVertical className="w-4 h-4" />
                           </Button>
                         </DropdownMenuTrigger>
@@ -345,11 +368,11 @@ export default function RequisitionsPage() {
                           <RoleGuard permission="approve_requisitions">
                             {pr.status === 'Pending Manager' && (
                               <>
-                                <DropdownMenuItem onClick={() => handleApprove(pr.id)} className="text-green-600">
+                                <DropdownMenuItem onClick={() => updatePRStatus(pr.id, 'Approved')} className="text-green-600">
                                   <CheckCircle className="w-4 h-4 mr-2" />
-                                  Approve
+                                  Authorize
                                 </DropdownMenuItem>
-                                <DropdownMenuItem onClick={() => handleReject(pr.id)} className="text-red-600">
+                                <DropdownMenuItem onClick={() => updatePRStatus(pr.id, 'Rejected')} className="text-red-600">
                                   <XCircle className="w-4 h-4 mr-2" />
                                   Reject
                                 </DropdownMenuItem>
@@ -362,7 +385,7 @@ export default function RequisitionsPage() {
                             {(pr.status === 'Draft' || currentUser.role === 'Admin') && (
                                <DropdownMenuItem onClick={() => handleEdit(pr)}>
                                 <Pencil className="w-4 h-4 mr-2" />
-                                Edit
+                                Edit Request
                               </DropdownMenuItem>
                             )}
                           </RoleGuard>
@@ -381,14 +404,17 @@ export default function RequisitionsPage() {
               })
             ) : (
               <TableRow>
-                <TableCell colSpan={7} className="h-24 text-center text-muted-foreground">
-                  No requisitions found.
+                <TableCell colSpan={7} className="h-32 text-center text-muted-foreground">
+                  <div className="flex flex-col items-center justify-center space-y-2 opacity-50">
+                    <Search className="w-8 h-8" />
+                    <p className="text-sm">No requisitions match your search filters.</p>
+                  </div>
                 </TableCell>
               </TableRow>
             )}
           </TableBody>
         </Table>
-      </div>
+      </Card>
     </div>
   );
 }

@@ -1,4 +1,3 @@
-
 "use client";
 
 import { useState, useEffect } from 'react';
@@ -11,13 +10,11 @@ import {
   ShoppingCart, 
   Plus, 
   Search, 
-  Filter, 
   MoreVertical, 
   Printer, 
   Truck, 
   CheckCircle, 
   Clock,
-  FileText,
   Building2,
   Calendar
 } from 'lucide-react';
@@ -65,7 +62,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { useToast } from '@/hooks/use-toast';
-import { LPO, PurchaseRequisition, Vendor } from '@/lib/types';
+import { LPO, calculatePRTotal } from '@/lib/types';
 
 const lpoSchema = z.object({
   prId: z.string().min(1, "Requisition is required"),
@@ -116,19 +113,21 @@ export default function LPOsPage() {
 
     if (!selectedPr || !selectedVendor) return;
 
+    const prTotal = calculatePRTotal(selectedPr);
+
     const newLpo: LPO = {
       id: `LPO-${Math.floor(Math.random() * 10000)}`,
       lpoNumber: `LPO/2024/${String(lpos.length + 1).padStart(3, '0')}`,
       prId: values.prId,
       vendorId: values.vendorId,
       vendorName: selectedVendor.name,
-      items: [{
-        description: selectedPr.itemDescription,
-        quantity: selectedPr.quantity,
-        unitPrice: selectedPr.estimatedCost,
-        total: selectedPr.estimatedCost * selectedPr.quantity
-      }],
-      totalValue: selectedPr.estimatedCost * selectedPr.quantity,
+      items: selectedPr.items.map(item => ({
+        description: item.description,
+        quantity: item.quantity,
+        unitPrice: item.estimatedUnitPrice,
+        total: item.quantity * item.estimatedUnitPrice
+      })),
+      totalValue: prTotal,
       deliveryDate: values.deliveryDate,
       paymentTerms: values.paymentTerms,
       status: 'Dispatched',
@@ -166,7 +165,7 @@ export default function LPOsPage() {
             <DialogHeader>
               <DialogTitle>Convert Requisition to LPO</DialogTitle>
               <DialogDescription>
-                Select an approved requisition to initiate the purchase order process.
+                Select an approved multi-item requisition to initiate the purchase order process.
               </DialogDescription>
             </DialogHeader>
             <Form {...form}>
@@ -186,7 +185,7 @@ export default function LPOsPage() {
                         <SelectContent>
                           {approvedPrs.map(pr => (
                             <SelectItem key={pr.id} value={pr.id}>
-                              {pr.refNumber} - {pr.itemDescription} (Ksh {(pr.estimatedCost * pr.quantity).toLocaleString()})
+                              {pr.refNumber} - {pr.items[0]?.description}... (Ksh {calculatePRTotal(pr).toLocaleString()})
                             </SelectItem>
                           ))}
                           {approvedPrs.length === 0 && (
@@ -338,7 +337,7 @@ export default function LPOsPage() {
                       </TableCell>
                       <TableCell>
                         <div className="flex flex-col">
-                          <span className="text-xs truncate max-w-[200px]">{lpo.items[0].description}</span>
+                          <span className="text-xs truncate max-w-[200px]">{lpo.items[0]?.description}</span>
                           {lpo.items.length > 1 && (
                             <span className="text-[10px] text-muted-foreground">+{lpo.items.length - 1} more items</span>
                           )}

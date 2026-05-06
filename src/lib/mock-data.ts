@@ -1,4 +1,3 @@
-
 import { PurchaseRequisition, Vendor, LPO, Budget, GRN, User } from './types';
 
 export const MOCK_BUDGETS: Budget[] = [
@@ -13,7 +12,7 @@ export const MOCK_BUDGETS: Budget[] = [
     q3Allocation: 250000,
     q4Allocation: 250000,
     spent: 120000, 
-    committed: 420000, // This should make it PAUSED in Q1/Q2 if cumulative is < 540k
+    committed: 0, 
   },
   { 
     id: 'BL-002', 
@@ -26,7 +25,7 @@ export const MOCK_BUDGETS: Budget[] = [
     q3Allocation: 500000,
     q4Allocation: 500000,
     spent: 450000, 
-    committed: 750000,
+    committed: 300000,
   },
   { 
     id: 'BL-003', 
@@ -73,9 +72,9 @@ export const MOCK_PRS: PurchaseRequisition[] = [
     id: 'PR-1001',
     refNumber: 'REQ/2024/001',
     requesterName: 'Jane Doe',
-    itemDescription: 'Development Laptops',
-    quantity: 2,
-    estimatedCost: 150000,
+    items: [
+      { id: 'item-1', description: 'MacBook Pro M3', quantity: 1, estimatedUnitPrice: 300000 }
+    ],
     budgetLine: 'IT Infrastructure',
     status: 'Pending Manager',
     createdAt: '2024-03-01T10:00:00Z',

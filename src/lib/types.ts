@@ -1,12 +1,17 @@
 export type PRStatus = 'Draft' | 'Pending Finance' | 'Pending Manager' | 'Pending Committee' | 'Approved' | 'Rejected' | 'LPO Generated';
 
+export interface PRItem {
+  id: string;
+  description: string;
+  quantity: number;
+  estimatedUnitPrice: number;
+}
+
 export interface PurchaseRequisition {
   id: string;
   refNumber: string;
   requesterName: string;
-  itemDescription: string;
-  quantity: number;
-  estimatedCost: number;
+  items: PRItem[];
   budgetLine: string; // Used as the link to Budget.name
   status: PRStatus;
   createdAt: string;
@@ -128,6 +133,10 @@ export const ROLE_PERMISSIONS: Record<UserRole, string[]> = {
 export function getCurrentQuarter(): number {
   const month = new Date().getMonth();
   return Math.floor(month / 3) + 1;
+}
+
+export function calculatePRTotal(pr: PurchaseRequisition): number {
+  return pr.items.reduce((sum, item) => sum + (item.quantity * item.estimatedUnitPrice), 0);
 }
 
 export function getBudgetStats(budget: Budget) {

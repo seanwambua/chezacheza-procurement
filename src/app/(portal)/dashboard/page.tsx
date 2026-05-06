@@ -1,4 +1,3 @@
-
 "use client";
 
 import { useEffect, useState } from 'react';
@@ -34,6 +33,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { calculatePRTotal } from '@/lib/types';
 
 export default function DashboardPage() {
   const { prs, budgets, vendors, lpos, grns } = useStore();
@@ -94,7 +94,6 @@ export default function DashboardPage() {
 
       {/* Bento Stats Grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-        {/* Main Stat Card - Prominent */}
         <div className="lg:col-span-2 lg:row-span-1">
           <StatCard 
             title={`Total Spend (Actual - ${selectedYear})`} 
@@ -106,7 +105,6 @@ export default function DashboardPage() {
           />
         </div>
 
-        {/* Supporting Stats */}
         <div className="lg:col-span-1">
           <StatCard 
             title="Pending Approvals" 
@@ -126,7 +124,6 @@ export default function DashboardPage() {
           />
         </div>
 
-        {/* Secondary Info Grid */}
         <div className="lg:col-span-2 lg:row-span-2">
           <Card className="h-full shadow-none border border-border">
             <CardHeader>
@@ -226,7 +223,6 @@ export default function DashboardPage() {
           />
         </div>
 
-        {/* Recent Activity - Wide Section */}
         <div className="lg:col-span-3">
           <Card className="shadow-none border border-border overflow-hidden">
             <CardHeader className="flex flex-row items-center justify-between py-4">
@@ -243,12 +239,12 @@ export default function DashboardPage() {
                           <FileCheck className="w-4 h-4 text-primary" />
                         </div>
                         <div className="overflow-hidden">
-                          <p className="font-bold text-sm truncate">{req.itemDescription}</p>
+                          <p className="font-bold text-sm truncate">{req.items[0]?.description || 'Untitled Request'}</p>
                           <p className="text-[10px] text-muted-foreground uppercase">{req.refNumber} • {req.budgetLine}</p>
                         </div>
                       </div>
                       <div className="text-right shrink-0 ml-4">
-                        <p className="text-sm font-black">Ksh {(req.estimatedCost * req.quantity).toLocaleString()}</p>
+                        <p className="text-sm font-black">Ksh {calculatePRTotal(req).toLocaleString()}</p>
                         <Badge variant={req.status === 'Approved' ? 'secondary' : 'outline'} className="text-[9px] px-1.5 py-0">
                           {req.status}
                         </Badge>
