@@ -280,13 +280,16 @@ export default function BudgetsPage() {
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
         <Card className="md:col-span-2 border-primary/10 bg-gradient-to-br from-primary/5 to-transparent relative overflow-hidden group">
           <CardHeader>
-             <CardTitle className="text-xs font-bold text-muted-foreground uppercase tracking-widest">
+             <CardTitle className="text-xs font-bold text-muted-foreground uppercase tracking-widest text-center sm:text-left">
                {isDetailed ? 'Global Fiscal Status' : 'Overall Spend'}
              </CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="flex flex-col sm:flex-row items-center gap-10">
-              <div className={isDetailed ? "relative w-36 h-36 shrink-0" : "relative w-40 h-40 shrink-0"}>
+            <div className="flex flex-col sm:flex-row items-center gap-8 md:gap-10">
+              <div className={cn(
+                "relative shrink-0",
+                isDetailed ? "w-32 h-32 md:w-36 md:h-36" : "w-36 h-36 md:w-40 md:h-40"
+              )}>
                 <svg className="w-full h-full transform -rotate-90" viewBox="0 0 100 100">
                   <circle className="text-muted/20 stroke-current" strokeWidth="8" fill="transparent" r="40" cx="50" cy="50" />
                   <circle
@@ -299,14 +302,14 @@ export default function BudgetsPage() {
                   />
                 </svg>
                 <div className="absolute inset-0 flex flex-col items-center justify-center">
-                  <span className={isDetailed ? "text-2xl font-black" : "text-3xl font-black"}>{overallUtilization}%</span>
+                  <span className={isDetailed ? "text-xl md:text-2xl font-black" : "text-2xl md:text-3xl font-black"}>{overallUtilization}%</span>
                   <span className="text-[8px] uppercase font-bold text-muted-foreground">Total Use</span>
                 </div>
               </div>
               <div className="flex-1 space-y-4 min-w-0 w-full">
-                <div className="text-center sm:text-left">
+                <div className="text-center sm:text-left space-y-1">
                   <p className={cn(
-                    "font-black text-primary tracking-tighter truncate",
+                    "font-black text-primary tracking-tighter truncate leading-none",
                     isDetailed ? "text-2xl md:text-3xl" : "text-3xl md:text-4xl"
                   )}>
                     Ksh {totalAllocation.toLocaleString()}
