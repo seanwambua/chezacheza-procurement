@@ -185,7 +185,7 @@ export default function LPOsPage() {
                         <SelectContent>
                           {approvedPrs.map(pr => (
                             <SelectItem key={pr.id} value={pr.id}>
-                              {pr.refNumber} - {pr.items[0]?.description}... (Ksh {calculatePRTotal(pr).toLocaleString()})
+                              {pr.refNumber} - {pr.items?.[0]?.description || 'Multi-item'}... (Ksh {calculatePRTotal(pr).toLocaleString()})
                             </SelectItem>
                           ))}
                           {approvedPrs.length === 0 && (
@@ -337,8 +337,8 @@ export default function LPOsPage() {
                       </TableCell>
                       <TableCell>
                         <div className="flex flex-col">
-                          <span className="text-xs truncate max-w-[200px]">{lpo.items[0]?.description}</span>
-                          {lpo.items.length > 1 && (
+                          <span className="text-xs truncate max-w-[200px]">{lpo.items?.[0]?.description || 'Untitled Item'}</span>
+                          {lpo.items?.length > 1 && (
                             <span className="text-[10px] text-muted-foreground">+{lpo.items.length - 1} more items</span>
                           )}
                         </div>

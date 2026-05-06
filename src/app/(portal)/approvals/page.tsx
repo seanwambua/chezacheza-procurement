@@ -51,7 +51,7 @@ export default function ApprovalsPage() {
   // Filter for pending items appropriate for the user's role
   const pendingPrs = prs.filter(pr => {
     const isPending = pr.status.startsWith('Pending');
-    const matchesSearch = pr.items.some(i => i.description.toLowerCase().includes(search.toLowerCase())) || 
+    const matchesSearch = pr.items?.some(i => i.description.toLowerCase().includes(search.toLowerCase())) || 
                           pr.refNumber.toLowerCase().includes(search.toLowerCase());
     
     // Admins see everything pending
@@ -183,8 +183,8 @@ export default function ApprovalsPage() {
                         <TableCell className="font-bold text-primary">{pr.refNumber}</TableCell>
                         <TableCell>
                           <div className="flex flex-col">
-                            <span className="text-sm font-medium">{pr.items[0]?.description}</span>
-                            {pr.items.length > 1 && (
+                            <span className="text-sm font-medium">{pr.items?.[0]?.description || 'Untitled Item'}</span>
+                            {pr.items?.length > 1 && (
                               <span className="text-[10px] text-muted-foreground uppercase">+{pr.items.length - 1} more items</span>
                             )}
                           </div>
@@ -192,7 +192,7 @@ export default function ApprovalsPage() {
                         <TableCell>
                           <div className="flex items-center gap-2">
                             <div className="w-6 h-6 rounded-full bg-accent/10 flex items-center justify-center text-[10px] font-bold text-accent">
-                              {pr.requesterName.charAt(0)}
+                              {pr.requesterName?.charAt(0) || '?'}
                             </div>
                             <span className="text-xs">{pr.requesterName}</span>
                           </div>

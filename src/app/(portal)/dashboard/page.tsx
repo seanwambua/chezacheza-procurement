@@ -46,10 +46,7 @@ export default function DashboardPage() {
 
   if (!mounted) return null;
 
-  // Filter budgets based on selected year
   const filteredBudgets = budgets.filter(b => b.fiscalYear === selectedYear);
-
-  // Dynamic calculations based on filtered budgets
   const totalSpendVal = filteredBudgets.reduce((acc, bl) => acc + bl.spent, 0);
   const pendingApprovals = prs.filter(pr => pr.status.includes('Pending')).length;
   const activeLposCount = lpos.filter(lpo => lpo.status !== 'Closed').length;
@@ -92,7 +89,6 @@ export default function DashboardPage() {
         </div>
       </div>
 
-      {/* Bento Stats Grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
         <div className="lg:col-span-2 lg:row-span-1">
           <StatCard 
@@ -239,7 +235,7 @@ export default function DashboardPage() {
                           <FileCheck className="w-4 h-4 text-primary" />
                         </div>
                         <div className="overflow-hidden">
-                          <p className="font-bold text-sm truncate">{req.items[0]?.description || 'Untitled Request'}</p>
+                          <p className="font-bold text-sm truncate">{req.items?.[0]?.description || 'Untitled Request'}</p>
                           <p className="text-[10px] text-muted-foreground uppercase">{req.refNumber} • {req.budgetLine}</p>
                         </div>
                       </div>
