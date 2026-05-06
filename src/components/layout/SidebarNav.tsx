@@ -18,7 +18,8 @@ import {
   ChevronDown,
   Building2,
   Maximize2,
-  Minimize2
+  Minimize2,
+  ChevronRight
 } from 'lucide-react';
 import { useUserStore } from '@/lib/user-store';
 import { UserRole, User } from '@/lib/types';
@@ -33,18 +34,47 @@ import {
 import { useEffect, useState } from 'react';
 import { ThemeToggle } from './ThemeToggle';
 import { Button } from '@/components/ui/button';
+import {
+  Collapsible,
+  CollapsibleContent,
+  CollapsibleTrigger,
+} from "@/components/ui/collapsible";
 
-const navItems = [
-  { name: 'Dashboard', href: '/dashboard', icon: LayoutDashboard, roles: ['Admin', 'Manager', 'Staff', 'Finance'] as UserRole[] },
-  { name: 'Departments', href: '/departments', icon: Building2, roles: ['Admin', 'Finance', 'Manager'] as UserRole[] },
-  { name: 'Budgets', href: '/budgets', icon: Wallet, roles: ['Admin', 'Finance', 'Manager'] as UserRole[] },
-  { name: 'Requisitions', href: '/requisitions', icon: FileText, roles: ['Admin', 'Manager', 'Staff', 'Finance'] as UserRole[] },
-  { name: 'Approvals', href: '/approvals', icon: CheckSquare, roles: ['Admin', 'Manager', 'Finance'] as UserRole[] },
-  { name: 'LPOs', href: '/lpos', icon: ShoppingCart, roles: ['Admin', 'Manager', 'Finance'] as UserRole[] },
-  { name: 'Deliveries (GRN)', href: '/deliveries', icon: Truck, roles: ['Admin', 'Manager', 'Finance'] as UserRole[] },
-  { name: 'Vendors', href: '/vendors', icon: Users, roles: ['Admin', 'Manager', 'Finance'] as UserRole[] },
-  { name: 'Users', href: '/users', icon: UserRound, roles: ['Admin'] as UserRole[] },
-  { name: 'Payments', href: '/payments', icon: CreditCard, roles: ['Admin', 'Finance'] as UserRole[] },
+const navGroups = [
+  {
+    id: 'workspace',
+    label: 'Workspace',
+    items: [
+      { name: 'Dashboard', href: '/dashboard', icon: LayoutDashboard, roles: ['Admin', 'Manager', 'Staff', 'Finance'] as UserRole[] },
+    ]
+  },
+  {
+    id: 'procurement',
+    label: 'Procurement Cycle',
+    items: [
+      { name: 'Requisitions', href: '/requisitions', icon: FileText, roles: ['Admin', 'Manager', 'Staff', 'Finance'] as UserRole[] },
+      { name: 'Approvals', href: '/approvals', icon: CheckSquare, roles: ['Admin', 'Manager', 'Finance'] as UserRole[] },
+      { name: 'LPOs', href: '/lpos', icon: ShoppingCart, roles: ['Admin', 'Manager', 'Finance'] as UserRole[] },
+      { name: 'Deliveries (GRN)', href: '/deliveries', icon: Truck, roles: ['Admin', 'Manager', 'Finance'] as UserRole[] },
+    ]
+  },
+  {
+    id: 'strategy',
+    label: 'Strategic Assets',
+    items: [
+      { name: 'Budgets', href: '/budgets', icon: Wallet, roles: ['Admin', 'Finance', 'Manager'] as UserRole[] },
+      { name: 'Departments', href: '/departments', icon: Building2, roles: ['Admin', 'Finance', 'Manager'] as UserRole[] },
+      { name: 'Vendors', href: '/vendors', icon: Users, roles: ['Admin', 'Manager', 'Finance'] as UserRole[] },
+    ]
+  },
+  {
+    id: 'admin',
+    label: 'Administration',
+    items: [
+      { name: 'Users', href: '/users', icon: UserRound, roles: ['Admin'] as UserRole[] },
+      { name: 'Payments', href: '/payments', icon: CreditCard, roles: ['Admin', 'Finance'] as UserRole[] },
+    ]
+  }
 ];
 
 export function SidebarNav() {
@@ -52,6 +82,12 @@ export function SidebarNav() {
   const router = useRouter();
   const { currentUser, users, setCurrentUser, viewPreference, setViewPreference } = useUserStore();
   const [mounted, setMounted] = useState(false);
+  const [openGroups, setOpenGroups] = useState<Record<string, boolean>>({
+    workspace: true,
+    procurement: true,
+    strategy: true,
+    admin: true
+  });
 
   useEffect(() => {
     setMounted(true);
@@ -74,8 +110,6 @@ export function SidebarNav() {
 
   if (!currentUser) return null;
 
-  const filteredNavItems = navItems.filter(item => item.roles.includes(currentUser.role));
-
   const handleUserSwitch = (user: User) => {
     setCurrentUser(user);
     router.push('/dashboard');
@@ -84,6 +118,10 @@ export function SidebarNav() {
 
   const toggleView = () => {
     setViewPreference(viewPreference === 'detailed' ? 'simple' : 'detailed');
+  };
+
+  const toggleGroup = (id: string) => {
+    setOpenGroups(prev => ({ ...prev, [id]: !prev[id] }));
   };
 
   return (
@@ -109,33 +147,62 @@ export function SidebarNav() {
         </div>
       </div>
       
-      <nav className="flex-1 px-4 space-y-1">
-        {filteredNavItems.map((item) => {
-          const isActive = pathname === item.href;
+      <div className="flex-1 px-4 space-y-4 overflow-y-auto custom-scrollbar">
+        {navGroups.map((group) => {
+          const visibleItems = group.items.filter(item => item.roles.includes(currentUser.role));
+          if (visibleItems.length === 0) return null;
+
           return (
-            <Link
-              key={item.name}
-              href={item.href}
-              className={cn(
-                "flex items-center gap-3 px-3 py-2 text-sm font-medium rounded-md transition-all duration-200",
-                isActive 
-                  ? "bg-primary text-primary-foreground shadow-sm" 
-                  : "text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground"
-              )}
+            <Collapsible
+              key={group.id}
+              open={openGroups[group.id]}
+              onOpenChange={() => toggleGroup(group.id)}
+              className="space-y-1"
             >
-              <item.icon className="w-4 h-4" />
-              {item.name}
-            </Link>
+              <CollapsibleTrigger asChild>
+                <Button 
+                  variant="ghost" 
+                  className="w-full flex items-center justify-between px-3 py-2 h-auto text-[10px] font-bold uppercase tracking-widest text-muted-foreground hover:bg-sidebar-accent hover:text-primary transition-all group"
+                >
+                  {group.label}
+                  {openGroups[group.id] ? (
+                    <ChevronDown className="w-3 h-3 transition-transform duration-200 group-hover:text-accent" />
+                  ) : (
+                    <ChevronRight className="w-3 h-3 transition-transform duration-200 group-hover:text-accent" />
+                  )}
+                </Button>
+              </CollapsibleTrigger>
+              <CollapsibleContent className="space-y-1 animate-in slide-in-from-top-2 duration-300">
+                {visibleItems.map((item) => {
+                  const isActive = pathname === item.href;
+                  return (
+                    <Link
+                      key={item.name}
+                      href={item.href}
+                      className={cn(
+                        "flex items-center gap-3 px-3 py-2 text-sm font-medium rounded-md transition-all duration-200 ml-1",
+                        isActive 
+                          ? "bg-primary text-primary-foreground shadow-sm" 
+                          : "text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground"
+                      )}
+                    >
+                      <item.icon className={cn("w-4 h-4", isActive ? "text-primary-foreground" : "text-accent")} />
+                      {item.name}
+                    </Link>
+                  );
+                })}
+              </CollapsibleContent>
+            </Collapsible>
           );
         })}
-      </nav>
+      </div>
 
-      <div className="p-4 mt-auto border-t border-sidebar-border space-y-4">
+      <div className="p-4 mt-auto border-t border-sidebar-border space-y-4 bg-sidebar">
         <div className="px-3">
            <p className="text-[9px] text-muted-foreground uppercase font-bold mb-2">Impersonate User (Demo)</p>
            <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <button className="flex items-center justify-between w-full p-2 bg-muted/50 rounded-md text-xs hover:bg-muted transition-colors">
+              <button className="flex items-center justify-between w-full p-2 bg-muted/50 rounded-md text-xs hover:bg-muted transition-colors border border-transparent hover:border-sidebar-border">
                 <span className="truncate">{currentUser.name} ({currentUser.role})</span>
                 <ChevronDown className="w-3 h-3 ml-2 opacity-50" />
               </button>
@@ -168,13 +235,13 @@ export function SidebarNav() {
           Settings
         </Link>
         
-        <div className="flex items-center gap-3 px-3 py-2">
-          <div className="w-8 h-8 rounded-full bg-accent flex items-center justify-center text-white text-xs font-bold shrink-0">
+        <div className="flex items-center gap-3 px-3 py-2 border-t border-sidebar-border/50 pt-4">
+          <div className="w-8 h-8 rounded-full bg-accent flex items-center justify-center text-white text-xs font-bold shrink-0 shadow-sm">
             {currentUser.name.charAt(0)}
           </div>
           <div className="flex flex-col overflow-hidden text-sidebar-foreground">
-            <span className="text-xs font-semibold truncate">{currentUser.name}</span>
-            <span className="text-[10px] text-muted-foreground truncate uppercase">{currentUser.role}</span>
+            <span className="text-xs font-bold truncate">{currentUser.name}</span>
+            <span className="text-[9px] text-muted-foreground truncate uppercase font-bold tracking-tight">{currentUser.role} • {currentUser.department}</span>
           </div>
         </div>
       </div>
