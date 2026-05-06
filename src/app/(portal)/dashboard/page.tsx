@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useEffect, useState } from 'react';
@@ -37,6 +38,7 @@ import {
 } from "@/components/ui/select";
 import { calculatePRTotal } from '@/lib/types';
 import Link from 'next/link';
+import { cn } from '@/lib/utils';
 
 export default function DashboardPage() {
   const { prs, budgets, vendors, lpos, grns } = useStore();
@@ -239,11 +241,17 @@ export default function DashboardPage() {
                           {isDetailed && <p className="text-[10px] text-muted-foreground uppercase">{req.refNumber} • {req.budgetLine}</p>}
                         </div>
                       </div>
-                      <div className="text-right shrink-0 ml-4 flex flex-col items-end gap-1">
-                        <p className={isDetailed ? "text-sm font-black" : "text-lg font-bold"}>
+                      <div className="text-right shrink-0 ml-4 flex flex-col items-end gap-1.5 justify-center min-w-[120px]">
+                        <p className={cn(
+                          "font-black tracking-tighter text-primary",
+                          isDetailed ? "text-sm" : "text-lg"
+                        )}>
                           Ksh {calculatePRTotal(req).toLocaleString()}
                         </p>
-                        <Badge variant={req.status === 'Approved' ? 'secondary' : 'outline'} className="text-[9px] px-1.5 py-0">
+                        <Badge 
+                          variant={req.status === 'Approved' ? 'secondary' : 'outline'} 
+                          className="text-[9px] px-1.5 py-0 h-4 uppercase tracking-tighter"
+                        >
                           {req.status}
                         </Badge>
                       </div>
