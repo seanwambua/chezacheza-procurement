@@ -188,7 +188,7 @@ export default function ApprovalsPage() {
                       <TableHead>Summary</TableHead>
                       {isDetailed && <TableHead>Requester</TableHead>}
                       <TableHead>Budget Health</TableHead>
-                      <TableHead className="text-right">Estimated Total</TableHead>
+                      {isDetailed && <TableHead className="text-right">Estimated Total</TableHead>}
                       <TableHead className="text-right">Actions</TableHead>
                     </TableRow>
                   </TableHeader>
@@ -233,12 +233,14 @@ export default function ApprovalsPage() {
                                 {isDetailed && <span className="text-xs font-bold uppercase">{isPaused ? 'Exhausted' : 'Healthy'}</span>}
                               </div>
                             </TableCell>
-                            <TableCell className={cn(
-                              "text-right font-black tracking-tighter",
-                              isDetailed ? "text-base" : "text-xl text-primary"
-                            )}>
-                              Ksh {total.toLocaleString()}
-                            </TableCell>
+                            {isDetailed && (
+                              <TableCell className={cn(
+                                "text-right font-black tracking-tighter",
+                                isDetailed ? "text-base" : "text-xl text-primary"
+                              )}>
+                                Ksh {total.toLocaleString()}
+                              </TableCell>
+                            )}
                             <TableCell className="text-right">
                               <Button 
                                 variant="outline" 
@@ -255,7 +257,7 @@ export default function ApprovalsPage() {
                       })
                     ) : (
                       <TableRow>
-                        <TableCell colSpan={isDetailed ? 6 : 5} className="h-32 text-center text-muted-foreground">
+                        <TableCell colSpan={isDetailed ? 6 : 4} className="h-32 text-center text-muted-foreground">
                           <p className="text-sm">Your approval queue is empty.</p>
                         </TableCell>
                       </TableRow>
@@ -278,7 +280,7 @@ export default function ApprovalsPage() {
                       <TableHead>Summary</TableHead>
                       <TableHead>Status</TableHead>
                       {isDetailed && <TableHead>Budget Line</TableHead>}
-                      <TableHead className="text-right">Final Total</TableHead>
+                      {isDetailed && <TableHead className="text-right">Final Total</TableHead>}
                       <TableHead className="text-right">Date</TableHead>
                     </TableRow>
                   </TableHeader>
@@ -305,9 +307,11 @@ export default function ApprovalsPage() {
                               {pr.budgetLine}
                             </TableCell>
                           )}
-                          <TableCell className="text-right font-black text-xs">
-                            Ksh {calculatePRTotal(pr).toLocaleString()}
-                          </TableCell>
+                          {isDetailed && (
+                            <TableCell className="text-right font-black text-xs">
+                              Ksh {calculatePRTotal(pr).toLocaleString()}
+                            </TableCell>
+                          )}
                           <TableCell className="text-right text-[10px] text-muted-foreground">
                             {new Date(pr.createdAt).toLocaleDateString()}
                           </TableCell>
@@ -315,7 +319,7 @@ export default function ApprovalsPage() {
                       ))
                     ) : (
                       <TableRow>
-                        <TableCell colSpan={isDetailed ? 6 : 5} className="h-32 text-center text-muted-foreground">
+                        <TableCell colSpan={isDetailed ? 6 : 4} className="h-32 text-center text-muted-foreground">
                           <p className="text-sm">No historical records found.</p>
                         </TableCell>
                       </TableRow>
