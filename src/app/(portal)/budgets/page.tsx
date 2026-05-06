@@ -205,7 +205,7 @@ export default function BudgetsPage() {
                       render={({ field }) => (
                         <FormItem>
                           <FormLabel>Assigned Department</FormLabel>
-                          <Select onValueChange={field.onChange} defaultValue={field.value}>
+                          <Select onValueChange={field.onChange} value={field.value}>
                             <FormControl>
                               <SelectTrigger>
                                 <SelectValue placeholder="Select department" />
@@ -217,6 +217,7 @@ export default function BudgetsPage() {
                               <SelectItem value="Marketing">Marketing</SelectItem>
                               <SelectItem value="HR">Human Resources</SelectItem>
                               <SelectItem value="Finance">Finance</SelectItem>
+                              <SelectItem value="Programs">Programs</SelectItem>
                             </SelectContent>
                           </Select>
                           <FormMessage />
@@ -242,7 +243,7 @@ export default function BudgetsPage() {
                       render={({ field }) => (
                         <FormItem>
                           <FormLabel>Fiscal Year</FormLabel>
-                          <Select onValueChange={field.onChange} defaultValue={field.value}>
+                          <Select onValueChange={field.onChange} value={field.value}>
                             <FormControl>
                               <SelectTrigger>
                                 <SelectValue placeholder="Year" />

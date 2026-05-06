@@ -71,9 +71,11 @@ export const useStore = create<ProcurementState>()(
 
         const updatedBudgetLines = state.budgetLines.map(bl => {
           let committed = bl.committed;
+          // Subtract old value if it was previously committed to this budget
           if (bl.name === oldPR.budgetLine && wasCommitted) {
             committed -= oldVal;
           }
+          // Add new value if it is now committed to this budget
           if (bl.name === newPR.budgetLine && isNowCommitted) {
             committed += newVal;
           }
