@@ -1,12 +1,12 @@
+
 "use client";
 
 import { useState, useEffect } from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { Star, Phone, Mail, UserPlus, Search, Users } from 'lucide-react';
+import { Star, Phone, Mail, UserPlus, Search, Users, History, CheckCircle2, AlertCircle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { PerformanceSummary } from '@/components/vendors/PerformanceSummary';
 import { Vendor } from '@/lib/types';
 import { useStore } from '@/lib/store';
 
@@ -117,7 +117,33 @@ export default function VendorsPage() {
                   </div>
                 </div>
 
-                <PerformanceSummary vendor={selectedVendor} />
+                <div className="space-y-6">
+                  <div className="flex items-center gap-2">
+                    <History className="w-4 h-4 text-primary" />
+                    <h4 className="text-sm font-bold uppercase tracking-wider">Performance History</h4>
+                  </div>
+                  
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <Card className="shadow-none border-border">
+                      <CardContent className="p-4 flex items-center gap-4">
+                        <CheckCircle2 className="w-5 h-5 text-green-600" />
+                        <div>
+                          <p className="text-xs font-bold uppercase text-muted-foreground">Success Rate</p>
+                          <p className="text-sm font-medium">High reliability across all orders</p>
+                        </div>
+                      </CardContent>
+                    </Card>
+                    <Card className="shadow-none border-border">
+                      <CardContent className="p-4 flex items-center gap-4">
+                        <AlertCircle className="w-5 h-5 text-accent" />
+                        <div>
+                          <p className="text-xs font-bold uppercase text-muted-foreground">Alerts</p>
+                          <p className="text-sm font-medium">{selectedVendor.disputeCount} resolved disputes</p>
+                        </div>
+                      </CardContent>
+                    </Card>
+                  </div>
+                </div>
               </div>
             </div>
           ) : (

@@ -1,4 +1,3 @@
-import { config } from 'dotenv';
-config();
 
-import '@/ai/flows/generate-vendor-performance-summary.ts';
+// Removed Genkit AI integration
+export {};
