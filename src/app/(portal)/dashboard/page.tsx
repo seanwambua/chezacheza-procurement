@@ -1,4 +1,3 @@
-
 "use client";
 
 import { useEffect, useState } from 'react';
@@ -79,7 +78,7 @@ export default function DashboardPage() {
       <div className="flex flex-col md:flex-row md:items-end justify-between gap-4">
         <div>
           <h2 className={isDetailed ? "text-3xl font-headline font-bold text-primary" : "text-4xl font-black text-primary"}>
-            Portal Overview
+            Overview
           </h2>
           <p className="text-muted-foreground">Strategic procurement metrics and fiscal health.</p>
         </div>
