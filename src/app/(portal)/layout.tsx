@@ -22,6 +22,7 @@ export default function PortalLayout({
 }) {
   const { isSidebarCollapsed } = useUserStore();
   const [mounted, setMounted] = useState(false);
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
   useEffect(() => {
     setMounted(true);
@@ -30,6 +31,7 @@ export default function PortalLayout({
   const defaultSidebarWidth = "w-20";
   const defaultMainMargin = "md:ml-20";
 
+  // Match the collapsed default from the store
   const sidebarWidth = isSidebarCollapsed ? "w-20" : "w-64";
   const mainMargin = isSidebarCollapsed ? "md:ml-20" : "md:ml-64";
 
@@ -40,7 +42,7 @@ export default function PortalLayout({
         <h1 className="text-xl font-headline font-bold text-primary tracking-tighter">
           CPP <span className="text-accent">Portal</span>
         </h1>
-        <Sheet>
+        <Sheet open={isMobileMenuOpen} onOpenChange={setIsMobileMenuOpen}>
           <SheetTrigger asChild>
             <Button variant="ghost" size="icon" className="hover:bg-accent/10">
               <Menu className="w-6 h-6 text-primary" />
@@ -50,7 +52,10 @@ export default function PortalLayout({
             <SheetHeader className="sr-only">
               <SheetTitle>Navigation Menu</SheetTitle>
             </SheetHeader>
-            <SidebarNav forceExpanded />
+            <SidebarNav 
+              forceExpanded 
+              onAction={() => setIsMobileMenuOpen(false)} 
+            />
           </SheetContent>
         </Sheet>
       </header>

@@ -19,7 +19,8 @@ import {
   Minimize2,
   PanelLeftClose,
   PanelLeft,
-  ChevronDown
+  ChevronDown,
+  Check
 } from 'lucide-react';
 import { useUserStore } from '@/lib/user-store';
 import { UserRole, User } from '@/lib/types';
@@ -71,7 +72,12 @@ const navGroups = [
   }
 ];
 
-export function SidebarNav({ forceExpanded = false }: { forceExpanded?: boolean }) {
+interface SidebarNavProps {
+  forceExpanded?: boolean;
+  onAction?: () => void;
+}
+
+export function SidebarNav({ forceExpanded = false, onAction }: SidebarNavProps) {
   const pathname = usePathname();
   const router = useRouter();
   const { 
@@ -103,6 +109,7 @@ export function SidebarNav({ forceExpanded = false }: { forceExpanded?: boolean 
 
   const handleUserSwitch = (user: User) => {
     setCurrentUser(user);
+    if (onAction) onAction();
     router.push('/dashboard');
     router.refresh();
   };
@@ -147,6 +154,7 @@ export function SidebarNav({ forceExpanded = false }: { forceExpanded?: boolean 
           <div className="space-y-1">
             <Link
               href="/dashboard"
+              onClick={onAction}
               className={cn(
                 "flex items-center gap-3 px-3 py-2.5 text-sm font-medium rounded-xl transition-all duration-200",
                 pathname === '/dashboard' 
@@ -177,6 +185,7 @@ export function SidebarNav({ forceExpanded = false }: { forceExpanded?: boolean 
                     <Link
                       key={item.name}
                       href={item.href}
+                      onClick={onAction}
                       className={cn(
                         "flex items-center gap-3 px-3 py-2.5 text-sm font-medium rounded-xl transition-all duration-200",
                         isActive 
@@ -255,10 +264,13 @@ export function SidebarNav({ forceExpanded = false }: { forceExpanded?: boolean 
 
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <button className={cn(
-                "flex items-center justify-between p-2 bg-muted/40 rounded-xl text-xs hover:bg-muted/60 transition-all border border-transparent hover:border-sidebar-border w-full group",
-                collapsed && "justify-center p-1.5"
-              )}>
+              <button 
+                type="button"
+                className={cn(
+                  "flex items-center justify-between p-2 bg-muted/40 rounded-xl text-xs hover:bg-muted/60 transition-all border border-transparent hover:border-sidebar-border w-full group outline-none",
+                  collapsed && "justify-center p-1.5"
+                )}
+              >
                 {!collapsed ? (
                   <>
                     <div className="flex flex-col items-start min-w-0 text-left">
@@ -279,11 +291,21 @@ export function SidebarNav({ forceExpanded = false }: { forceExpanded?: boolean 
               <DropdownMenuSeparator className="my-1 bg-primary/5" />
               <div className="space-y-1">
                 {users.map(user => (
-                  <DropdownMenuItem key={user.id} onClick={() => handleUserSwitch(user)} className="cursor-pointer rounded-lg px-2 py-2 focus:bg-accent/10">
+                  <DropdownMenuItem 
+                    key={user.id} 
+                    onClick={() => handleUserSwitch(user)} 
+                    className="cursor-pointer rounded-lg px-2 py-2 focus:bg-accent/10 flex items-center justify-between group"
+                  >
                     <div className="flex flex-col min-w-0">
-                      <span className="font-bold text-xs text-primary">{user.name}</span>
+                      <span className={cn(
+                        "font-bold text-xs transition-colors",
+                        currentUser.id === user.id ? "text-accent" : "text-primary"
+                      )}>
+                        {user.name}
+                      </span>
                       <span className="text-[9px] text-muted-foreground uppercase font-bold truncate opacity-70">{user.role} • {user.department}</span>
                     </div>
+                    {currentUser.id === user.id && <Check className="w-4 h-4 text-accent" />}
                   </DropdownMenuItem>
                 ))}
               </div>
