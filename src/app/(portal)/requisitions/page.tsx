@@ -15,7 +15,7 @@ import {
   TableRow 
 } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
-import { Plus, Search, Filter, MoreVertical, Pencil, Trash2 } from 'lucide-react';
+import { Plus, Search, Filter, MoreVertical, Pencil, Trash2, CheckCircle, XCircle } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import {
   Dialog,
@@ -41,7 +41,9 @@ import {
 } from "@/components/ui/form";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useStore } from '@/lib/store';
+import { useUserStore } from '@/lib/user-store';
 import { PurchaseRequisition } from '@/lib/types';
+import { RoleGuard } from '@/components/auth/RoleGuard';
 
 const requisitionSchema = z.object({
   itemDescription: z.string().min(3, "Description must be at least 3 characters"),
@@ -53,7 +55,8 @@ const requisitionSchema = z.object({
 type RequisitionFormValues = z.infer<typeof requisitionSchema>;
 
 export default function RequisitionsPage() {
-  const { prs, budgetLines, addPR, updatePR, deletePR } = useStore();
+  const { prs, budgetLines, addPR, updatePR, deletePR, updatePRStatus } = useStore();
+  const { currentUser, hasPermission } = useUserStore();
   const [search, setSearch] = useState('');
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [editingPr, setEditingPr] = useState<PurchaseRequisition | null>(null);
@@ -91,12 +94,19 @@ export default function RequisitionsPage() {
     }
   }, [editingPr, form]);
 
-  if (!mounted) return null;
+  if (!mounted || !currentUser) return null;
 
-  const filteredPrs = prs.filter(pr => 
-    pr.itemDescription.toLowerCase().includes(search.toLowerCase()) || 
-    pr.refNumber.toLowerCase().includes(search.toLowerCase())
-  );
+  const filteredPrs = prs.filter(pr => {
+    const matchesSearch = pr.itemDescription.toLowerCase().includes(search.toLowerCase()) || 
+                          pr.refNumber.toLowerCase().includes(search.toLowerCase());
+    
+    // Staff can only see their own PRs if they don't have global view permission
+    if (currentUser.role === 'Staff') {
+      return matchesSearch && pr.requesterName === currentUser.name;
+    }
+    
+    return matchesSearch;
+  });
 
   const onSubmit = (values: RequisitionFormValues) => {
     if (editingPr) {
@@ -104,7 +114,7 @@ export default function RequisitionsPage() {
     } else {
       addPR({
         ...values,
-        requesterName: 'Jane Doe',
+        requesterName: currentUser.name,
         status: 'Pending Manager',
       });
     }
@@ -123,6 +133,17 @@ export default function RequisitionsPage() {
     }
   };
 
+  const handleApprove = (id: string) => {
+    updatePRStatus(id, 'Approved');
+  };
+
+  const handleReject = (id: string) => {
+    const reason = prompt('Please enter rejection reason:');
+    if (reason) {
+      updatePRStatus(id, 'Rejected');
+    }
+  };
+
   return (
     <div className="space-y-6 animate-in fade-in duration-500">
       <div className="flex items-center justify-between">
@@ -131,100 +152,102 @@ export default function RequisitionsPage() {
           <p className="text-muted-foreground">Manage and track internal purchase requests.</p>
         </div>
         
-        <Dialog open={isDialogOpen} onOpenChange={(open) => {
-          setIsDialogOpen(open);
-          if (!open) setEditingPr(null);
-        }}>
-          <DialogTrigger asChild>
-            <Button className="bg-primary hover:bg-primary/90" onClick={() => setEditingPr(null)}>
-              <Plus className="w-4 h-4 mr-2" />
-              New Requisition
-            </Button>
-          </DialogTrigger>
-          <DialogContent className="max-w-2xl">
-            <DialogHeader>
-              <DialogTitle>{editingPr ? 'Edit Requisition' : 'Submit New PR'}</DialogTitle>
-            </DialogHeader>
-            <Form {...form}>
-              <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4 py-4">
-                <div className="grid grid-cols-2 gap-4">
-                  <div className="col-span-2">
+        <RoleGuard permission="create_requisitions">
+          <Dialog open={isDialogOpen} onOpenChange={(open) => {
+            setIsDialogOpen(open);
+            if (!open) setEditingPr(null);
+          }}>
+            <DialogTrigger asChild>
+              <Button className="bg-primary hover:bg-primary/90" onClick={() => setEditingPr(null)}>
+                <Plus className="w-4 h-4 mr-2" />
+                New Requisition
+              </Button>
+            </DialogTrigger>
+            <DialogContent className="max-w-2xl">
+              <DialogHeader>
+                <DialogTitle>{editingPr ? 'Edit Requisition' : 'Submit New PR'}</DialogTitle>
+              </DialogHeader>
+              <Form {...form}>
+                <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4 py-4">
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="col-span-2">
+                      <FormField
+                        control={form.control}
+                        name="itemDescription"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Item Description</FormLabel>
+                            <FormControl>
+                              <Input placeholder="e.g. 10x Office Keyboards" {...field} />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                    </div>
+                    
                     <FormField
                       control={form.control}
-                      name="itemDescription"
+                      name="quantity"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel>Item Description</FormLabel>
+                          <FormLabel>Quantity</FormLabel>
                           <FormControl>
-                            <Input placeholder="e.g. 10x Office Keyboards" {...field} />
+                            <Input type="number" {...field} />
                           </FormControl>
                           <FormMessage />
                         </FormItem>
                       )}
                     />
-                  </div>
-                  
-                  <FormField
-                    control={form.control}
-                    name="quantity"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Quantity</FormLabel>
-                        <FormControl>
-                          <Input type="number" {...field} />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
 
-                  <FormField
-                    control={form.control}
-                    name="estimatedCost"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Estimated Unit Cost (Ksh)</FormLabel>
-                        <FormControl>
-                          <Input type="number" step="0.01" {...field} />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-
-                  <div className="col-span-2">
                     <FormField
                       control={form.control}
-                      name="budgetLine"
+                      name="estimatedCost"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel>Budget Line</FormLabel>
-                          <Select onValueChange={field.onChange} value={field.value}>
-                            <FormControl>
-                              <SelectTrigger>
-                                <SelectValue placeholder="Select budget line" />
-                              </SelectTrigger>
-                            </FormControl>
-                            <SelectContent>
-                              {budgetLines.map(bl => (
-                                <SelectItem key={bl.id} value={bl.name}>{bl.name}</SelectItem>
-                              ))}
-                            </SelectContent>
-                          </Select>
+                          <FormLabel>Estimated Unit Cost (Ksh)</FormLabel>
+                          <FormControl>
+                            <Input type="number" step="0.01" {...field} />
+                          </FormControl>
                           <FormMessage />
                         </FormItem>
                       )}
                     />
+
+                    <div className="col-span-2">
+                      <FormField
+                        control={form.control}
+                        name="budgetLine"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Budget Line</FormLabel>
+                            <Select onValueChange={field.onChange} value={field.value}>
+                              <FormControl>
+                                <SelectTrigger>
+                                  <SelectValue placeholder="Select budget line" />
+                                </SelectTrigger>
+                              </FormControl>
+                              <SelectContent>
+                                {budgetLines.map(bl => (
+                                  <SelectItem key={bl.id} value={bl.name}>{bl.name}</SelectItem>
+                                ))}
+                              </SelectContent>
+                            </Select>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                    </div>
                   </div>
-                </div>
-                <DialogFooter className="pt-4">
-                  <Button type="button" variant="outline" onClick={() => setIsDialogOpen(false)}>Cancel</Button>
-                  <Button type="submit">{editingPr ? 'Update Requisition' : 'Submit for Approval'}</Button>
-                </DialogFooter>
-              </form>
-            </Form>
-          </DialogContent>
-        </Dialog>
+                  <DialogFooter className="pt-4">
+                    <Button type="button" variant="outline" onClick={() => setIsDialogOpen(false)}>Cancel</Button>
+                    <Button type="submit">{editingPr ? 'Update Requisition' : 'Submit for Approval'}</Button>
+                  </DialogFooter>
+                </form>
+              </Form>
+            </DialogContent>
+          </Dialog>
+        </RoleGuard>
       </div>
 
       <div className="flex items-center gap-4 bg-white p-4 rounded-lg border border-border">
@@ -280,14 +303,39 @@ export default function RequisitionsPage() {
                         </Button>
                       </DropdownMenuTrigger>
                       <DropdownMenuContent align="end">
-                        <DropdownMenuItem onClick={() => handleEdit(pr)}>
-                          <Pencil className="w-4 h-4 mr-2" />
-                          Edit
-                        </DropdownMenuItem>
-                        <DropdownMenuItem onClick={() => handleDelete(pr.id)} className="text-destructive focus:text-destructive">
-                          <Trash2 className="w-4 h-4 mr-2" />
-                          Delete
-                        </DropdownMenuItem>
+                        {/* Manager/Admin Approvals */}
+                        <RoleGuard permission="approve_requisitions">
+                          {pr.status === 'Pending Manager' && (
+                            <>
+                              <DropdownMenuItem onClick={() => handleApprove(pr.id)} className="text-green-600">
+                                <CheckCircle className="w-4 h-4 mr-2" />
+                                Approve
+                              </DropdownMenuItem>
+                              <DropdownMenuItem onClick={() => handleReject(pr.id)} className="text-red-600">
+                                <XCircle className="w-4 h-4 mr-2" />
+                                Reject
+                              </DropdownMenuItem>
+                              <DropdownMenuSeparator />
+                            </>
+                          )}
+                        </RoleGuard>
+
+                        {/* Edit/Delete (Only if Draft or user is Admin) */}
+                        <RoleGuard allowedRoles={['Admin', 'Staff']}>
+                          {(pr.status === 'Draft' || currentUser.role === 'Admin') && (
+                             <DropdownMenuItem onClick={() => handleEdit(pr)}>
+                              <Pencil className="w-4 h-4 mr-2" />
+                              Edit
+                            </DropdownMenuItem>
+                          )}
+                        </RoleGuard>
+
+                        <RoleGuard allowedRoles={['Admin']}>
+                          <DropdownMenuItem onClick={() => handleDelete(pr.id)} className="text-destructive focus:text-destructive">
+                            <Trash2 className="w-4 h-4 mr-2" />
+                            Delete
+                          </DropdownMenuItem>
+                        </RoleGuard>
                       </DropdownMenuContent>
                     </DropdownMenu>
                   </TableCell>

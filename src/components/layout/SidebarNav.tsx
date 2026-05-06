@@ -14,23 +14,39 @@ import {
   CreditCard,
   Settings,
   Wallet,
-  UserRound
+  UserRound,
+  ChevronDown
 } from 'lucide-react';
+import { useUserStore } from '@/lib/user-store';
+import { UserRole } from '@/lib/types';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 
 const navItems = [
-  { name: 'Dashboard', href: '/dashboard', icon: LayoutDashboard },
-  { name: 'Budgets', href: '/budgets', icon: Wallet },
-  { name: 'Requisitions', href: '/requisitions', icon: FileText },
-  { name: 'Approvals', href: '/approvals', icon: CheckSquare },
-  { name: 'LPOs', href: '/lpos', icon: ShoppingCart },
-  { name: 'Deliveries (GRN)', href: '/deliveries', icon: Truck },
-  { name: 'Vendors', href: '/vendors', icon: Users },
-  { name: 'Users', href: '/users', icon: UserRound },
-  { name: 'Payments & Closure', href: '/payments', icon: CreditCard },
+  { name: 'Dashboard', href: '/dashboard', icon: LayoutDashboard, roles: ['Admin', 'Manager', 'Staff', 'Finance'] as UserRole[] },
+  { name: 'Budgets', href: '/budgets', icon: Wallet, roles: ['Admin', 'Finance', 'Manager'] as UserRole[] },
+  { name: 'Requisitions', href: '/requisitions', icon: FileText, roles: ['Admin', 'Manager', 'Staff', 'Finance'] as UserRole[] },
+  { name: 'Approvals', href: '/approvals', icon: CheckSquare, roles: ['Admin', 'Manager', 'Finance'] as UserRole[] },
+  { name: 'LPOs', href: '/lpos', icon: ShoppingCart, roles: ['Admin', 'Manager', 'Finance'] as UserRole[] },
+  { name: 'Deliveries (GRN)', href: '/deliveries', icon: Truck, roles: ['Admin', 'Manager', 'Finance'] as UserRole[] },
+  { name: 'Vendors', href: '/vendors', icon: Users, roles: ['Admin', 'Manager', 'Finance'] as UserRole[] },
+  { name: 'Users', href: '/users', icon: UserRound, roles: ['Admin'] as UserRole[] },
+  { name: 'Payments', href: '/payments', icon: CreditCard, roles: ['Admin', 'Finance'] as UserRole[] },
 ];
 
 export function SidebarNav() {
   const pathname = usePathname();
+  const { currentUser, users, setCurrentUser } = useUserStore();
+
+  if (!currentUser) return null;
+
+  const filteredNavItems = navItems.filter(item => item.roles.includes(currentUser.role));
 
   return (
     <div className="flex flex-col h-full bg-sidebar border-r border-sidebar-border">
@@ -42,7 +58,7 @@ export function SidebarNav() {
       </div>
       
       <nav className="flex-1 px-4 space-y-1">
-        {navItems.map((item) => {
+        {filteredNavItems.map((item) => {
           const isActive = pathname === item.href;
           return (
             <Link
@@ -62,7 +78,32 @@ export function SidebarNav() {
         })}
       </nav>
 
-      <div className="p-4 mt-auto border-t border-sidebar-border">
+      <div className="p-4 mt-auto border-t border-sidebar-border space-y-4">
+        {/* Role Switcher for Testing */}
+        <div className="px-3">
+           <p className="text-[9px] text-muted-foreground uppercase font-bold mb-2">Impersonate User (Demo)</p>
+           <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <button className="flex items-center justify-between w-full p-2 bg-muted/50 rounded-md text-xs hover:bg-muted transition-colors">
+                <span className="truncate">{currentUser.name} ({currentUser.role})</span>
+                <ChevronDown className="w-3 h-3 ml-2 opacity-50" />
+              </button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end" className="w-56">
+              <DropdownMenuLabel>Select User Perspective</DropdownMenuLabel>
+              <DropdownMenuSeparator />
+              {users.map(user => (
+                <DropdownMenuItem key={user.id} onClick={() => setCurrentUser(user)}>
+                  <div className="flex flex-col">
+                    <span className="font-medium text-xs">{user.name}</span>
+                    <span className="text-[10px] text-muted-foreground">{user.role} • {user.department}</span>
+                  </div>
+                </DropdownMenuItem>
+              ))}
+            </DropdownMenuContent>
+          </DropdownMenu>
+        </div>
+
         <Link
           href="/settings"
           className="flex items-center gap-3 px-3 py-2 text-sm font-medium text-sidebar-foreground rounded-md hover:bg-sidebar-accent transition-all duration-200"
@@ -70,13 +111,14 @@ export function SidebarNav() {
           <Settings className="w-4 h-4" />
           Settings
         </Link>
-        <div className="mt-4 flex items-center gap-3 px-3 py-2">
-          <div className="w-8 h-8 rounded-full bg-accent flex items-center justify-center text-white text-xs font-bold">
-            JD
+        
+        <div className="flex items-center gap-3 px-3 py-2">
+          <div className="w-8 h-8 rounded-full bg-accent flex items-center justify-center text-white text-xs font-bold shrink-0">
+            {currentUser.name.charAt(0)}
           </div>
           <div className="flex flex-col overflow-hidden">
-            <span className="text-xs font-semibold truncate text-sidebar-foreground">Jane Doe</span>
-            <span className="text-[10px] text-muted-foreground truncate uppercase">Administrator</span>
+            <span className="text-xs font-semibold truncate text-sidebar-foreground">{currentUser.name}</span>
+            <span className="text-[10px] text-muted-foreground truncate uppercase">{currentUser.role}</span>
           </div>
         </div>
       </div>

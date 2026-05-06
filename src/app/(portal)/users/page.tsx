@@ -15,7 +15,7 @@ import {
   TableRow 
 } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
-import { Plus, Search, MoreVertical, Pencil, Trash2, UserPlus, Shield } from 'lucide-react';
+import { Plus, Search, MoreVertical, Pencil, Trash2, UserPlus, Shield, Lock } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import {
   Dialog,
@@ -42,6 +42,7 @@ import {
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useUserStore } from '@/lib/user-store';
 import { User, UserRole } from '@/lib/types';
+import { RoleGuard } from '@/components/auth/RoleGuard';
 
 const userSchema = z.object({
   name: z.string().min(2, "Name must be at least 2 characters"),
@@ -54,7 +55,7 @@ const userSchema = z.object({
 type UserFormValues = z.infer<typeof userSchema>;
 
 export default function UsersPage() {
-  const { users, addUser, updateUser, deleteUser, toggleUserStatus } = useUserStore();
+  const { users, addUser, updateUser, deleteUser, toggleUserStatus, currentUser } = useUserStore();
   const [search, setSearch] = useState('');
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [editingUser, setEditingUser] = useState<User | null>(null);
@@ -96,6 +97,20 @@ export default function UsersPage() {
   }, [editingUser, form]);
 
   if (!mounted) return null;
+
+  // Final Safety Check
+  if (currentUser?.role !== 'Admin') {
+    return (
+      <div className="flex flex-col items-center justify-center h-[60vh] text-center space-y-4">
+        <div className="w-16 h-16 bg-muted rounded-full flex items-center justify-center">
+          <Lock className="w-8 h-8 text-muted-foreground" />
+        </div>
+        <h2 className="text-xl font-bold">Access Restricted</h2>
+        <p className="text-muted-foreground max-w-sm">Only system administrators can manage users and roles. Please contact support if you believe this is an error.</p>
+        <Button variant="outline" onClick={() => window.history.back()}>Go Back</Button>
+      </div>
+    );
+  }
 
   const filteredUsers = users.filter(user => 
     user.name.toLowerCase().includes(search.toLowerCase()) || 

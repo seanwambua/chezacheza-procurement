@@ -82,3 +82,35 @@ export interface User {
   status: 'Active' | 'Inactive';
   createdAt: string;
 }
+
+// RBAC Permissions Mapping
+export const ROLE_PERMISSIONS: Record<UserRole, string[]> = {
+  Admin: ['*'], // Access to everything
+  Manager: [
+    'view_dashboard',
+    'view_budgets',
+    'view_requisitions',
+    'create_requisitions',
+    'approve_requisitions',
+    'view_vendors',
+    'manage_vendors',
+    'view_lpos',
+    'view_deliveries'
+  ],
+  Finance: [
+    'view_dashboard',
+    'view_budgets',
+    'manage_budgets',
+    'view_requisitions',
+    'approve_requisitions',
+    'view_vendors',
+    'view_lpos',
+    'view_payments'
+  ],
+  Staff: [
+    'view_dashboard',
+    'view_requisitions',
+    'create_requisitions',
+    'view_own_requisitions'
+  ],
+};

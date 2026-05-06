@@ -3,6 +3,7 @@
 
 import { useState, useEffect } from 'react';
 import { useStore } from '@/lib/store';
+import { useUserStore } from '@/lib/user-store';
 import { 
   Table, 
   TableBody, 
@@ -14,10 +15,12 @@ import {
 import { Progress } from '@/components/ui/progress';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { StatCard } from '@/components/dashboard/StatCard';
-import { Wallet, PieChart, TrendingDown, ArrowUpRight } from 'lucide-react';
+import { Wallet, PieChart, TrendingDown, ArrowUpRight, Lock } from 'lucide-react';
+import { Button } from '@/components/ui/button';
 
 export default function BudgetsPage() {
   const { budgetLines } = useStore();
+  const { currentUser } = useUserStore();
   const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
@@ -25,6 +28,20 @@ export default function BudgetsPage() {
   }, []);
 
   if (!mounted) return null;
+
+  // Final Safety Check
+  if (currentUser && !['Admin', 'Finance', 'Manager'].includes(currentUser.role)) {
+    return (
+      <div className="flex flex-col items-center justify-center h-[60vh] text-center space-y-4">
+        <div className="w-16 h-16 bg-muted rounded-full flex items-center justify-center">
+          <Lock className="w-8 h-8 text-muted-foreground" />
+        </div>
+        <h2 className="text-xl font-bold">Financial Access Restricted</h2>
+        <p className="text-muted-foreground max-w-sm">You do not have the required permissions to view departmental budgets.</p>
+        <Button variant="outline" onClick={() => window.history.back()}>Go Back</Button>
+      </div>
+    );
+  }
 
   const totalAllocation = budgetLines.reduce((acc, bl) => acc + bl.allocation, 0);
   const totalSpent = budgetLines.reduce((acc, bl) => acc + bl.spent, 0);
