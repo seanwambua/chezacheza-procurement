@@ -27,12 +27,12 @@ import {
   TableHead, 
   TableHeader, 
   TableRow 
-} from '@/table';
-import { Button } from '@/button';
-import { Badge } from '@/badge';
-import { Input } from '@/input';
-import { Textarea } from '@/textarea';
-import { Card, CardContent, CardHeader, CardTitle } from '@/card';
+} from '@/components/ui/table';
+import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
+import { Input } from '@/components/ui/input';
+import { Textarea } from '@/components/ui/textarea';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { StatCard } from '@/components/dashboard/StatCard';
 import {
   Dialog,
@@ -42,7 +42,7 @@ import {
   DialogTrigger,
   DialogFooter,
   DialogDescription
-} from "@/dialog";
+} from "@/components/ui/dialog";
 import {
   Form,
   FormControl,
@@ -51,7 +51,7 @@ import {
   FormLabel,
   FormMessage,
   FormDescription,
-} from "@/form";
+} from "@/components/ui/form";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -61,20 +61,20 @@ import {
   AlertDialogFooter,
   AlertDialogHeader,
   AlertDialogTitle,
-} from "@/alert-dialog";
+} from "@/components/ui/alert-dialog";
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from "@/select";
+} from "@/components/ui/select";
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
-} from "@/dropdown-menu";
+} from "@/components/ui/dropdown-menu";
 import { useToast } from '@/hooks/use-toast';
 import { LPO, calculatePRTotal, GRN } from '@/lib/types';
 import { cn } from '@/lib/utils';

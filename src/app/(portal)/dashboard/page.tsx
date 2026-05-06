@@ -43,7 +43,7 @@ import {
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from "@/select";
+} from "@/components/ui/select";
 import { 
   Sheet,
   SheetContent,
@@ -52,7 +52,7 @@ import {
   SheetTrigger,
   SheetFooter,
   SheetDescription
-} from "@/sheet";
+} from "@/components/ui/sheet";
 import {
   Form,
   FormControl,
@@ -61,7 +61,7 @@ import {
   FormLabel,
   FormMessage,
   FormDescription,
-} from "@/form";
+} from "@/components/ui/form";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -71,10 +71,10 @@ import {
   AlertDialogFooter,
   AlertDialogHeader,
   AlertDialogTitle,
-} from "@/alert-dialog";
-import { Input } from '@/input';
-import { Button } from '@/button';
-import { Checkbox } from '@/checkbox';
+} from "@/components/ui/alert-dialog";
+import { Input } from '@/components/ui/input';
+import { Button } from '@/components/ui/button';
+import { Checkbox } from '@/components/ui/checkbox';
 import { calculatePRTotal } from '@/lib/types';
 import Link from 'next/link';
 import { cn } from '@/lib/utils';
@@ -83,7 +83,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
 import { useToast } from '@/hooks/use-toast';
 import { RoleGuard } from '@/components/auth/RoleGuard';
-import { Separator } from '@/separator';
+import { Separator } from '@/components/ui/separator';
 
 const fiscalYearSchema = z.object({
   year: z.string().min(4, "Year is required"),

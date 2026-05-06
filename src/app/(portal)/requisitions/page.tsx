@@ -4,7 +4,7 @@ import { useState, useEffect, Suspense } from 'react';
 import { useForm, useFieldArray } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
-import { Button } from '@/button';
+import { Button } from '@/components/ui/button';
 import { 
   Table, 
   TableBody, 
@@ -12,11 +12,11 @@ import {
   TableHead, 
   TableHeader, 
   TableRow 
-} from '@/table';
-import { Card } from '@/card';
-import { Badge } from '@/badge';
+} from '@/components/ui/table';
+import { Card } from '@/components/ui/card';
+import { Badge } from '@/components/ui/badge';
 import { Plus, Search, Filter, MoreVertical, Pencil, Trash2, CheckCircle, XCircle, AlertTriangle, PlusCircle, Trash } from 'lucide-react';
-import { Input } from '@/input';
+import { Input } from '@/components/ui/input';
 import {
   Dialog,
   DialogContent,
@@ -25,14 +25,14 @@ import {
   DialogTrigger,
   DialogFooter,
   DialogDescription
-} from "@/dialog";
+} from "@/components/ui/dialog";
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
   DropdownMenuSeparator,
-} from "@/dropdown-menu";
+} from "@/components/ui/dropdown-menu";
 import {
   Form,
   FormControl,
@@ -40,7 +40,7 @@ import {
   FormItem,
   FormLabel,
   FormMessage,
-} from "@/form";
+} from "@/components/ui/form";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -50,13 +50,13 @@ import {
   AlertDialogFooter,
   AlertDialogHeader,
   AlertDialogTitle,
-} from "@/alert-dialog";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/select';
+} from "@/components/ui/alert-dialog";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useStore } from '@/lib/store';
 import { useUserStore } from '@/lib/user-store';
 import { PurchaseRequisition, getBudgetStats, calculatePRTotal } from '@/lib/types';
 import { RoleGuard } from '@/components/auth/RoleGuard';
-import { Alert, AlertDescription, AlertTitle } from '@/alert';
+import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { useSearchParams, useRouter } from 'next/navigation';
 import { cn } from '@/lib/utils';
 
