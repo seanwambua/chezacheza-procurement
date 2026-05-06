@@ -12,7 +12,8 @@ import {
   TrendingUp, 
   ChevronRight,
   Info,
-  AlertCircle
+  AlertCircle,
+  History
 } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
@@ -23,12 +24,29 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+} from "@/components/ui/dialog";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
 import { cn } from '@/lib/utils';
+import { getBudgetStats } from '@/lib/types';
 
 export default function DepartmentsPage() {
   const { budgets, selectedYear } = useStore();
   const { users, viewPreference } = useUserStore();
   const [mounted, setMounted] = useState(false);
+  const [historyDept, setHistoryDept] = useState<string | null>(null);
 
   useEffect(() => {
     setMounted(true);
@@ -73,6 +91,10 @@ export default function DepartmentsPage() {
   const avgUtilization = departmentalData.filter(d => d.hasActiveBudgets).length > 0 
     ? departmentalData.filter(d => d.hasActiveBudgets).reduce((acc, d) => acc + d.utilization, 0) / departmentalData.filter(d => d.hasActiveBudgets).length 
     : 0;
+
+  const historicalBudgets = historyDept 
+    ? budgets.filter(b => b.department === historyDept).sort((a, b) => Number(b.fiscalYear) - Number(a.fiscalYear))
+    : [];
 
   return (
     <div className="space-y-6 md:space-y-8 animate-in fade-in duration-500 pb-10 max-w-full overflow-hidden">
@@ -133,7 +155,12 @@ export default function DepartmentsPage() {
                   )}
                 </div>
               </div>
-              <Button variant="ghost" size="icon" className="shrink-0 h-9 w-9 md:opacity-0 group-hover:opacity-100 transition-opacity">
+              <Button 
+                variant="ghost" 
+                size="icon" 
+                className="shrink-0 h-9 w-9 md:opacity-0 group-hover:opacity-100 transition-opacity"
+                onClick={() => setHistoryDept(dept.name)}
+              >
                 <ChevronRight className="w-5 h-5 text-accent" />
               </Button>
             </CardHeader>
@@ -206,7 +233,13 @@ export default function DepartmentsPage() {
                     Ksh {dept.totalAllocation.toLocaleString()}
                   </p>
                 </div>
-                <Button variant="outline" size="sm" className="h-9 text-[10px] font-bold uppercase tracking-widest shadow-sm">
+                <Button 
+                  variant="outline" 
+                  size="sm" 
+                  className="h-9 text-[10px] font-bold uppercase tracking-widest shadow-sm"
+                  onClick={() => setHistoryDept(dept.name)}
+                >
+                  <History className="w-3.5 h-3.5 mr-2" />
                   View Full History
                 </Button>
               </div>
@@ -214,6 +247,97 @@ export default function DepartmentsPage() {
           </Card>
         ))}
       </div>
+
+      <Dialog open={!!historyDept} onOpenChange={(open) => !open && setHistoryDept(null)}>
+        <DialogContent className="max-w-4xl w-[95vw] max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2 text-2xl font-black tracking-tight">
+              <History className="w-6 h-6 text-accent" />
+              {historyDept} Fiscal History
+            </DialogTitle>
+            <DialogDescription className="text-xs font-medium uppercase tracking-wider">
+              Consolidated performance metrics across all established fiscal periods.
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="space-y-6 py-6">
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+              <div className="p-4 bg-muted/30 rounded-xl border border-border/50">
+                <p className="text-[10px] uppercase font-bold text-muted-foreground mb-1">Total Lifetime Spend</p>
+                <p className="text-xl font-black text-primary tracking-tighter">
+                  Ksh {historicalBudgets.reduce((acc, b) => acc + (b.spent || 0), 0).toLocaleString()}
+                </p>
+              </div>
+              <div className="p-4 bg-muted/30 rounded-xl border border-border/50">
+                <p className="text-[10px] uppercase font-bold text-muted-foreground mb-1">Highest Allocation</p>
+                <p className="text-xl font-black text-accent tracking-tighter">
+                  Ksh {Math.max(...historicalBudgets.map(b => b.q1Allocation + b.q2Allocation + b.q3Allocation + b.q4Allocation), 0).toLocaleString()}
+                </p>
+              </div>
+              <div className="p-4 bg-muted/30 rounded-xl border border-border/50">
+                <p className="text-[10px] uppercase font-bold text-muted-foreground mb-1">Avg. Utilization</p>
+                <p className="text-xl font-black text-primary tracking-tighter">
+                  {historicalBudgets.length > 0 
+                    ? Math.round(historicalBudgets.reduce((acc, b) => {
+                        const stats = getBudgetStats(b);
+                        return acc + stats.utilization;
+                      }, 0) / historicalBudgets.length)
+                    : 0}%
+                </p>
+              </div>
+            </div>
+
+            <div className="rounded-xl border border-border overflow-hidden bg-card">
+              <Table>
+                <TableHeader>
+                  <TableRow className="bg-muted/30 hover:bg-muted/30">
+                    <TableHead className="text-[10px] font-black uppercase">Fiscal Year</TableHead>
+                    <TableHead className="text-[10px] font-black uppercase">Budget Line</TableHead>
+                    <TableHead className="text-[10px] font-black uppercase text-right">Total Allocation</TableHead>
+                    <TableHead className="text-[10px] font-black uppercase text-right">Actual Spend</TableHead>
+                    <TableHead className="text-[10px] font-black uppercase text-right">Utilization</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {historicalBudgets.length > 0 ? (
+                    historicalBudgets.map((b) => {
+                      const stats = getBudgetStats(b);
+                      return (
+                        <TableRow key={b.id} className="group hover:bg-muted/5">
+                          <TableCell className="font-bold text-xs text-primary">FY {b.fiscalYear}</TableCell>
+                          <TableCell className="text-xs font-medium">{b.name}</TableCell>
+                          <TableCell className="text-right text-xs font-bold tracking-tighter">Ksh {stats.totalAllocation.toLocaleString()}</TableCell>
+                          <TableCell className="text-right text-xs font-bold text-accent tracking-tighter">Ksh {(b.spent || 0).toLocaleString()}</TableCell>
+                          <TableCell className="text-right">
+                            <div className="flex items-center justify-end gap-2">
+                              <span className="text-[10px] font-black">{Math.round(stats.utilization)}%</span>
+                              <div className="w-12 h-1.5 bg-muted rounded-full overflow-hidden hidden sm:block">
+                                <div 
+                                  className={cn(
+                                    "h-full transition-all",
+                                    stats.utilization > 90 ? "bg-destructive" : "bg-accent"
+                                  )} 
+                                  style={{ width: `${Math.min(100, stats.utilization)}%` }} 
+                                />
+                              </div>
+                            </div>
+                          </TableCell>
+                        </TableRow>
+                      );
+                    })
+                  ) : (
+                    <TableRow>
+                      <TableCell colSpan={5} className="h-32 text-center text-muted-foreground italic">
+                        No historical records found for this branch.
+                      </TableCell>
+                    </TableRow>
+                  )}
+                </TableBody>
+              </Table>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
