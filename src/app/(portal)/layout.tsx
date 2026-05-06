@@ -28,9 +28,9 @@ export default function PortalLayout({
   }, []);
 
   // Defaults for server and initial client render to prevent hydration mismatch
-  // Defaulting to expanded as per latest project requirements
-  const defaultSidebarWidth = "w-64";
-  const defaultMainMargin = "md:ml-64";
+  // Updated to match the new collapsed default
+  const defaultSidebarWidth = "w-20";
+  const defaultMainMargin = "md:ml-20";
 
   const sidebarWidth = isSidebarCollapsed ? "w-20" : "w-64";
   const mainMargin = isSidebarCollapsed ? "md:ml-20" : "md:ml-64";
