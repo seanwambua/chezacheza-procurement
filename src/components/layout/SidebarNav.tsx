@@ -36,9 +36,9 @@ import { ThemeToggle } from './ThemeToggle';
 import { Button } from '@/components/ui/button';
 import {
   Tooltip,
-  TooltipContent,
   TooltipProvider,
   TooltipTrigger,
+  TooltipContent,
 } from "@/components/ui/tooltip";
 
 const navGroups = [
@@ -78,7 +78,7 @@ const navGroups = [
   }
 ];
 
-export function SidebarNav() {
+export function SidebarNav({ forceExpanded = false }: { forceExpanded?: boolean }) {
   const pathname = usePathname();
   const router = useRouter();
   const { 
@@ -122,17 +122,19 @@ export function SidebarNav() {
     setSidebarCollapsed(!isSidebarCollapsed);
   };
 
+  const collapsed = forceExpanded ? false : isSidebarCollapsed;
+
   return (
     <TooltipProvider delayDuration={0}>
       <div className={cn(
         "flex flex-col h-full bg-sidebar transition-all duration-300",
-        isSidebarCollapsed ? "items-center" : "w-full"
+        collapsed ? "items-center" : "w-full"
       )}>
         <div className={cn(
           "p-6 flex items-center justify-between w-full shrink-0",
-          isSidebarCollapsed && "flex-col gap-4 p-4"
+          collapsed && "flex-col gap-4 p-4"
         )}>
-          {!isSidebarCollapsed ? (
+          {!collapsed ? (
             <div>
               <h1 className="text-xl font-headline font-bold text-primary tracking-tighter">
                 CPP <span className="text-accent">Portal</span>
@@ -146,14 +148,14 @@ export function SidebarNav() {
           )}
         </div>
         
-        <div className="flex-1 px-4 space-y-4 py-4">
+        <div className="flex-1 px-4 space-y-6 py-4">
           {navGroups.map((group) => {
             const visibleItems = group.items.filter(item => item.roles.includes(currentUser.role));
             if (visibleItems.length === 0) return null;
 
             return (
               <div key={group.id} className="space-y-1">
-                {!isSidebarCollapsed && (
+                {!collapsed && (
                   <p className="px-3 text-[9px] font-bold uppercase text-muted-foreground tracking-widest mb-2">
                     {group.label}
                   </p>
@@ -169,15 +171,15 @@ export function SidebarNav() {
                         isActive 
                           ? "bg-primary text-primary-foreground shadow-sm" 
                           : "text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground",
-                        isSidebarCollapsed && "justify-center px-0 w-10 h-10"
+                        collapsed && "justify-center px-0 w-10 h-10"
                       )}
                     >
                       <item.icon className={cn("w-4 h-4 shrink-0", isActive ? "text-primary-foreground" : "text-accent")} />
-                      {!isSidebarCollapsed && item.name}
+                      {!collapsed && <span className="truncate">{item.name}</span>}
                     </Link>
                   );
 
-                  if (isSidebarCollapsed) {
+                  if (collapsed) {
                     return (
                       <Tooltip key={item.name}>
                         <TooltipTrigger asChild>
@@ -199,24 +201,26 @@ export function SidebarNav() {
 
         <div className={cn(
           "p-4 mt-auto border-t border-sidebar-border space-y-4 bg-sidebar w-full shrink-0",
-          isSidebarCollapsed && "p-2 items-center"
+          collapsed && "p-2 items-center"
         )}>
-          <div className={cn("flex items-center gap-1 justify-center", isSidebarCollapsed && "flex-col")}>
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <Button 
-                  variant="ghost" 
-                  size="icon" 
-                  className="w-8 h-8"
-                  onClick={toggleSidebar}
-                >
-                  {isSidebarCollapsed ? <PanelLeft className="w-4 h-4" /> : <PanelLeftClose className="w-4 h-4" />}
-                </Button>
-              </TooltipTrigger>
-              <TooltipContent side="right" className="text-[10px] font-bold">
-                {isSidebarCollapsed ? 'Expand Menu' : 'Collapse Menu'}
-              </TooltipContent>
-            </Tooltip>
+          <div className={cn("flex items-center gap-1 justify-center", collapsed && "flex-col")}>
+            {!forceExpanded && (
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button 
+                    variant="ghost" 
+                    size="icon" 
+                    className="w-8 h-8"
+                    onClick={toggleSidebar}
+                  >
+                    {collapsed ? <PanelLeft className="w-4 h-4" /> : <PanelLeftClose className="w-4 h-4" />}
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent side="right" className="text-[10px] font-bold">
+                  {collapsed ? 'Expand Menu' : 'Collapse Menu'}
+                </TooltipContent>
+              </Tooltip>
+            )}
             
             <Tooltip>
               <TooltipTrigger asChild>
@@ -241,9 +245,9 @@ export function SidebarNav() {
             <DropdownMenuTrigger asChild>
               <button className={cn(
                 "flex items-center justify-between p-2 bg-muted/50 rounded-md text-xs hover:bg-muted transition-colors border border-transparent hover:border-sidebar-border w-full",
-                isSidebarCollapsed && "justify-center"
+                collapsed && "justify-center"
               )}>
-                {!isSidebarCollapsed ? (
+                {!collapsed ? (
                   <>
                     <span className="truncate">{currentUser.name.split(' ')[0]}</span>
                     <ChevronDown className="w-3 h-3 ml-2 opacity-50" />
@@ -253,7 +257,7 @@ export function SidebarNav() {
                 )}
               </button>
             </DropdownMenuTrigger>
-            <DropdownMenuContent align={isSidebarCollapsed ? "right" : "end"} className="w-56">
+            <DropdownMenuContent align={collapsed ? "right" : "end"} className="w-56">
               <DropdownMenuLabel>Perspective Switch</DropdownMenuLabel>
               <DropdownMenuSeparator />
               {users.map(user => (
@@ -271,3 +275,4 @@ export function SidebarNav() {
     </TooltipProvider>
   );
 }
+
