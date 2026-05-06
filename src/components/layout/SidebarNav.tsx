@@ -129,7 +129,7 @@ export function SidebarNav() {
         isSidebarCollapsed ? "items-center" : "w-full"
       )}>
         <div className={cn(
-          "p-6 flex items-center justify-between w-full",
+          "p-6 flex items-center justify-between w-full shrink-0",
           isSidebarCollapsed && "flex-col gap-4 p-4"
         )}>
           {!isSidebarCollapsed ? (
@@ -146,7 +146,7 @@ export function SidebarNav() {
           )}
         </div>
         
-        <div className="flex-1 px-4 space-y-6 overflow-hidden">
+        <div className="flex-1 px-4 space-y-6 overflow-y-auto py-4">
           {navGroups.map((group) => {
             const visibleItems = group.items.filter(item => item.roles.includes(currentUser.role));
             if (visibleItems.length === 0) return null;
@@ -198,7 +198,7 @@ export function SidebarNav() {
         </div>
 
         <div className={cn(
-          "p-4 mt-auto border-t border-sidebar-border space-y-4 bg-sidebar w-full",
+          "p-4 mt-auto border-t border-sidebar-border space-y-4 bg-sidebar w-full shrink-0",
           isSidebarCollapsed && "p-2 items-center"
         )}>
           <div className={cn("flex items-center gap-1 justify-center", isSidebarCollapsed && "flex-col")}>
