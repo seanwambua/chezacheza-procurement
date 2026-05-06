@@ -17,6 +17,8 @@ interface ProcurementState {
   updatePRStatus: (id: string, status: PurchaseRequisition['status']) => void;
   addVendor: (vendor: Vendor) => void;
   addLPO: (lpo: LPO) => void;
+  updateLPO: (id: string, updates: Partial<LPO>) => void;
+  deleteLPO: (id: string) => void;
   updateLPOStatus: (id: string, status: LPO['status']) => void;
   addGRN: (grn: GRN) => void;
   addBudget: (budget: Omit<Budget, 'id' | 'spent' | 'committed'>) => void;
@@ -143,6 +145,14 @@ export const useStore = create<ProcurementState>()(
 
       addLPO: (lpo) => set((state) => ({
         lpos: [...state.lpos, lpo]
+      })),
+
+      updateLPO: (id, updates) => set((state) => ({
+        lpos: state.lpos.map(lpo => lpo.id === id ? { ...lpo, ...updates } : lpo)
+      })),
+
+      deleteLPO: (id) => set((state) => ({
+        lpos: state.lpos.filter(lpo => lpo.id !== id)
       })),
 
       updateLPOStatus: (id, status) => set((state) => ({

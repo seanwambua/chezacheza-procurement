@@ -16,7 +16,10 @@ import {
   CheckCircle, 
   Building2,
   Calendar,
-  PackageCheck
+  PackageCheck,
+  Pencil,
+  Trash2,
+  AlertTriangle
 } from 'lucide-react';
 import { 
   Table, 
@@ -75,12 +78,13 @@ const lpoSchema = z.object({
 type LPOFormValues = z.infer<typeof lpoSchema>;
 
 export default function LPOsPage() {
-  const { lpos, prs, vendors, addLPO, updatePRStatus, addGRN } = useStore();
+  const { lpos, prs, vendors, addLPO, updateLPO, deleteLPO, updatePRStatus, addGRN } = useStore();
   const { currentUser, viewPreference } = useUserStore();
   const { toast } = useToast();
   const [mounted, setMounted] = useState(false);
   const [search, setSearch] = useState('');
   const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [editingLpo, setEditingLpo] = useState<LPO | null>(null);
   const [receivingLpo, setReceivingLpo] = useState<LPO | null>(null);
 
   const isDetailed = viewPreference === 'detailed';
@@ -99,6 +103,24 @@ export default function LPOsPage() {
     setMounted(true);
   }, []);
 
+  useEffect(() => {
+    if (editingLpo) {
+      form.reset({
+        prId: editingLpo.prId,
+        vendorId: editingLpo.vendorId,
+        deliveryDate: editingLpo.deliveryDate,
+        paymentTerms: editingLpo.paymentTerms,
+      });
+    } else {
+      form.reset({
+        prId: '',
+        vendorId: '',
+        deliveryDate: '',
+        paymentTerms: '30 Days Net',
+      });
+    }
+  }, [editingLpo, form]);
+
   if (!mounted || !currentUser) return null;
 
   const filteredLpos = lpos.filter(lpo => 
@@ -106,7 +128,7 @@ export default function LPOsPage() {
     lpo.vendorName.toLowerCase().includes(search.toLowerCase())
   );
 
-  const approvedPrs = prs.filter(pr => pr.status === 'Approved');
+  const approvedPrs = prs.filter(pr => pr.status === 'Approved' || (editingLpo && pr.id === editingLpo.prId));
   const totalValue = lpos.reduce((acc, lpo) => acc + lpo.totalValue, 0);
 
   const onSubmit = (values: LPOFormValues) => {
@@ -114,31 +136,54 @@ export default function LPOsPage() {
     const selectedVendor = vendors.find(v => v.id === values.vendorId);
     if (!selectedPr || !selectedVendor) return;
 
-    const prTotal = calculatePRTotal(selectedPr);
-    const newLpo: LPO = {
-      id: `LPO-${Math.floor(Math.random() * 10000)}`,
-      lpoNumber: `LPO/2024/${String(lpos.length + 1).padStart(3, '0')}`,
-      prId: values.prId,
-      vendorId: values.vendorId,
-      vendorName: selectedVendor.name,
-      items: selectedPr.items.map(item => ({
-        description: item.description,
-        quantity: item.quantity,
-        unitPrice: item.estimatedUnitPrice,
-        total: item.quantity * item.estimatedUnitPrice
-      })),
-      totalValue: prTotal,
-      deliveryDate: values.deliveryDate,
-      paymentTerms: values.paymentTerms,
-      status: 'Dispatched',
-      createdAt: new Date().toISOString(),
-    };
+    if (editingLpo) {
+      updateLPO(editingLpo.id, {
+        vendorId: values.vendorId,
+        vendorName: selectedVendor.name,
+        deliveryDate: values.deliveryDate,
+        paymentTerms: values.paymentTerms,
+      });
+      toast({ title: "LPO Updated", description: `Order ${editingLpo.lpoNumber} has been modified.` });
+    } else {
+      const prTotal = calculatePRTotal(selectedPr);
+      const newLpo: LPO = {
+        id: `LPO-${Math.floor(Math.random() * 10000)}`,
+        lpoNumber: `LPO/2024/${String(lpos.length + 1).padStart(3, '0')}`,
+        prId: values.prId,
+        vendorId: values.vendorId,
+        vendorName: selectedVendor.name,
+        items: selectedPr.items.map(item => ({
+          description: item.description,
+          quantity: item.quantity,
+          unitPrice: item.estimatedUnitPrice,
+          total: item.quantity * item.estimatedUnitPrice
+        })),
+        totalValue: prTotal,
+        deliveryDate: values.deliveryDate,
+        paymentTerms: values.paymentTerms,
+        status: 'Dispatched',
+        createdAt: new Date().toISOString(),
+      };
 
-    addLPO(newLpo);
-    updatePRStatus(values.prId, 'LPO Generated');
+      addLPO(newLpo);
+      updatePRStatus(values.prId, 'LPO Generated');
+      toast({ title: "LPO Dispatched", description: `Order ${newLpo.lpoNumber} sent to ${selectedVendor.name}.` });
+    }
+
     setIsDialogOpen(false);
+    setEditingLpo(null);
     form.reset();
-    toast({ title: "LPO Dispatched", description: `Order ${newLpo.lpoNumber} sent to ${selectedVendor.name}.` });
+  };
+
+  const handleDeleteLPO = (lpo: LPO) => {
+    if (confirm(`Are you sure you want to delete LPO ${lpo.lpoNumber}? The associated requisition will be reverted to Approved status.`)) {
+      deleteLPO(lpo.id);
+      updatePRStatus(lpo.prId, 'Approved');
+      toast({
+        title: "LPO Deleted",
+        description: `Requisition associated with ${lpo.lpoNumber} has been unlocked.`
+      });
+    }
   };
 
   const handleReceiveGoods = (lpo: LPO) => {
@@ -177,17 +222,22 @@ export default function LPOsPage() {
           <p className="text-muted-foreground">Manage official vendor commitments and logistics.</p>
         </div>
         
-        <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+        <Dialog open={isDialogOpen} onOpenChange={(open) => {
+          setIsDialogOpen(open);
+          if (!open) setEditingLpo(null);
+        }}>
           <DialogTrigger asChild>
-            <Button className="bg-primary font-bold uppercase text-xs">
+            <Button className="bg-primary font-bold uppercase text-xs" onClick={() => setEditingLpo(null)}>
               <Plus className="w-4 h-4 mr-2" />
               Generate LPO
             </Button>
           </DialogTrigger>
           <DialogContent className="max-w-xl">
             <DialogHeader>
-              <DialogTitle>Convert Requisition to LPO</DialogTitle>
-              <DialogDescription>Assign a vendor and terms to an approved request.</DialogDescription>
+              <DialogTitle>{editingLpo ? `Edit LPO ${editingLpo.lpoNumber}` : 'Convert Requisition to LPO'}</DialogTitle>
+              <DialogDescription>
+                {editingLpo ? 'Update delivery terms or vendor selection.' : 'Assign a vendor and terms to an approved request.'}
+              </DialogDescription>
             </DialogHeader>
             <Form {...form}>
               <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4 py-4">
@@ -197,7 +247,11 @@ export default function LPOsPage() {
                   render={({ field }) => (
                     <FormItem>
                       <FormLabel>Approved Requisition</FormLabel>
-                      <Select onValueChange={field.onChange} value={field.value}>
+                      <Select 
+                        onValueChange={field.onChange} 
+                        value={field.value}
+                        disabled={!!editingLpo}
+                      >
                         <FormControl><SelectTrigger><SelectValue placeholder="Select" /></SelectTrigger></FormControl>
                         <SelectContent>
                           {approvedPrs.map(pr => (
@@ -234,12 +288,16 @@ export default function LPOsPage() {
                         <SelectContent>
                           <SelectItem value="30 Days Net">30 Days Net</SelectItem>
                           <SelectItem value="Immediate">Immediate</SelectItem>
+                          <SelectItem value="60 Days Net">60 Days Net</SelectItem>
                         </SelectContent>
                       </Select>
                     </FormItem>
                   )} />
                 </div>
-                <DialogFooter><Button type="submit">Dispatch LPO</Button></DialogFooter>
+                <DialogFooter>
+                  <Button type="button" variant="outline" onClick={() => setIsDialogOpen(false)}>Cancel</Button>
+                  <Button type="submit">{editingLpo ? 'Update Commitment' : 'Dispatch LPO'}</Button>
+                </DialogFooter>
               </form>
             </Form>
           </DialogContent>
@@ -301,11 +359,17 @@ export default function LPOsPage() {
                           <DropdownMenuTrigger asChild><Button variant="ghost" size="icon" className="h-8 w-8"><MoreVertical className="w-4 h-4" /></Button></DropdownMenuTrigger>
                           <DropdownMenuContent align="end">
                             <DropdownMenuItem><Printer className="w-4 h-4 mr-2" /> Print PDF</DropdownMenuItem>
+                            <DropdownMenuItem onClick={() => { setEditingLpo(lpo); setIsDialogOpen(true); }}>
+                              <Pencil className="w-4 h-4 mr-2" /> Edit Details
+                            </DropdownMenuItem>
                             {lpo.status !== 'Fulfilled' && (
                               <DropdownMenuItem className="text-green-600" onClick={() => setReceivingLpo(lpo)}>
                                 <PackageCheck className="w-4 h-4 mr-2" /> Receive Goods
                               </DropdownMenuItem>
                             )}
+                            <DropdownMenuItem className="text-destructive" onClick={() => handleDeleteLPO(lpo)}>
+                              <Trash2 className="w-4 h-4 mr-2" /> Delete LPO
+                            </DropdownMenuItem>
                           </DropdownMenuContent>
                         </DropdownMenu>
                       </TableCell>
