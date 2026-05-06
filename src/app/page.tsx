@@ -8,7 +8,8 @@ import {
   ArrowRight, 
   LayoutDashboard,
   Building2,
-  FileText
+  FileText,
+  HelpCircle
 } from 'lucide-react';
 
 export default function Home() {
@@ -22,11 +23,17 @@ export default function Home() {
               CPP <span className="text-accent">Portal</span>
             </h1>
           </div>
-          <Link href="/dashboard">
-            <Button variant="ghost" size="sm" className="font-bold uppercase text-[10px]">
-              Sign In
-            </Button>
-          </Link>
+          <div className="flex items-center gap-4">
+            <Link href="/how-to" className="hidden sm:flex items-center gap-1.5 text-xs font-bold uppercase text-muted-foreground hover:text-accent transition-colors">
+              <HelpCircle className="w-3.5 h-3.5" />
+              How it works
+            </Link>
+            <Link href="/dashboard">
+              <Button variant="ghost" size="sm" className="font-bold uppercase text-[10px]">
+                Sign In
+              </Button>
+            </Link>
+          </div>
         </div>
       </nav>
 
@@ -51,9 +58,9 @@ export default function Home() {
                   Enter Portal <ArrowRight className="ml-2 w-5 h-5" />
                 </Button>
               </Link>
-              <Link href="/requisitions">
+              <Link href="/how-to">
                 <Button variant="outline" size="lg" className="h-14 px-8 text-base font-bold border-2">
-                  New Requisition
+                  View Guide
                 </Button>
               </Link>
             </div>
@@ -112,11 +119,18 @@ export default function Home() {
                   Access departmental budgets, manage LPOs, and verify goods received 
                   all in one high-performance interface.
                 </p>
-                <Link href="/dashboard" className="block">
-                  <Button variant="secondary" size="lg" className="font-bold">
-                    Go to Dashboard
-                  </Button>
-                </Link>
+                <div className="flex gap-4">
+                  <Link href="/dashboard">
+                    <Button variant="secondary" size="lg" className="font-bold">
+                      Go to Dashboard
+                    </Button>
+                  </Link>
+                  <Link href="/how-to">
+                    <Button variant="outline" size="lg" className="font-bold bg-transparent border-white/20 text-white hover:bg-white/10">
+                      Read Guide
+                    </Button>
+                  </Link>
+                </div>
               </div>
               <div className="grid grid-cols-2 gap-4 w-full md:w-auto relative z-10">
                 <div className="p-6 bg-white/5 rounded-2xl backdrop-blur-sm border border-white/10 text-center">
@@ -152,9 +166,10 @@ export default function Home() {
         <div className="max-w-7xl mx-auto px-6 flex flex-col md:flex-row items-center justify-between gap-8">
           <div>
             <p className="text-sm font-bold text-primary uppercase tracking-tighter">CPP Portal</p>
-            <p className="text-xs text-muted-foreground mt-1">© 2024 Chezacheza Procurement. All rights reserved.</p>
+            <p className="text-xs text-muted-foreground mt-1">© 2024 Chezacheza Procurement.</p>
           </div>
           <div className="flex gap-8">
+            <Link href="/how-to" className="text-xs font-bold uppercase text-muted-foreground hover:text-accent transition-colors">How it works</Link>
             <Link href="/settings" className="text-xs font-bold uppercase text-muted-foreground hover:text-accent transition-colors">Settings</Link>
             <Link href="/users" className="text-xs font-bold uppercase text-muted-foreground hover:text-accent transition-colors">User Management</Link>
             <Link href="/vendors" className="text-xs font-bold uppercase text-muted-foreground hover:text-accent transition-colors">Vendor Database</Link>
