@@ -2,7 +2,7 @@
 "use client";
 
 import Link from 'next/link';
-import { usePathname } from 'next/navigation';
+import { usePathname, useRouter } from 'next/navigation';
 import { cn } from '@/lib/utils';
 import { 
   LayoutDashboard, 
@@ -18,7 +18,7 @@ import {
   ChevronDown
 } from 'lucide-react';
 import { useUserStore } from '@/lib/user-store';
-import { UserRole } from '@/lib/types';
+import { UserRole, User } from '@/lib/types';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -27,6 +27,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { useEffect, useState } from 'react';
 
 const navItems = [
   { name: 'Dashboard', href: '/dashboard', icon: LayoutDashboard, roles: ['Admin', 'Manager', 'Staff', 'Finance'] as UserRole[] },
@@ -42,11 +43,37 @@ const navItems = [
 
 export function SidebarNav() {
   const pathname = usePathname();
+  const router = useRouter();
   const { currentUser, users, setCurrentUser } = useUserStore();
+  const [mounted, setMounted] = useState(false);
 
-  if (!currentUser) return null;
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  if (!mounted || !currentUser) {
+    return (
+      <div className="flex flex-col h-full bg-sidebar border-r border-sidebar-border animate-pulse">
+        <div className="p-6">
+          <div className="h-8 w-32 bg-muted rounded" />
+        </div>
+        <div className="flex-1 px-4 space-y-2">
+          {[1, 2, 3, 4, 5].map(i => (
+            <div key={i} className="h-10 bg-muted rounded w-full" />
+          ))}
+        </div>
+      </div>
+    );
+  }
 
   const filteredNavItems = navItems.filter(item => item.roles.includes(currentUser.role));
+
+  const handleUserSwitch = (user: User) => {
+    setCurrentUser(user);
+    // Force a fresh navigation to the dashboard to reset any role-specific state
+    router.push('/dashboard');
+    router.refresh();
+  };
 
   return (
     <div className="flex flex-col h-full bg-sidebar border-r border-sidebar-border">
@@ -93,7 +120,7 @@ export function SidebarNav() {
               <DropdownMenuLabel>Select User Perspective</DropdownMenuLabel>
               <DropdownMenuSeparator />
               {users.map(user => (
-                <DropdownMenuItem key={user.id} onClick={() => setCurrentUser(user)}>
+                <DropdownMenuItem key={user.id} onClick={() => handleUserSwitch(user)}>
                   <div className="flex flex-col">
                     <span className="font-medium text-xs">{user.name}</span>
                     <span className="text-[10px] text-muted-foreground">{user.role} • {user.department}</span>
