@@ -221,19 +221,6 @@ export function SidebarNav() {
             </DropdownMenuContent>
           </DropdownMenu>
         </div>
-
-        <Link
-          href="/settings"
-          className={cn(
-            "flex items-center gap-3 px-3 py-2 text-sm font-medium rounded-md transition-all duration-200",
-            pathname === '/settings' 
-              ? "bg-primary text-primary-foreground shadow-sm" 
-              : "text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground"
-          )}
-        >
-          <Settings className="w-4 h-4" />
-          Settings
-        </Link>
         
         <div className="flex items-center gap-3 px-3 py-2 border-t border-sidebar-border/50 pt-4">
           <div className="w-8 h-8 rounded-full bg-accent flex items-center justify-center text-white text-xs font-bold shrink-0 shadow-sm">
