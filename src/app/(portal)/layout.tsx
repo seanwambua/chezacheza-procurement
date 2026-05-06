@@ -81,39 +81,49 @@ export default function PortalLayout({
 
       {/* Global Data Protection Consent Sheet */}
       <Sheet open={!hasConsentedToDataProtection} onOpenChange={(open) => !open && setConsent(true)}>
-        <SheetContent side="bottom" className="h-auto sm:h-[40vh] p-6 sm:p-10 flex flex-col justify-center border-t-accent shadow-2xl">
-          <div className="max-w-4xl mx-auto w-full space-y-6">
-            <SheetHeader className="text-left">
-              <div className="flex items-center gap-3 mb-2">
-                <div className="p-2 bg-accent/10 rounded-xl text-accent">
-                  <ShieldCheck className="w-6 h-6" />
-                </div>
-                <SheetTitle className="text-2xl font-black tracking-tight text-primary">Data Protection & Privacy Consent</SheetTitle>
+        <SheetContent side="bottom" className="h-auto max-h-[90vh] p-0 border-t-accent shadow-2xl overflow-y-auto">
+          <div className="max-w-4xl mx-auto w-full p-6 sm:p-10 space-y-8">
+            <div className="flex flex-col md:flex-row items-start md:items-center gap-6">
+              <div className="p-4 bg-accent/10 rounded-2xl text-accent shrink-0 shadow-inner">
+                <ShieldCheck className="w-8 h-8" />
               </div>
-              <SheetDescription className="text-sm sm:text-base text-muted-foreground leading-relaxed">
-                Chezacheza is committed to protecting your professional and personal data. By using the CPP Portal, 
-                you acknowledge that we collect procurement-related data, including user identity, departmental 
-                requisitions, and vendor contact information for audit and organizational efficiency purposes.
-              </SheetDescription>
-            </SheetHeader>
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-4">
-              <div className="p-4 bg-muted/30 rounded-xl border border-border/50">
-                <p className="text-[10px] font-black uppercase text-primary mb-1">Purpose of Collection</p>
-                <p className="text-xs text-muted-foreground">Internal procurement management, budget verification, and vendor audit tracking.</p>
-              </div>
-              <div className="p-4 bg-muted/30 rounded-xl border border-border/50">
-                <p className="text-[10px] font-black uppercase text-primary mb-1">Your Rights</p>
-                <p className="text-xs text-muted-foreground">You may request access to your recorded data or its removal by contacting the System Administrator.</p>
+              <div className="space-y-2">
+                <h2 className="text-2xl sm:text-3xl font-black tracking-tight text-primary leading-none">
+                  Privacy & Data Consent
+                </h2>
+                <p className="text-sm sm:text-base text-muted-foreground font-medium leading-relaxed max-w-2xl">
+                  Chezacheza is committed to protecting your professional data. By accessing the CPP Portal, 
+                  you acknowledge the collection of procurement-related information for organizational transparency and audit.
+                </p>
               </div>
             </div>
-            <SheetFooter className="flex flex-col sm:flex-row gap-3 pt-6 border-t">
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="p-5 bg-muted/30 rounded-2xl border border-border/50 group hover:border-accent/20 transition-colors">
+                <h4 className="text-[10px] font-black uppercase text-accent tracking-[0.1em] mb-2">Purpose of Collection</h4>
+                <p className="text-xs text-muted-foreground leading-relaxed font-medium">
+                  We process user identity, departmental logs, and vendor data to ensure fiscal responsibility and procurement efficiency.
+                </p>
+              </div>
+              <div className="p-5 bg-muted/30 rounded-2xl border border-border/50 group hover:border-accent/20 transition-colors">
+                <h4 className="text-[10px] font-black uppercase text-accent tracking-[0.1em] mb-2">Your Professional Rights</h4>
+                <p className="text-xs text-muted-foreground leading-relaxed font-medium">
+                  You maintain the right to view or request removal of your professional identity logs by contacting the System Administrator.
+                </p>
+              </div>
+            </div>
+
+            <div className="flex flex-col sm:flex-row items-center justify-between gap-6 pt-6 border-t">
+              <p className="text-[10px] text-muted-foreground font-bold uppercase tracking-wider opacity-60">
+                © 2024 Chezacheza Organizational Policy
+              </p>
               <Button 
-                className="w-full bg-primary font-black uppercase text-xs h-12 shadow-lg"
+                className="w-full sm:w-auto bg-primary text-primary-foreground font-black uppercase text-xs h-12 px-10 rounded-xl shadow-xl hover:shadow-primary/20 transition-all"
                 onClick={() => setConsent(true)}
               >
-                I Acknowledge & Accept
+                Accept & Enter Portal
               </Button>
-            </SheetFooter>
+            </div>
           </div>
         </SheetContent>
       </Sheet>
