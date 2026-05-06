@@ -45,6 +45,7 @@ export interface LPO {
   totalValue: number;
   deliveryDate: string;
   paymentTerms: string;
+  additionalTerms?: string; // New field for documenting specific terms
   status: 'Draft' | 'Dispatched' | 'Fulfilled' | 'Partially Fulfilled' | 'Matched' | 'Closed';
   createdAt: string;
 }
