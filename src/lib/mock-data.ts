@@ -1,4 +1,19 @@
-import { PurchaseRequisition, Vendor, LPO, Budget, GRN, User } from './types';
+import { PurchaseRequisition, Vendor, LPO, Budget, GRN, User, FiscalYear } from './types';
+
+export const MOCK_FISCAL_YEARS: FiscalYear[] = [
+  {
+    id: 'FY-2024',
+    year: '2024',
+    globalTarget: 5000000,
+    strategy: 'Balanced',
+    status: 'Open',
+    q1Weight: 25,
+    q2Weight: 25,
+    q3Weight: 25,
+    q4Weight: 25,
+    createdAt: '2023-12-01T00:00:00Z',
+  }
+];
 
 export const MOCK_BUDGETS: Budget[] = [
   { 

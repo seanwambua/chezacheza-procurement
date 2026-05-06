@@ -1,7 +1,7 @@
 import { create } from 'zustand';
 import { persist, createJSONStorage } from 'zustand/middleware';
-import { PurchaseRequisition, Vendor, LPO, Budget, GRN, PRStatus, calculatePRTotal } from './types';
-import { MOCK_PRS, MOCK_VENDORS, MOCK_LPOS, MOCK_BUDGETS, MOCK_GRNS } from './mock-data';
+import { PurchaseRequisition, Vendor, LPO, Budget, GRN, PRStatus, calculatePRTotal, FiscalYear } from './types';
+import { MOCK_PRS, MOCK_VENDORS, MOCK_LPOS, MOCK_BUDGETS, MOCK_GRNS, MOCK_FISCAL_YEARS } from './mock-data';
 
 interface ProcurementState {
   prs: PurchaseRequisition[];
@@ -9,6 +9,7 @@ interface ProcurementState {
   lpos: LPO[];
   grns: GRN[];
   budgets: Budget[];
+  fiscalYears: FiscalYear[];
   selectedYear: string;
   
   // Actions
@@ -26,6 +27,10 @@ interface ProcurementState {
   addBudget: (budget: Omit<Budget, 'id' | 'spent' | 'committed'>) => void;
   updateBudget: (id: string, updates: Partial<Budget>) => void;
   deleteBudget: (id: string) => void;
+  
+  // Fiscal Year CRUD
+  addFiscalYear: (fy: Omit<FiscalYear, 'id' | 'createdAt'>) => void;
+  updateFiscalYear: (id: string, updates: Partial<FiscalYear>) => void;
   deleteFiscalYear: (year: string) => void;
 }
 
@@ -39,6 +44,7 @@ export const useStore = create<ProcurementState>()(
       lpos: MOCK_LPOS,
       grns: MOCK_GRNS,
       budgets: MOCK_BUDGETS,
+      fiscalYears: MOCK_FISCAL_YEARS,
       selectedYear: '2024',
 
       setSelectedYear: (selectedYear) => set({ selectedYear }),
@@ -113,7 +119,6 @@ export const useStore = create<ProcurementState>()(
           return b;
         });
 
-        // Also delete any associated LPOs and GRNs
         const linkedLpos = state.lpos.filter(l => l.prId === id);
         const linkedLpoIds = linkedLpos.map(l => l.id);
 
@@ -168,15 +173,12 @@ export const useStore = create<ProcurementState>()(
         const lpo = state.lpos.find(l => l.id === id);
         if (!lpo) return state;
 
-        // Reset PR status if it exists
         const updatedPrs = state.prs.map(pr => 
           pr.id === lpo.prId ? { ...pr, status: 'Approved' as PRStatus } : pr
         );
 
-        // Delete associated GRNs if any
         const updatedGrns = state.grns.filter(g => g.lpoId !== id);
 
-        // Revert budget spent back to committed if it was already received
         const linkedGrn = state.grns.find(g => g.lpoId === id);
         const updatedBudgets = state.budgets.map(b => {
           const pr = state.prs.find(p => p.id === lpo.prId);
@@ -248,7 +250,6 @@ export const useStore = create<ProcurementState>()(
         const budgetToDelete = state.budgets.find(b => b.id === id);
         if (!budgetToDelete) return state;
 
-        // Cascade delete PRs and LPOs that use this budget line
         const updatedPrs = state.prs.filter(p => p.budgetLine !== budgetToDelete.name || p.fiscalYear !== budgetToDelete.fiscalYear);
         const lposToDelete = state.lpos.filter(l => {
           const pr = state.prs.find(p => p.id === l.prId);
@@ -264,7 +265,21 @@ export const useStore = create<ProcurementState>()(
         };
       }),
 
+      addFiscalYear: (fyData) => set((state) => {
+        const newFY: FiscalYear = {
+          ...fyData,
+          id: `FY-${fyData.year}`,
+          createdAt: new Date().toISOString(),
+        };
+        return { fiscalYears: [...state.fiscalYears, newFY] };
+      }),
+
+      updateFiscalYear: (id, updates) => set((state) => ({
+        fiscalYears: state.fiscalYears.map(fy => fy.id === id ? { ...fy, ...updates } : fy)
+      })),
+
       deleteFiscalYear: (year) => set((state) => ({
+        fiscalYears: state.fiscalYears.filter(fy => fy.year !== year),
         budgets: state.budgets.filter(b => b.fiscalYear !== year),
         prs: state.prs.filter(p => p.fiscalYear !== year),
         lpos: state.lpos.filter(l => l.fiscalYear !== year),

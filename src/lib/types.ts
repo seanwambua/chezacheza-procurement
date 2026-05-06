@@ -85,6 +85,19 @@ export interface Budget {
   committed: number;
 }
 
+export interface FiscalYear {
+  id: string;
+  year: string;
+  globalTarget: number;
+  strategy: 'Growth' | 'Conservative' | 'Balanced';
+  status: 'Open' | 'Closed' | 'Archived';
+  q1Weight: number;
+  q2Weight: number;
+  q3Weight: number;
+  q4Weight: number;
+  createdAt: string;
+}
+
 export type UserRole = 'Admin' | 'Manager' | 'Staff' | 'Finance';
 
 export interface User {
