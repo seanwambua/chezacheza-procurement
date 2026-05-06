@@ -12,11 +12,13 @@ import {
   Truck, 
   Users, 
   CreditCard,
-  Settings
+  Settings,
+  Wallet
 } from 'lucide-react';
 
 const navItems = [
   { name: 'Dashboard', href: '/', icon: LayoutDashboard },
+  { name: 'Budgets', href: '/budgets', icon: Wallet },
   { name: 'Requisitions', href: '/requisitions', icon: FileText },
   { name: 'Approvals', href: '/approvals', icon: CheckSquare },
   { name: 'LPOs', href: '/lpos', icon: ShoppingCart },
