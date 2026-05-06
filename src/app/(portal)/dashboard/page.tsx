@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useEffect, useState } from 'react';
@@ -273,6 +274,8 @@ export default function DashboardPage() {
     toast({ variant: "destructive", title: "Fiscal Year Purged" });
     if (yearToDelete === selectedYear && fiscalYears.length > 1) {
       setSelectedYear(fiscalYears.find(f => f.year !== yearToDelete)?.year || '');
+    } else if (fiscalYears.length === 1) {
+       setSelectedYear('');
     }
     setYearToDelete(null);
   };
@@ -301,27 +304,29 @@ export default function DashboardPage() {
               </SelectTrigger>
               <SelectContent>
                 {fiscalYears.map(fy => (
-                  <SelectItem key={fy.id} value={fy.year} className="text-xs group">
-                    <div className="flex items-center justify-between w-full gap-2 min-w-[140px]">
-                      <span>FY {fy.year}</span>
-                      {currentUser?.role === 'Admin' && (
-                        <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                          <button 
-                            className="p-1 hover:bg-accent/10 rounded-md text-accent"
-                            onClick={(e) => { e.preventDefault(); e.stopPropagation(); openEditWizard(fy); }}
-                          >
-                            <Pencil className="w-3 h-3" />
-                          </button>
-                          <button 
-                            className="p-1 hover:bg-destructive/10 rounded-md text-destructive"
-                            onClick={(e) => { e.preventDefault(); e.stopPropagation(); setYearToDelete(fy.year); }}
-                          >
-                            <Trash2 className="w-3 h-3" />
-                          </button>
-                        </div>
-                      )}
-                    </div>
-                  </SelectItem>
+                  <div key={fy.id} className="relative flex items-center justify-between w-full p-1 hover:bg-muted/50 transition-colors">
+                    <SelectItem value={fy.year} className="flex-1 text-xs">
+                      FY {fy.year}
+                    </SelectItem>
+                    {currentUser?.role === 'Admin' && (
+                      <div className="flex items-center gap-1 ml-2 pr-2">
+                        <button 
+                          className="p-1 hover:bg-accent/20 rounded-md text-accent transition-colors"
+                          onClick={(e) => { e.preventDefault(); e.stopPropagation(); openEditWizard(fy); }}
+                          title="Edit Strategy"
+                        >
+                          <Pencil className="w-3 h-3" />
+                        </button>
+                        <button 
+                          className="p-1 hover:bg-destructive/20 rounded-md text-destructive transition-colors"
+                          onClick={(e) => { e.preventDefault(); e.stopPropagation(); setYearToDelete(fy.year); }}
+                          title="Delete Period"
+                        >
+                          <Trash2 className="w-3 h-3" />
+                        </button>
+                      </div>
+                    )}
+                  </div>
                 ))}
               </SelectContent>
             </Select>
@@ -523,7 +528,7 @@ export default function DashboardPage() {
           <Card className="shadow-none border border-border overflow-hidden">
             <CardHeader><CardTitle className="text-base font-headline">Recent Activity</CardTitle></CardHeader>
             <CardContent className="space-y-4">
-              {recentPrs.map(req => (
+              {recentPrs.length > 0 ? recentPrs.map(req => (
                 <Link key={req.id} href={`/requisitions?id=${req.id}`} className="flex items-center justify-between p-3 rounded-xl hover:bg-muted/50 border border-border/50 group">
                   <div className="min-w-0 flex-1">
                     <p className="font-bold text-xs truncate">{req.items?.[0]?.description || 'Untitled'}</p>
@@ -534,7 +539,9 @@ export default function DashboardPage() {
                     <Badge variant="outline" className="text-[8px] h-3.5 px-1 py-0">{req.status}</Badge>
                   </div>
                 </Link>
-              ))}
+              )) : (
+                <div className="py-10 text-center opacity-30 italic text-xs">No recent activity</div>
+              )}
             </CardContent>
           </Card>
         </div>
@@ -543,14 +550,27 @@ export default function DashboardPage() {
       <AlertDialog open={!!yearToDelete} onOpenChange={(open) => !open && setYearToDelete(null)}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle className="text-destructive flex items-center gap-2"><AlertCircle className="w-5 h-5" /> Purge Fiscal Period?</AlertDialogTitle>
-            <AlertDialogDescription className="text-xs">
-              This will permanently delete the entire **FY {yearToDelete}** fiscal period and all its associated data.
+            <AlertDialogTitle className="text-destructive flex items-center gap-2">
+              <AlertCircle className="w-5 h-5" /> 
+              Purge Fiscal Period FY {yearToDelete}?
+            </AlertDialogTitle>
+            <AlertDialogDescription className="text-xs space-y-3">
+              <p>This will **permanently delete** the entire fiscal period and all its associated data. This action cannot be undone.</p>
+              <div className="p-3 bg-destructive/10 border border-destructive/20 rounded-lg space-y-1">
+                <p className="font-black uppercase text-[10px]">Cascading Impact:</p>
+                <ul className="list-disc pl-4 text-[9px] font-bold">
+                  <li>All departmental budget lines for {yearToDelete}</li>
+                  <li>All purchase requisitions and approval logs</li>
+                  <li>All Local Purchase Orders (LPOs) and GRNs</li>
+                </ul>
+              </div>
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel className="text-xs font-bold uppercase">Keep Period</AlertDialogCancel>
-            <AlertDialogAction onClick={handleDeleteYear} className="bg-destructive hover:bg-destructive/90 text-white text-xs font-bold uppercase">Purge FY {yearToDelete}</AlertDialogAction>
+            <AlertDialogCancel className="text-xs font-bold uppercase">Cancel</AlertDialogCancel>
+            <AlertDialogAction onClick={handleDeleteYear} className="bg-destructive hover:bg-destructive/90 text-white text-xs font-bold uppercase">
+              Purge FY {yearToDelete}
+            </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
