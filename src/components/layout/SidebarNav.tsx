@@ -88,9 +88,9 @@ export function SidebarNav() {
   const [mounted, setMounted] = useState(false);
   const [openGroups, setOpenGroups] = useState<Record<string, boolean>>({
     workspace: true,
-    procurement: true,
-    strategy: true,
-    admin: true
+    procurement: false,
+    strategy: false,
+    admin: false
   });
 
   useEffect(() => {
@@ -151,7 +151,7 @@ export function SidebarNav() {
         </div>
       </div>
       
-      <div className="flex-1 px-4 space-y-4 overflow-y-auto custom-scrollbar">
+      <div className="flex-1 px-4 space-y-4">
         {navGroups.map((group) => {
           const visibleItems = group.items.filter(item => item.roles.includes(currentUser.role));
           if (visibleItems.length === 0) return null;
