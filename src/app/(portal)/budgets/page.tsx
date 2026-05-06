@@ -25,7 +25,6 @@ import {
   Pencil, 
   Trash2, 
   MoreVertical, 
-  Landmark, 
   Info,
   CalendarDays,
   PauseCircle,
@@ -75,11 +74,6 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from "@/components/ui/popover";
 import { RoleGuard } from '@/components/auth/RoleGuard';
 import { Budget, getBudgetStats } from '@/lib/types';
 import { Badge } from '@/components/ui/badge';
@@ -351,20 +345,23 @@ export default function BudgetsPage() {
                 return (
                   <TableRow key={b.id} className="group hover:bg-muted/10">
                     <TableCell>
-                      <div className="flex flex-col">
-                        <Popover>
-                          <PopoverTrigger asChild>
-                            <span className="font-bold text-primary flex items-center gap-2 cursor-pointer hover:underline">
-                              {b.name}
-                              <Info className="w-3.5 h-3.5 text-muted-foreground opacity-50 group-hover:opacity-100" />
-                              {stats.isPaused ? (
-                                <PauseCircle className="w-3.5 h-3.5 text-destructive" />
-                              ) : (
-                                <PlayCircle className="w-3.5 h-3.5 text-green-500" />
-                              )}
-                            </span>
-                          </PopoverTrigger>
-                          <PopoverContent className="w-80 shadow-2xl border-primary/20 p-0">
+                      <TooltipProvider>
+                        <Tooltip delayDuration={0}>
+                          <TooltipTrigger asChild>
+                            <div className="flex flex-col cursor-help">
+                              <span className="font-bold text-primary flex items-center gap-2">
+                                {b.name}
+                                <Info className="w-3.5 h-3.5 text-muted-foreground opacity-50 group-hover:opacity-100" />
+                                {stats.isPaused ? (
+                                  <PauseCircle className="w-3.5 h-3.5 text-destructive" />
+                                ) : (
+                                  <PlayCircle className="w-3.5 h-3.5 text-green-500" />
+                                )}
+                              </span>
+                              <span className="text-[10px] text-muted-foreground uppercase">{b.department}</span>
+                            </div>
+                          </TooltipTrigger>
+                          <TooltipContent side="right" className="w-80 p-0 overflow-hidden border-primary/20 shadow-2xl bg-white text-foreground">
                             <div className="bg-primary p-4 text-primary-foreground">
                               <h4 className="font-bold text-sm uppercase tracking-tight">{b.name} Metrics</h4>
                               <p className="text-[10px] opacity-70 mt-1 line-clamp-2">{b.description}</p>
@@ -408,10 +405,9 @@ export default function BudgetsPage() {
                                 </div>
                               </div>
                             </div>
-                          </PopoverContent>
-                        </Popover>
-                        <span className="text-[10px] text-muted-foreground uppercase">{b.department}</span>
-                      </div>
+                          </TooltipContent>
+                        </Tooltip>
+                      </TooltipProvider>
                     </TableCell>
                     <TableCell>
                       <div className="flex items-center gap-2">
