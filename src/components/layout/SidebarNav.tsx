@@ -165,42 +165,6 @@ export function SidebarNav() {
               <h1 className="text-xl font-headline font-bold text-primary tracking-tighter">CPP</h1>
             </div>
           )}
-          
-          <div className={cn("flex items-center gap-1", isSidebarCollapsed && "flex-col")}>
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <Button 
-                  variant="ghost" 
-                  size="icon" 
-                  className="w-8 h-8"
-                  onClick={toggleSidebar}
-                >
-                  {isSidebarCollapsed ? <PanelLeft className="w-4 h-4" /> : <PanelLeftClose className="w-4 h-4" />}
-                </Button>
-              </TooltipTrigger>
-              <TooltipContent side="right" className="text-[10px] font-bold">
-                {isSidebarCollapsed ? 'Expand Menu' : 'Collapse Menu'}
-              </TooltipContent>
-            </Tooltip>
-            
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <Button 
-                  variant="ghost" 
-                  size="icon" 
-                  className="w-8 h-8"
-                  onClick={toggleView}
-                >
-                  {viewPreference === 'detailed' ? <Minimize2 className="w-4 h-4" /> : <Maximize2 className="w-4 h-4" />}
-                </Button>
-              </TooltipTrigger>
-              <TooltipContent side="right" className="text-[10px] font-bold">
-                {viewPreference === 'detailed' ? 'Simple View' : 'Detailed View'}
-              </TooltipContent>
-            </Tooltip>
-            
-            <ThemeToggle />
-          </div>
         </div>
         
         <div className="flex-1 px-4 space-y-4 overflow-hidden">
@@ -301,9 +265,42 @@ export function SidebarNav() {
           "p-4 mt-auto border-t border-sidebar-border space-y-4 bg-sidebar w-full",
           isSidebarCollapsed && "p-2 items-center"
         )}>
-          {!isSidebarCollapsed && (
-             <p className="px-3 text-[9px] text-muted-foreground uppercase font-bold mb-2">Impersonate</p>
-          )}
+          <div className={cn("flex items-center gap-1 justify-center", isSidebarCollapsed && "flex-col")}>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button 
+                  variant="ghost" 
+                  size="icon" 
+                  className="w-8 h-8"
+                  onClick={toggleSidebar}
+                >
+                  {isSidebarCollapsed ? <PanelLeft className="w-4 h-4" /> : <PanelLeftClose className="w-4 h-4" />}
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent side="right" className="text-[10px] font-bold">
+                {isSidebarCollapsed ? 'Expand Menu' : 'Collapse Menu'}
+              </TooltipContent>
+            </Tooltip>
+            
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button 
+                  variant="ghost" 
+                  size="icon" 
+                  className="w-8 h-8"
+                  onClick={toggleView}
+                >
+                  {viewPreference === 'detailed' ? <Minimize2 className="w-4 h-4" /> : <Maximize2 className="w-4 h-4" />}
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent side="right" className="text-[10px] font-bold">
+                {viewPreference === 'detailed' ? 'Simple View' : 'Detailed View'}
+              </TooltipContent>
+            </Tooltip>
+            
+            <ThemeToggle />
+          </div>
+
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <button className={cn(
