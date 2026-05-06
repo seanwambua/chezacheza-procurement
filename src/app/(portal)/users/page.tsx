@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useState, useEffect } from 'react';
@@ -14,7 +15,7 @@ import {
   TableRow 
 } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
-import { Plus, Search, MoreVertical, Pencil, Trash2, UserPlus, Shield, Lock } from 'lucide-react';
+import { Plus, Search, MoreVertical, Pencil, Trash2, UserPlus, Shield, Lock, ShieldCheck } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import {
   Dialog,
@@ -38,12 +39,15 @@ import {
   FormItem,
   FormLabel,
   FormMessage,
+  FormDescription,
 } from "@/components/ui/form";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Checkbox } from '@/components/ui/checkbox';
 import { useUserStore } from '@/lib/user-store';
 import { User, UserRole } from '@/lib/types';
 import { RoleGuard } from '@/components/auth/RoleGuard';
 import { cn } from '@/lib/utils';
+import { Separator } from '@/components/ui/separator';
 
 const userSchema = z.object({
   name: z.string().min(2, "Name must be at least 2 characters"),
@@ -51,6 +55,7 @@ const userSchema = z.object({
   role: z.enum(['Admin', 'Manager', 'Staff', 'Finance'] as const),
   department: z.string().min(2, "Department is required"),
   status: z.enum(['Active', 'Inactive'] as const),
+  dataConsentConfirmed: z.boolean().refine(v => v === true, "Data processing consent is mandatory"),
 });
 
 type UserFormValues = z.infer<typeof userSchema>;
@@ -72,6 +77,7 @@ export default function UsersPage() {
       role: 'Staff',
       department: '',
       status: 'Active',
+      dataConsentConfirmed: false,
     },
   });
 
@@ -87,6 +93,7 @@ export default function UsersPage() {
         role: editingUser.role,
         department: editingUser.department,
         status: editingUser.status,
+        dataConsentConfirmed: true,
       });
     } else {
       form.reset({
@@ -95,6 +102,7 @@ export default function UsersPage() {
         role: 'Staff',
         department: '',
         status: 'Active',
+        dataConsentConfirmed: false,
       });
     }
   }, [editingUser, form]);
@@ -108,7 +116,7 @@ export default function UsersPage() {
           <Lock className="w-8 h-8 text-muted-foreground" />
         </div>
         <h2 className="text-xl font-bold">Access Restricted</h2>
-        <p className="text-muted-foreground max-w-sm">Only system administrators can manage users and roles. Please contact support if you believe this is an error.</p>
+        <p className="text-muted-foreground max-w-sm">Only system administrators can manage users and roles.</p>
         <Button variant="outline" onClick={() => window.history.back()}>Go Back</Button>
       </div>
     );
@@ -245,6 +253,34 @@ export default function UsersPage() {
                         <Input placeholder="e.g. Finance, Operations" {...field} className="h-10 text-sm" />
                       </FormControl>
                       <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                <Separator />
+
+                <FormField
+                  control={form.control}
+                  name="dataConsentConfirmed"
+                  render={({ field }) => (
+                    <FormItem className="flex flex-row items-start space-x-3 space-y-0 p-4 bg-accent/5 rounded-xl border border-accent/20">
+                      <FormControl>
+                        <Checkbox
+                          checked={field.value}
+                          onCheckedChange={field.onChange}
+                        />
+                      </FormControl>
+                      <div className="space-y-1 leading-none">
+                        <FormLabel className="text-xs font-black uppercase text-accent flex items-center gap-1.5">
+                          <ShieldCheck className="w-3.5 h-3.5" />
+                          Data Processing Consent
+                        </FormLabel>
+                        <FormDescription className="text-[10px] font-medium leading-tight">
+                          I confirm that this user has been informed that their professional identity 
+                          will be processed by CPP for procurement governance and audit.
+                        </FormDescription>
+                        <FormMessage />
+                      </div>
                     </FormItem>
                   )}
                 />

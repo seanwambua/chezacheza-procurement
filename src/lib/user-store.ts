@@ -11,6 +11,7 @@ interface UserState {
   currentUser: User | null;
   viewPreference: ViewPreference;
   isSidebarCollapsed: boolean;
+  hasConsentedToDataProtection: boolean;
   
   // Actions
   addUser: (userData: Omit<User, 'id' | 'createdAt'>) => void;
@@ -20,6 +21,7 @@ interface UserState {
   setCurrentUser: (user: User | null) => void;
   setViewPreference: (pref: ViewPreference) => void;
   setSidebarCollapsed: (collapsed: boolean) => void;
+  setConsent: (consented: boolean) => void;
   hasPermission: (permission: string) => boolean;
   hasRole: (roles: UserRole[]) => boolean;
 }
@@ -31,6 +33,7 @@ export const useUserStore = create<UserState>()(
       currentUser: MOCK_USERS[0],
       viewPreference: 'simple',
       isSidebarCollapsed: true,
+      hasConsentedToDataProtection: false,
 
       addUser: (userData) => set((state) => {
         const id = `U-${Math.floor(Math.random() * 10000)}`;
@@ -63,6 +66,8 @@ export const useUserStore = create<UserState>()(
       setViewPreference: (viewPreference) => set({ viewPreference }),
       
       setSidebarCollapsed: (isSidebarCollapsed) => set({ isSidebarCollapsed }),
+
+      setConsent: (hasConsentedToDataProtection) => set({ hasConsentedToDataProtection }),
 
       hasPermission: (permission) => {
         const user = get().currentUser;

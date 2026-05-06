@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useState, useEffect } from 'react';
@@ -63,6 +64,7 @@ const vendorSchema = z.object({
   taxCompliant: z.boolean().refine(v => v === true, "Tax compliance is mandatory"),
   businessPermit: z.boolean().refine(v => v === true, "Valid permit is mandatory"),
   bankDetailsProvided: z.boolean().refine(v => v === true, "Bank details are required"),
+  dataProtectionConsent: z.boolean().refine(v => v === true, "Data consent is required"),
 });
 
 type VendorFormValues = z.infer<typeof vendorSchema>;
@@ -86,6 +88,7 @@ export default function VendorsPage() {
       taxCompliant: false,
       businessPermit: false,
       bankDetailsProvided: false,
+      dataProtectionConsent: false,
     },
   });
 
@@ -112,7 +115,7 @@ export default function VendorsPage() {
       email: values.email,
       phone: values.phone,
       category: values.category,
-      rating: 5.0, // Initial perfect rating for new vetted vendors
+      rating: 5.0,
       onTimeDeliveryRate: 100,
       disputeCount: 0,
       onboardingDate: new Date().toISOString().split('T')[0],
@@ -135,7 +138,7 @@ export default function VendorsPage() {
   const nextStep = async () => {
     let fieldsToValidate: (keyof VendorFormValues)[] = [];
     if (step === 1) fieldsToValidate = ['name', 'category', 'email', 'phone'];
-    if (step === 2) fieldsToValidate = ['taxCompliant', 'businessPermit', 'bankDetailsProvided'];
+    if (step === 2) fieldsToValidate = ['taxCompliant', 'businessPermit', 'bankDetailsProvided', 'dataProtectionConsent'];
 
     const isValid = await form.trigger(fieldsToValidate);
     if (isValid) setStep(prev => prev + 1);
@@ -219,9 +222,9 @@ export default function VendorsPage() {
 
                   {step === 2 && (
                     <div className="space-y-6 animate-in slide-in-from-right-4 duration-300">
-                      <div className="p-4 bg-accent/5 border border-accent/20 rounded-xl space-y-4">
-                        <div className="flex items-center gap-2 text-accent mb-2">
-                          <ShieldCheck className="w-5 h-5" />
+                      <div className="p-4 bg-muted/30 border border-border/50 rounded-xl space-y-4">
+                        <div className="flex items-center gap-2 text-primary mb-2">
+                          <ShieldCheck className="w-5 h-5 text-accent" />
                           <h4 className="text-xs font-black uppercase tracking-tight">Compliance Checklist</h4>
                         </div>
                         <FormField control={form.control} name="taxCompliant" render={({ field }) => (
@@ -248,6 +251,16 @@ export default function VendorsPage() {
                             <div className="space-y-1 leading-none">
                               <FormLabel className="text-xs font-bold">Bank Disbursement Details</FormLabel>
                               <FormDescription className="text-[10px]">Verified EFT/Mobile money details provided.</FormDescription>
+                            </div>
+                          </FormItem>
+                        )} />
+                        <Separator />
+                        <FormField control={form.control} name="dataProtectionConsent" render={({ field }) => (
+                          <FormItem className="flex flex-row items-start space-x-3 space-y-0 p-2 bg-accent/5 rounded-lg">
+                            <FormControl><Checkbox checked={field.value} onCheckedChange={field.onChange} /></FormControl>
+                            <div className="space-y-1 leading-none">
+                              <FormLabel className="text-xs font-black text-accent uppercase">Data Protection Agreement</FormLabel>
+                              <FormDescription className="text-[10px]">I agree to the processing of vendor data for procurement and audit purposes.</FormDescription>
                             </div>
                           </FormItem>
                         )} />
@@ -280,7 +293,7 @@ export default function VendorsPage() {
                           <div className="pt-2">
                             <div className="flex items-center gap-2 text-emerald-600">
                               <CheckCircle2 className="w-3.5 h-3.5" />
-                              <span className="text-[10px] font-black uppercase">Vetting Requirements Met</span>
+                              <span className="text-[10px] font-black uppercase">Vetting & Data Consent Met</span>
                             </div>
                           </div>
                        </div>
@@ -301,7 +314,7 @@ export default function VendorsPage() {
                         <ArrowRight className="w-3.5 h-3.5 ml-2" />
                       </Button>
                     ) : (
-                      <Button type="submit" className="w-full sm:w-auto bg-emerald-600 hover:bg-emerald-700 text-white font-bold uppercase text-xs h-10 shadow-md">
+                      <Button type="submit" className="w-full sm:w-auto bg-primary hover:bg-primary/90 text-white font-bold uppercase text-xs h-10 shadow-md">
                         Authorize Onboarding
                       </Button>
                     )}
@@ -358,12 +371,6 @@ export default function VendorsPage() {
                 </CardContent>
               </Card>
             ))}
-            {filteredVendors.length === 0 && (
-              <div className="text-center py-12 opacity-50 space-y-2">
-                <Users className="w-8 h-8 mx-auto text-muted-foreground" />
-                <p className="text-xs font-bold uppercase">No vendors found</p>
-              </div>
-            )}
           </div>
         </div>
 
@@ -435,7 +442,7 @@ export default function VendorsPage() {
                   <div className="space-y-1">
                     <p className="text-[9px] text-muted-foreground uppercase font-black tracking-widest">Compliance</p>
                     <div className="pt-1">
-                      <Badge className="bg-emerald-500/10 text-emerald-600 hover:bg-emerald-500/20 border-emerald-500/20 text-[9px] uppercase font-black px-1.5 h-4.5">
+                      <Badge className="bg-accent/10 text-accent hover:bg-accent/20 border-accent/20 text-[9px] uppercase font-black px-1.5 h-4.5">
                         VERIFIED
                       </Badge>
                     </div>
@@ -451,7 +458,7 @@ export default function VendorsPage() {
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <Card className="shadow-none border-border/50 bg-muted/20">
                       <CardContent className="p-4 flex items-center gap-4">
-                        <div className="w-10 h-10 rounded-xl bg-emerald-500/10 flex items-center justify-center text-emerald-600 shrink-0">
+                        <div className="w-10 h-10 rounded-xl bg-accent/10 flex items-center justify-center text-accent shrink-0">
                           <CheckCircle2 className="w-5 h-5" />
                         </div>
                         <div className="min-w-0">
