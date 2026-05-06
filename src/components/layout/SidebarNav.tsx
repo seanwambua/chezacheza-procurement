@@ -146,7 +146,7 @@ export function SidebarNav() {
           )}
         </div>
         
-        <div className="flex-1 px-4 space-y-6 overflow-y-auto py-4">
+        <div className="flex-1 px-4 space-y-4 py-4">
           {navGroups.map((group) => {
             const visibleItems = group.items.filter(item => item.roles.includes(currentUser.role));
             if (visibleItems.length === 0) return null;
