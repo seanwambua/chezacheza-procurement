@@ -10,13 +10,12 @@ import {
   Users, 
   Wallet, 
   TrendingUp, 
-  ArrowUpRight,
   ChevronRight,
-  Info
+  Info,
+  AlertCircle
 } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
-import { Separator } from '@/components/ui/separator';
 import { Button } from '@/components/ui/button';
 import { 
   Tooltip,
@@ -27,7 +26,7 @@ import {
 import { cn } from '@/lib/utils';
 
 export default function DepartmentsPage() {
-  const { budgets } = useStore();
+  const { budgets, selectedYear } = useStore();
   const { users, viewPreference } = useUserStore();
   const [mounted, setMounted] = useState(false);
 
@@ -39,37 +38,40 @@ export default function DepartmentsPage() {
 
   const isDetailed = viewPreference === 'detailed';
 
+  // Departments are decoupled from years - they exist as long as there are users or historical budgets
   const departmentNames = Array.from(new Set([
     ...budgets.map(b => b.department),
     ...users.map(u => u.department)
   ])).filter(Boolean);
 
   const departmentalData = departmentNames.map(name => {
-    const deptBudgets = budgets.filter(b => b.department === name);
+    // Current year data for performance tracking
+    const currentYearBudgets = budgets.filter(b => b.department === name && b.fiscalYear === selectedYear);
     const deptUsers = users.filter(u => u.department === name);
     
-    const totalAllocation = deptBudgets.reduce((acc, b) => 
+    const totalAllocation = currentYearBudgets.reduce((acc, b) => 
       acc + b.q1Allocation + b.q2Allocation + b.q3Allocation + b.q4Allocation, 0
     );
-    const totalSpent = deptBudgets.reduce((acc, b) => acc + (b.spent || 0), 0);
-    const totalCommitted = deptBudgets.reduce((acc, b) => acc + (b.committed || 0), 0);
-    const utilization = totalAllocation > 0 ? (totalSpent / totalAllocation) * 100 : 0;
+    const totalSpent = currentYearBudgets.reduce((acc, b) => acc + (b.spent || 0), 0);
+    const totalCommitted = currentYearBudgets.reduce((acc, b) => acc + (b.committed || 0), 0);
+    const utilization = totalAllocation > 0 ? ((totalSpent + totalCommitted) / totalAllocation) * 100 : 0;
 
     return {
       name,
-      budgetCount: deptBudgets.length,
+      budgetCount: currentYearBudgets.length,
       staffCount: deptUsers.length,
       totalAllocation,
       totalSpent,
       totalCommitted,
       utilization,
-      budgets: deptBudgets
+      budgets: currentYearBudgets,
+      hasActiveBudgets: currentYearBudgets.length > 0
     };
   });
 
   const totalAllocationAll = departmentalData.reduce((acc, d) => acc + d.totalAllocation, 0);
-  const avgUtilization = departmentalData.length > 0 
-    ? departmentalData.reduce((acc, d) => acc + d.utilization, 0) / departmentalData.length 
+  const avgUtilization = departmentalData.filter(d => d.hasActiveBudgets).length > 0 
+    ? departmentalData.filter(d => d.hasActiveBudgets).reduce((acc, d) => acc + d.utilization, 0) / departmentalData.filter(d => d.hasActiveBudgets).length 
     : 0;
 
   return (
@@ -82,29 +84,29 @@ export default function DepartmentsPage() {
           )}>
             Departmental Insights
           </h2>
-          <p className="text-muted-foreground text-sm font-medium">Operational efficiency and resource distribution across departments.</p>
+          <p className="text-muted-foreground text-sm font-medium">Persistent organizational branches and their FY {selectedYear} performance.</p>
         </div>
       </div>
 
       <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 md:gap-6">
         <StatCard 
-          title="Active Departments" 
+          title="Total Branches" 
           value={departmentalData.length} 
           icon={Building2} 
-          description={isDetailed ? "Across all fiscal branches" : undefined}
+          description={isDetailed ? "Decoupled global entities" : undefined}
         />
         <StatCard 
-          title="Global Allocation" 
+          title={`FY ${selectedYear} Pool`} 
           value={`Ksh ${totalAllocationAll.toLocaleString()}`} 
           icon={Wallet} 
-          description={isDetailed ? "Consolidated annual pool" : undefined}
+          description={isDetailed ? "Active annual target" : undefined}
         />
         <div className="sm:col-span-2 md:col-span-1">
           <StatCard 
             title="Avg. Utilization" 
             value={`${Math.round(avgUtilization)}%`} 
             icon={TrendingUp} 
-            description={isDetailed ? "System-wide efficiency" : undefined}
+            description={isDetailed ? `Current FY ${selectedYear} efficiency` : undefined}
           />
         </div>
       </div>
@@ -119,19 +121,14 @@ export default function DepartmentsPage() {
                   isDetailed ? "text-lg md:text-xl" : "text-xl md:text-2xl"
                 )}>
                   {dept.name}
-                  {isDetailed && (
-                    <Badge variant="outline" className="hidden xs:inline-flex text-[9px] font-bold uppercase tracking-tighter">
-                      {dept.name.substring(0, 3).toUpperCase()}
-                    </Badge>
-                  )}
                 </CardTitle>
                 <div className="flex flex-wrap items-center gap-x-4 gap-y-1">
                   <span className="flex items-center gap-1.5 text-[10px] sm:text-xs text-muted-foreground font-medium">
-                    <Users className="w-3 h-3" /> {dept.staffCount} Team
+                    <Users className="w-3 h-3" /> {dept.staffCount} Team Members
                   </span>
                   {isDetailed && (
                     <span className="flex items-center gap-1.5 text-[10px] sm:text-xs text-muted-foreground font-medium">
-                      <Wallet className="w-3 h-3" /> {dept.budgetCount} Budgets
+                      <Wallet className="w-3 h-3" /> {dept.budgetCount} Active FY {selectedYear} Lines
                     </span>
                   )}
                 </div>
@@ -141,50 +138,47 @@ export default function DepartmentsPage() {
               </Button>
             </CardHeader>
             <CardContent className="space-y-6 px-4 sm:px-6 pb-4 sm:pb-6">
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <div className="p-4 bg-muted/30 rounded-xl border border-border/50 flex flex-col justify-between">
-                  <div className="flex items-center justify-between mb-3">
-                    <p className="text-[10px] uppercase font-bold text-muted-foreground tracking-wider">Utilization</p>
-                    <TrendingUp className="w-3.5 h-3.5 text-accent" />
+              {dept.hasActiveBudgets ? (
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div className="p-4 bg-muted/30 rounded-xl border border-border/50 flex flex-col justify-between">
+                    <div className="flex items-center justify-between mb-3">
+                      <p className="text-[10px] uppercase font-bold text-muted-foreground tracking-wider">Utilization (FY {selectedYear})</p>
+                      <TrendingUp className="w-3.5 h-3.5 text-accent" />
+                    </div>
+                    <div className="flex items-end justify-between mb-2">
+                      <span className={cn(
+                        "font-black tracking-tight",
+                        isDetailed ? "text-xl" : "text-2xl"
+                      )}>{Math.round(dept.utilization)}%</span>
+                    </div>
+                    <Progress value={dept.utilization} className="h-1.5 bg-muted" />
                   </div>
-                  <div className="flex items-end justify-between mb-2">
+                  <div className="p-4 bg-muted/30 rounded-xl border border-border/50 flex flex-col justify-between">
+                    <div className="flex items-center justify-between mb-3">
+                      <p className="text-[10px] uppercase font-bold text-muted-foreground tracking-wider">FY {selectedYear} Committed</p>
+                      <div className="w-1.5 h-1.5 rounded-full bg-accent" />
+                    </div>
                     <span className={cn(
-                      "font-black tracking-tight",
-                      isDetailed ? "text-xl" : "text-2xl"
-                    )}>{Math.round(dept.utilization)}%</span>
+                      "font-black tracking-tighter truncate text-primary leading-none",
+                      isDetailed ? "text-lg" : "text-xl"
+                    )}>
+                      Ksh {dept.totalCommitted.toLocaleString()}
+                    </span>
+                    {isDetailed && <p className="text-[9px] text-muted-foreground mt-2 uppercase font-bold opacity-70">Awaiting Settlement</p>}
                   </div>
-                  <Progress value={dept.utilization} className="h-1.5 bg-muted" />
                 </div>
-                <div className="p-4 bg-muted/30 rounded-xl border border-border/50 flex flex-col justify-between">
-                  <div className="flex items-center justify-between mb-3">
-                    <p className="text-[10px] uppercase font-bold text-muted-foreground tracking-wider">Net Committed</p>
-                    <div className="w-1.5 h-1.5 rounded-full bg-accent" />
-                  </div>
-                  <span className={cn(
-                    "font-black tracking-tighter truncate text-primary leading-none",
-                    isDetailed ? "text-lg" : "text-xl"
-                  )}>
-                    Ksh {dept.totalCommitted.toLocaleString()}
-                  </span>
-                  {isDetailed && <p className="text-[9px] text-muted-foreground mt-2 uppercase font-bold opacity-70">Pending Settlement</p>}
+              ) : (
+                <div className="flex items-center gap-3 p-6 bg-muted/20 border-2 border-dashed rounded-xl justify-center text-muted-foreground">
+                  <AlertCircle className="w-5 h-5 opacity-40" />
+                  <p className="text-xs font-bold uppercase tracking-tight">No Active FY {selectedYear} Allocation</p>
                 </div>
-              </div>
+              )}
 
-              {isDetailed && (
+              {isDetailed && dept.hasActiveBudgets && (
                 <div className="space-y-4 pt-2">
-                  <div className="flex items-center justify-between">
-                    <h4 className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground flex items-center gap-2">
-                      Primary Budgets
-                      <TooltipProvider>
-                        <Tooltip delayDuration={0}>
-                          <TooltipTrigger asChild>
-                            <Info className="w-3 h-3 cursor-help opacity-40" />
-                          </TooltipTrigger>
-                          <TooltipContent className="text-[10px] bg-card text-foreground border-accent/20">Active financial lines.</TooltipContent>
-                        </Tooltip>
-                      </TooltipProvider>
-                    </h4>
-                  </div>
+                  <h4 className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground flex items-center gap-2">
+                    Current Budget Lines
+                  </h4>
                   <div className="space-y-1.5">
                     {dept.budgets.slice(0, 3).map((b) => (
                       <div key={b.id} className="flex items-center justify-between text-xs p-2.5 rounded-lg hover:bg-muted/50 transition-colors border border-transparent hover:border-border/40 group/item">
@@ -204,7 +198,7 @@ export default function DepartmentsPage() {
               
               <div className="flex flex-col sm:flex-row justify-between items-stretch sm:items-center gap-4 pt-4 border-t border-border/50">
                 <div className="text-left">
-                  <p className="text-[9px] uppercase font-bold text-muted-foreground tracking-tight">Total Annual Target</p>
+                  <p className="text-[9px] uppercase font-bold text-muted-foreground tracking-tight">FY {selectedYear} Target</p>
                   <p className={cn(
                     "font-black text-primary tracking-tighter leading-none",
                     isDetailed ? "text-lg" : "text-xl"
@@ -213,7 +207,7 @@ export default function DepartmentsPage() {
                   </p>
                 </div>
                 <Button variant="outline" size="sm" className="h-9 text-[10px] font-bold uppercase tracking-widest shadow-sm">
-                  Audit Branch
+                  View Full History
                 </Button>
               </div>
             </CardContent>
