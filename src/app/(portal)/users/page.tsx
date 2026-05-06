@@ -22,7 +22,8 @@ import {
   DialogHeader,
   DialogTitle,
   DialogTrigger,
-  DialogFooter
+  DialogFooter,
+  DialogDescription
 } from "@/components/ui/dialog";
 import {
   DropdownMenu,
@@ -42,6 +43,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { useUserStore } from '@/lib/user-store';
 import { User, UserRole } from '@/lib/types';
 import { RoleGuard } from '@/components/auth/RoleGuard';
+import { cn } from '@/lib/utils';
 
 const userSchema = z.object({
   name: z.string().min(2, "Name must be at least 2 characters"),
@@ -54,11 +56,13 @@ const userSchema = z.object({
 type UserFormValues = z.infer<typeof userSchema>;
 
 export default function UsersPage() {
-  const { users, addUser, updateUser, deleteUser, toggleUserStatus, currentUser } = useUserStore();
+  const { users, addUser, updateUser, deleteUser, toggleUserStatus, currentUser, viewPreference } = useUserStore();
   const [search, setSearch] = useState('');
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [editingUser, setEditingUser] = useState<User | null>(null);
   const [mounted, setMounted] = useState(false);
+
+  const isDetailed = viewPreference === 'detailed';
 
   const form = useForm<UserFormValues>({
     resolver: zodResolver(userSchema),
@@ -97,10 +101,9 @@ export default function UsersPage() {
 
   if (!mounted) return null;
 
-  // Final Safety Check
   if (currentUser?.role !== 'Admin') {
     return (
-      <div className="flex flex-col items-center justify-center h-[60vh] text-center space-y-4">
+      <div className="flex flex-col items-center justify-center h-[60vh] text-center space-y-4 px-4">
         <div className="w-16 h-16 bg-muted rounded-full flex items-center justify-center">
           <Lock className="w-8 h-8 text-muted-foreground" />
         </div>
@@ -127,23 +130,17 @@ export default function UsersPage() {
     setEditingUser(null);
   };
 
-  const handleEdit = (user: User) => {
-    setEditingUser(user);
-    setIsDialogOpen(true);
-  };
-
-  const handleDelete = (id: string) => {
-    if (confirm('Are you sure you want to delete this user? This action cannot be undone.')) {
-      deleteUser(id);
-    }
-  };
-
   return (
-    <div className="space-y-6 animate-in fade-in duration-500">
-      <div className="flex items-center justify-between">
-        <div>
-          <h2 className="text-2xl font-headline font-bold text-primary">System Users</h2>
-          <p className="text-muted-foreground">Manage user accounts, roles, and access permissions.</p>
+    <div className="space-y-6 md:space-y-8 animate-in fade-in duration-500 pb-10 max-w-full overflow-hidden">
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+        <div className="min-w-0 flex-1">
+          <h2 className={cn(
+            "font-headline font-bold text-primary tracking-tighter leading-tight truncate",
+            isDetailed ? "text-2xl md:text-3xl" : "text-3xl md:text-4xl"
+          )}>
+            System Users
+          </h2>
+          <p className="text-muted-foreground text-sm font-medium">Manage user accounts, roles, and access permissions.</p>
         </div>
         
         <Dialog open={isDialogOpen} onOpenChange={(open) => {
@@ -151,25 +148,26 @@ export default function UsersPage() {
           if (!open) setEditingUser(null);
         }}>
           <DialogTrigger asChild>
-            <Button className="bg-primary hover:bg-primary/90" onClick={() => setEditingUser(null)}>
+            <Button className="w-full md:w-auto bg-primary font-bold uppercase text-xs h-10 shadow-sm" onClick={() => setEditingUser(null)}>
               <UserPlus className="w-4 h-4 mr-2" />
               Add User
             </Button>
           </DialogTrigger>
-          <DialogContent className="max-w-md">
+          <DialogContent className="max-w-md w-[95vw] max-h-[90vh] overflow-y-auto">
             <DialogHeader>
-              <DialogTitle>{editingUser ? 'Edit User Profile' : 'Create New User'}</DialogTitle>
+              <DialogTitle className="text-xl md:text-2xl font-black tracking-tight">{editingUser ? 'Edit User Profile' : 'Create New User'}</DialogTitle>
+              <DialogDescription className="text-xs font-medium">Configure access levels and departmental assignments.</DialogDescription>
             </DialogHeader>
             <Form {...form}>
-              <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4 py-4">
+              <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-5 py-4">
                 <FormField
                   control={form.control}
                   name="name"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Full Name</FormLabel>
+                      <FormLabel className="text-[10px] uppercase font-bold text-muted-foreground">Full Name</FormLabel>
                       <FormControl>
-                        <Input placeholder="John Doe" {...field} />
+                        <Input placeholder="John Doe" {...field} className="h-10 text-sm" />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
@@ -181,33 +179,32 @@ export default function UsersPage() {
                   name="email"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Email Address</FormLabel>
+                      <FormLabel className="text-[10px] uppercase font-bold text-muted-foreground">Email Address</FormLabel>
                       <FormControl>
-                        <Input type="email" placeholder="john@chezacheza.org" {...field} />
+                        <Input type="email" placeholder="john@chezacheza.org" {...field} className="h-10 text-sm" />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
                   )}
                 />
 
-                <div className="grid grid-cols-2 gap-4">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <FormField
                     control={form.control}
                     name="role"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>System Role</FormLabel>
+                        <FormLabel className="text-[10px] uppercase font-bold text-muted-foreground">System Role</FormLabel>
                         <Select onValueChange={field.onChange} value={field.value}>
                           <FormControl>
-                            <SelectTrigger>
+                            <SelectTrigger className="h-10 text-sm">
                               <SelectValue placeholder="Select role" />
                             </SelectTrigger>
                           </FormControl>
                           <SelectContent>
-                            <SelectItem value="Admin">Admin</SelectItem>
-                            <SelectItem value="Manager">Manager</SelectItem>
-                            <SelectItem value="Finance">Finance</SelectItem>
-                            <SelectItem value="Staff">Staff</SelectItem>
+                            {['Admin', 'Manager', 'Finance', 'Staff'].map(r => (
+                              <SelectItem key={r} value={r} className="text-xs">{r}</SelectItem>
+                            ))}
                           </SelectContent>
                         </Select>
                         <FormMessage />
@@ -220,16 +217,16 @@ export default function UsersPage() {
                     name="status"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Status</FormLabel>
+                        <FormLabel className="text-[10px] uppercase font-bold text-muted-foreground">Status</FormLabel>
                         <Select onValueChange={field.onChange} value={field.value}>
                           <FormControl>
-                            <SelectTrigger>
+                            <SelectTrigger className="h-10 text-sm">
                               <SelectValue placeholder="Status" />
                             </SelectTrigger>
                           </FormControl>
                           <SelectContent>
-                            <SelectItem value="Active">Active</SelectItem>
-                            <SelectItem value="Inactive">Inactive</SelectItem>
+                            <SelectItem value="Active" className="text-xs">Active</SelectItem>
+                            <SelectItem value="Inactive" className="text-xs">Inactive</SelectItem>
                           </SelectContent>
                         </Select>
                         <FormMessage />
@@ -243,18 +240,20 @@ export default function UsersPage() {
                   name="department"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Department</FormLabel>
+                      <FormLabel className="text-[10px] uppercase font-bold text-muted-foreground">Department</FormLabel>
                       <FormControl>
-                        <Input placeholder="e.g. Finance, Operations" {...field} />
+                        <Input placeholder="e.g. Finance, Operations" {...field} className="h-10 text-sm" />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
                   )}
                 />
 
-                <DialogFooter className="pt-4">
-                  <Button type="button" variant="outline" onClick={() => setIsDialogOpen(false)}>Cancel</Button>
-                  <Button type="submit">{editingUser ? 'Save Changes' : 'Create Account'}</Button>
+                <DialogFooter className="gap-2 sm:gap-0 pt-6 flex-col sm:flex-row border-t">
+                  <Button type="button" variant="outline" onClick={() => setIsDialogOpen(false)} className="w-full sm:w-auto font-bold uppercase text-xs h-10">Cancel</Button>
+                  <Button type="submit" className="w-full sm:w-auto bg-primary shadow-md font-bold uppercase text-xs h-10">
+                    {editingUser ? 'Save Changes' : 'Create Account'}
+                  </Button>
                 </DialogFooter>
               </form>
             </Form>
@@ -262,94 +261,103 @@ export default function UsersPage() {
         </Dialog>
       </div>
 
-      <div className="flex items-center gap-4 bg-card p-4 rounded-lg border border-border">
-        <div className="relative flex-1">
+      <div className="bg-card p-4 rounded-xl border border-border shadow-sm">
+        <div className="relative w-full">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
           <Input 
-            placeholder="Search users by name, email, or department..." 
-            className="pl-9" 
+            placeholder="Search users..." 
+            className="w-full pl-9 h-10 text-xs bg-muted/30 border-none shadow-none focus-visible:ring-1" 
             value={search}
             onChange={(e) => setSearch(e.target.value)}
           />
         </div>
       </div>
 
-      <div className="bg-card rounded-lg border border-border overflow-hidden">
-        <Table>
-          <TableHeader>
-            <TableRow className="bg-muted/50">
-              <TableHead>User</TableHead>
-              <TableHead>Role</TableHead>
-              <TableHead>Department</TableHead>
-              <TableHead>Status</TableHead>
-              <TableHead>Joined Date</TableHead>
-              <TableHead className="w-[50px]"></TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {filteredUsers.length > 0 ? (
-              filteredUsers.map((user) => (
-                <TableRow key={user.id}>
-                  <TableCell>
-                    <div className="flex items-center gap-3">
-                      <div className="w-8 h-8 rounded-full bg-accent/20 flex items-center justify-center text-accent font-bold text-xs">
-                        {user.name.charAt(0)}
+      <div className="bg-card rounded-xl border border-border overflow-hidden shadow-sm">
+        <div className="overflow-x-auto w-full">
+          <Table>
+            <TableHeader>
+              <TableRow className="bg-muted/30 border-none">
+                <TableHead className="min-w-[200px] font-bold uppercase text-[10px]">User</TableHead>
+                <TableHead className="font-bold uppercase text-[10px]">Role</TableHead>
+                {isDetailed && <TableHead className="font-bold uppercase text-[10px]">Department</TableHead>}
+                <TableHead className="font-bold uppercase text-[10px]">Status</TableHead>
+                {isDetailed && <TableHead className="font-bold uppercase text-[10px] text-right">Joined</TableHead>}
+                <TableHead className="w-[50px]"></TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {filteredUsers.length > 0 ? (
+                filteredUsers.map((user) => (
+                  <TableRow key={user.id} className="group hover:bg-muted/5">
+                    <TableCell>
+                      <div className="flex items-center gap-3">
+                        <div className="w-8 h-8 rounded-lg bg-accent/10 flex items-center justify-center text-accent font-black text-[10px] shrink-0">
+                          {user.name.charAt(0)}
+                        </div>
+                        <div className="min-w-0">
+                          <p className="font-bold text-xs truncate text-primary">{user.name}</p>
+                          <p className="text-[10px] text-muted-foreground truncate opacity-70 font-medium">{user.email}</p>
+                        </div>
                       </div>
-                      <div>
-                        <p className="font-semibold text-sm">{user.name}</p>
-                        <p className="text-xs text-muted-foreground">{user.email}</p>
+                    </TableCell>
+                    <TableCell>
+                      <div className="flex items-center gap-2">
+                        <Shield className={cn(
+                          "w-3 h-3",
+                          user.role === 'Admin' ? "text-accent" : "text-muted-foreground opacity-50"
+                        )} />
+                        <span className="text-[10px] font-bold uppercase tracking-tight">{user.role}</span>
                       </div>
-                    </div>
-                  </TableCell>
-                  <TableCell>
-                    <div className="flex items-center gap-2">
-                      <Shield className={`w-3 h-3 ${user.role === 'Admin' ? 'text-primary' : 'text-muted-foreground'}`} />
-                      <span className="text-sm">{user.role}</span>
-                    </div>
-                  </TableCell>
-                  <TableCell className="text-sm">{user.department}</TableCell>
-                  <TableCell>
-                    <Badge variant={user.status === 'Active' ? 'secondary' : 'outline'} className="text-[10px]">
-                      {user.status}
-                    </Badge>
-                  </TableCell>
-                  <TableCell className="text-xs text-muted-foreground">
-                    {new Date(user.createdAt).toLocaleDateString()}
-                  </TableCell>
-                  <TableCell>
-                    <DropdownMenu>
-                      <DropdownMenuTrigger asChild>
-                        <Button variant="ghost" size="icon">
-                          <MoreVertical className="w-4 h-4" />
-                        </Button>
-                      </DropdownMenuTrigger>
-                      <DropdownMenuContent align="end">
-                        <DropdownMenuItem onClick={() => handleEdit(user)}>
-                          <Pencil className="w-4 h-4 mr-2" />
-                          Edit Profile
-                        </DropdownMenuItem>
-                        <DropdownMenuItem onClick={() => toggleUserStatus(user.id)}>
-                          <Plus className="w-4 h-4 mr-2" />
-                          {user.status === 'Active' ? 'Deactivate' : 'Activate'}
-                        </DropdownMenuItem>
-                        <DropdownMenuItem onClick={() => handleDelete(user.id)} className="text-destructive focus:text-destructive">
-                          <Trash2 className="w-4 h-4 mr-2" />
-                          Delete User
-                        </DropdownMenuItem>
-                      </DropdownMenuContent>
-                    </DropdownMenu>
+                    </TableCell>
+                    {isDetailed && <TableCell className="text-[10px] font-bold uppercase text-muted-foreground">{user.department}</TableCell>}
+                    <TableCell>
+                      <Badge variant={user.status === 'Active' ? 'secondary' : 'outline'} className="text-[9px] uppercase px-1.5 py-0 h-4 tracking-tighter">
+                        {user.status}
+                      </Badge>
+                    </TableCell>
+                    {isDetailed && (
+                      <TableCell className="text-right text-[10px] text-muted-foreground whitespace-nowrap font-bold">
+                        {new Date(user.createdAt).toLocaleDateString()}
+                      </TableCell>
+                    )}
+                    <TableCell>
+                      <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                          <Button variant="ghost" size="icon" className="h-8 w-8 md:opacity-0 group-hover:opacity-100 transition-opacity">
+                            <MoreVertical className="w-4 h-4" />
+                          </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end">
+                          <DropdownMenuItem onClick={() => { setEditingUser(user); setIsDialogOpen(true); }} className="text-xs font-bold">
+                            <Pencil className="w-4 h-4 mr-2" /> Edit Profile
+                          </DropdownMenuItem>
+                          <DropdownMenuItem onClick={() => toggleUserStatus(user.id)} className="text-xs font-bold">
+                            <Plus className="w-4 h-4 mr-2" /> {user.status === 'Active' ? 'Deactivate' : 'Activate'}
+                          </DropdownMenuItem>
+                          <DropdownMenuItem onClick={() => { if(confirm('Delete user?')) deleteUser(user.id); }} className="text-destructive text-xs font-bold">
+                            <Trash2 className="w-4 h-4 mr-2" /> Delete
+                          </DropdownMenuItem>
+                        </DropdownMenuContent>
+                      </DropdownMenu>
+                    </TableCell>
+                  </TableRow>
+                ))
+              ) : (
+                <TableRow>
+                  <TableCell colSpan={isDetailed ? 6 : 4} className="h-48 text-center text-muted-foreground">
+                     <div className="flex flex-col items-center justify-center space-y-3 opacity-50">
+                        <div className="p-4 bg-muted rounded-full">
+                          <Search className="w-8 h-8" />
+                        </div>
+                        <p className="text-sm font-medium">No system users found.</p>
+                      </div>
                   </TableCell>
                 </TableRow>
-              ))
-            ) : (
-              <TableRow>
-                <TableCell colSpan={6} className="h-24 text-center text-muted-foreground">
-                  No users found matching your search.
-                </TableCell>
-              </TableRow>
-            )}
-          </TableBody>
-        </Table>
+              )}
+            </TableBody>
+          </Table>
+        </div>
       </div>
     </div>
   );
