@@ -17,7 +17,11 @@ import {
   ShieldCheck,
   CheckCircle2,
   TrendingDown,
-  Target
+  Target,
+  Building2,
+  PieChart as PieChartIcon,
+  LayoutDashboard,
+  FileText
 } from 'lucide-react';
 import { 
   BarChart, 
@@ -43,14 +47,14 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { 
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-  DialogFooter,
-  DialogDescription
-} from "@/components/ui/dialog";
+  Sheet,
+  SheetContent,
+  SheetHeader,
+  SheetTitle,
+  SheetTrigger,
+  SheetFooter,
+  SheetDescription
+} from "@/components/ui/sheet";
 import {
   Form,
   FormControl,
@@ -58,9 +62,11 @@ import {
   FormItem,
   FormLabel,
   FormMessage,
+  FormDescription,
 } from "@/components/ui/form";
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
+import { Checkbox } from '@/components/ui/checkbox';
 import { calculatePRTotal } from '@/lib/types';
 import Link from 'next/link';
 import { cn } from '@/lib/utils';
@@ -69,14 +75,25 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
 import { useToast } from '@/hooks/use-toast';
 import { RoleGuard } from '@/components/auth/RoleGuard';
+import { Separator } from '@/components/ui/separator';
 
 const fiscalYearSchema = z.object({
   year: z.string().min(4, "Year is required"),
   globalTarget: z.coerce.number().min(1, "Target must be greater than zero"),
   strategy: z.enum(['Growth', 'Conservative', 'Balanced']),
+  departments: z.array(z.string()).min(1, "Select at least one department"),
+  q1Weight: z.coerce.number().min(0).max(100),
+  q2Weight: z.coerce.number().min(0).max(100),
+  q3Weight: z.coerce.number().min(0).max(100),
+  q4Weight: z.coerce.number().min(0).max(100),
+}).refine((data) => (data.q1Weight + data.q2Weight + data.q3Weight + data.q4Weight) === 100, {
+  message: "Quarterly weights must total 100%",
+  path: ["q1Weight"]
 });
 
 type FiscalYearValues = z.infer<typeof fiscalYearSchema>;
+
+const DEPARTMENTS = ['IT', 'Operations', 'Marketing', 'Finance', 'Programs', 'HR'];
 
 export default function DashboardPage() {
   const { prs, budgets, vendors, lpos, grns, addBudget } = useStore();
@@ -84,11 +101,9 @@ export default function DashboardPage() {
   const { toast } = useToast();
   const [mounted, setMounted] = useState(false);
   
-  // Dynamic available years from budgets
   const availableYears = Array.from(new Set(budgets.map(b => b.fiscalYear))).sort((a, b) => Number(b) - Number(a));
   const [selectedYear, setSelectedYear] = useState(availableYears[0] || '2024');
   
-  // Wizard state
   const [isWizardOpen, setIsWizardOpen] = useState(false);
   const [wizardStep, setWizardStep] = useState(1);
 
@@ -96,8 +111,13 @@ export default function DashboardPage() {
     resolver: zodResolver(fiscalYearSchema),
     defaultValues: {
       year: '2025',
-      globalTarget: 5000000,
+      globalTarget: 10000000,
       strategy: 'Balanced',
+      departments: ['Operations', 'IT'],
+      q1Weight: 25,
+      q2Weight: 25,
+      q3Weight: 25,
+      q4Weight: 25,
     },
   });
 
@@ -105,7 +125,6 @@ export default function DashboardPage() {
     setMounted(true);
   }, []);
 
-  // Update selected year if the list was empty and now has data
   useEffect(() => {
     if (availableYears.length > 0 && !availableYears.includes(selectedYear)) {
       setSelectedYear(availableYears[0]);
@@ -137,30 +156,31 @@ export default function DashboardPage() {
   const recentPrs = prs.slice(0, isDetailed ? 5 : 3);
 
   const onWizardSubmit = (values: FiscalYearValues) => {
-    // Prevent submission if not on the final step
-    if (wizardStep < 3) {
+    if (wizardStep < 5) {
       nextStep();
       return;
     }
 
-    // To "establish" the year, we create a primary general budget for it
-    addBudget({
-      name: `General Operations - ${values.year}`,
-      department: 'Operations',
-      fiscalYear: values.year,
-      description: `Auto-initialized budget for FY ${values.year} (${values.strategy} strategy).`,
-      q1Allocation: values.globalTarget / 4,
-      q2Allocation: values.globalTarget / 4,
-      q3Allocation: values.globalTarget / 4,
-      q4Allocation: values.globalTarget / 4,
+    const deptCount = values.departments.length;
+    
+    values.departments.forEach(dept => {
+      addBudget({
+        name: `${dept} General - ${values.year}`,
+        department: dept,
+        fiscalYear: values.year,
+        description: `Strategic initialized budget for FY ${values.year}. Strategy: ${values.strategy}.`,
+        q1Allocation: (values.globalTarget * (values.q1Weight / 100)) / deptCount,
+        q2Allocation: (values.globalTarget * (values.q2Weight / 100)) / deptCount,
+        q3Allocation: (values.globalTarget * (values.q3Weight / 100)) / deptCount,
+        q4Allocation: (values.globalTarget * (values.q4Weight / 100)) / deptCount,
+      });
     });
 
-    // Switch to the new year
     setSelectedYear(values.year);
     
     toast({
-      title: "Fiscal Year Established",
-      description: `Strategy for FY ${values.year} has been successfully initialized.`,
+      title: "Fiscal Year Strategic Onboarding Complete",
+      description: `Established FY ${values.year} with ${deptCount} departmental budgets.`,
     });
     setIsWizardOpen(false);
     setWizardStep(1);
@@ -168,11 +188,23 @@ export default function DashboardPage() {
   };
 
   const nextStep = async () => {
-    let isValid = false;
-    if (wizardStep === 1) isValid = await form.trigger(['year']);
-    if (wizardStep === 2) isValid = await form.trigger(['globalTarget', 'strategy']);
+    let fieldsToValidate: (keyof FiscalYearValues)[] = [];
+    if (wizardStep === 1) fieldsToValidate = ['year'];
+    if (wizardStep === 2) fieldsToValidate = ['globalTarget', 'strategy'];
+    if (wizardStep === 3) fieldsToValidate = ['departments'];
+    if (wizardStep === 4) fieldsToValidate = ['q1Weight', 'q2Weight', 'q3Weight', 'q4Weight'];
+    
+    const isValid = await form.trigger(fieldsToValidate);
     
     if (isValid) {
+      if (wizardStep === 4) {
+        // Double check weight sum
+        const { q1Weight, q2Weight, q3Weight, q4Weight } = form.getValues();
+        if ((q1Weight + q2Weight + q3Weight + q4Weight) !== 100) {
+          form.setError('q1Weight', { message: 'Weights must total exactly 100%' });
+          return;
+        }
+      }
       setWizardStep(prev => prev + 1);
     }
   };
@@ -209,75 +241,87 @@ export default function DashboardPage() {
           </div>
           
           <RoleGuard allowedRoles={['Admin', 'Finance']}>
-            <Dialog open={isWizardOpen} onOpenChange={(open) => {
+            <Sheet open={isWizardOpen} onOpenChange={(open) => {
               setIsWizardOpen(open);
               if (!open) {
                 setWizardStep(1);
                 form.reset();
               }
             }}>
-              <DialogTrigger asChild>
+              <SheetTrigger asChild>
                 <Button variant="outline" className="h-9 gap-2 bg-card shadow-sm hover:bg-accent hover:text-white transition-all group">
                   <Plus className="w-4 h-4" />
                   <span className="hidden md:inline text-[10px] font-bold uppercase tracking-widest">New Fiscal Year</span>
                 </Button>
-              </DialogTrigger>
-              <DialogContent className="max-w-xl w-[95vw] max-h-[90vh] overflow-y-auto">
-                <DialogHeader>
-                  <DialogTitle className="text-xl md:text-2xl font-black tracking-tight">Establish Fiscal Year</DialogTitle>
-                  <DialogDescription className="text-xs font-medium">
-                    Step {wizardStep} of 3: {wizardStep === 1 ? 'Period Definition' : wizardStep === 2 ? 'Strategic Posture' : 'Review & Authorization'}
-                  </DialogDescription>
-                </DialogHeader>
+              </SheetTrigger>
+              <SheetContent side="right" className="sm:max-w-xl w-[95vw] overflow-y-auto flex flex-col h-full border-l-primary/10">
+                <SheetHeader className="pb-6 border-b">
+                  <SheetTitle className="text-2xl font-black tracking-tight flex items-center gap-2">
+                    <Target className="w-6 h-6 text-accent" />
+                    Strategic FY Onboarding
+                  </SheetTitle>
+                  <SheetDescription className="text-xs font-medium">
+                    Configure the strategic foundation for the upcoming fiscal cycle.
+                  </SheetDescription>
+                </SheetHeader>
 
-                <div className="py-4">
-                  <div className="flex items-center gap-2 mb-8 px-2">
-                    {[1, 2, 3].map((s) => (
+                <div className="flex-1 py-8">
+                  <div className="flex items-center gap-2 mb-10 px-2">
+                    {[1, 2, 3, 4, 5].map((s) => (
                       <div key={s} className="flex-1 flex items-center gap-2">
                         <div className={cn(
-                          "w-7 h-7 rounded-full flex items-center justify-center text-[10px] font-black transition-all",
+                          "w-8 h-8 rounded-full flex items-center justify-center text-[10px] font-black transition-all",
                           wizardStep === s ? "bg-accent text-white scale-110 shadow-lg" : 
                           wizardStep > s ? "bg-primary text-white" : "bg-muted text-muted-foreground"
                         )}>
-                          {wizardStep > s ? <CheckCircle2 className="w-3.5 h-3.5" /> : s}
+                          {wizardStep > s ? <CheckCircle2 className="w-4 h-4" /> : s}
                         </div>
-                        {s < 3 && <div className={cn("flex-1 h-0.5 rounded-full", wizardStep > s ? "bg-primary" : "bg-muted")} />}
+                        {s < 5 && <div className={cn("flex-1 h-0.5 rounded-full", wizardStep > s ? "bg-primary" : "bg-muted")} />}
                       </div>
                     ))}
                   </div>
 
                   <Form {...form}>
-                    <form onSubmit={form.handleSubmit(onWizardSubmit)} className="space-y-6" onKeyDown={(e) => { if (e.key === 'Enter') e.preventDefault(); }}>
+                    <form onSubmit={form.handleSubmit(onWizardSubmit)} className="space-y-8" onKeyDown={(e) => { if (e.key === 'Enter') e.preventDefault(); }}>
                       {wizardStep === 1 && (
-                        <div className="space-y-4 animate-in slide-in-from-right-4 duration-300">
-                          <FormField control={form.control} name="year" render={({ field }) => (
-                            <FormItem>
-                              <FormLabel className="text-[10px] uppercase font-bold text-muted-foreground">Target Fiscal Period</FormLabel>
-                              <Select onValueChange={field.onChange} value={field.value}>
-                                <FormControl><SelectTrigger className="h-10 text-xs"><SelectValue placeholder="Select Year" /></SelectTrigger></FormControl>
-                                <SelectContent>
-                                  <SelectItem value="2025" className="text-xs">Fiscal Year 2025</SelectItem>
-                                  <SelectItem value="2026" className="text-xs">Fiscal Year 2026</SelectItem>
-                                  <SelectItem value="2027" className="text-xs">Fiscal Year 2027</SelectItem>
-                                </SelectContent>
-                              </Select>
-                              <FormMessage />
-                            </FormItem>
-                          )} />
-                          <div className="p-4 bg-muted/30 rounded-xl border border-border/50">
-                            <p className="text-[10px] font-medium text-muted-foreground leading-relaxed">
-                              Establishing a new period allows departmental managers to draft preliminary budgets and requisitions for the upcoming fiscal cycle.
-                            </p>
+                        <div className="space-y-6 animate-in slide-in-from-right-4 duration-300">
+                          <div className="space-y-4">
+                            <h3 className="text-lg font-bold text-primary flex items-center gap-2">
+                              <CalendarDays className="w-5 h-5" /> 1. Period Selection
+                            </h3>
+                            <FormField control={form.control} name="year" render={({ field }) => (
+                              <FormItem>
+                                <FormLabel className="text-[10px] uppercase font-bold text-muted-foreground">Target Fiscal Year</FormLabel>
+                                <Select onValueChange={field.onChange} value={field.value}>
+                                  <FormControl><SelectTrigger className="h-12 text-sm font-bold"><SelectValue placeholder="Select Year" /></SelectTrigger></FormControl>
+                                  <SelectContent>
+                                    <SelectItem value="2025" className="text-sm font-medium">Fiscal Year 2025</SelectItem>
+                                    <SelectItem value="2026" className="text-sm font-medium">Fiscal Year 2026</SelectItem>
+                                    <SelectItem value="2027" className="text-sm font-medium">Fiscal Year 2027</SelectItem>
+                                  </SelectContent>
+                                </Select>
+                                <FormMessage />
+                              </FormItem>
+                            )} />
+                            <div className="p-4 bg-muted/30 rounded-xl border border-border/50">
+                              <p className="text-xs font-medium text-muted-foreground leading-relaxed">
+                                Establishing a new period allows departmental managers to draft preliminary budgets and requisitions for the upcoming fiscal cycle.
+                              </p>
+                            </div>
                           </div>
                         </div>
                       )}
 
                       {wizardStep === 2 && (
                         <div className="space-y-6 animate-in slide-in-from-right-4 duration-300">
+                          <h3 className="text-lg font-bold text-primary flex items-center gap-2">
+                            <TrendingUp className="w-5 h-5" /> 2. Strategic Posture
+                          </h3>
                           <FormField control={form.control} name="globalTarget" render={({ field }) => (
                             <FormItem>
                               <FormLabel className="text-[10px] uppercase font-bold text-muted-foreground">Global Allocation Target (Ksh)</FormLabel>
-                              <FormControl><Input type="number" {...field} className="h-10 text-xs font-bold" /></FormControl>
+                              <FormControl><Input type="number" {...field} className="h-12 text-lg font-black tracking-tight" /></FormControl>
+                              <FormDescription className="text-[10px]">Total organizational spend cap for the year.</FormDescription>
                               <FormMessage />
                             </FormItem>
                           )} />
@@ -286,17 +330,11 @@ export default function DashboardPage() {
                             <FormItem>
                               <FormLabel className="text-[10px] uppercase font-bold text-muted-foreground">Strategic Posture</FormLabel>
                               <Select onValueChange={field.onChange} value={field.value}>
-                                <FormControl><SelectTrigger className="h-10 text-xs"><SelectValue placeholder="Select Strategy" /></SelectTrigger></FormControl>
+                                <FormControl><SelectTrigger className="h-12 text-sm"><SelectValue placeholder="Select Strategy" /></SelectTrigger></FormControl>
                                 <SelectContent>
-                                  <SelectItem value="Growth" className="text-xs flex items-center gap-2">
-                                    <div className="flex items-center gap-2"><TrendingUp className="w-3 h-3 text-accent" /> Growth-Oriented</div>
-                                  </SelectItem>
-                                  <SelectItem value="Conservative" className="text-xs">
-                                    <div className="flex items-center gap-2"><TrendingDown className="w-3 h-3 text-destructive" /> Conservative</div>
-                                  </SelectItem>
-                                  <SelectItem value="Balanced" className="text-xs">
-                                    <div className="flex items-center gap-2"><Target className="w-3 h-3 text-primary" /> Balanced</div>
-                                  </SelectItem>
+                                  <SelectItem value="Growth" className="text-sm">Growth-Oriented (Aggressive)</SelectItem>
+                                  <SelectItem value="Balanced" className="text-sm">Balanced Approach</SelectItem>
+                                  <SelectItem value="Conservative" className="text-sm">Conservative (Cost-Control)</SelectItem>
                                 </SelectContent>
                               </Select>
                               <FormMessage />
@@ -307,54 +345,160 @@ export default function DashboardPage() {
 
                       {wizardStep === 3 && (
                         <div className="space-y-6 animate-in slide-in-from-right-4 duration-300">
-                          <div className="p-6 bg-muted/30 border border-border/50 rounded-xl space-y-4">
-                            <div className="flex items-center gap-4 pb-4 border-b border-border/50">
-                              <div className="w-12 h-12 bg-primary/10 rounded-lg flex items-center justify-center text-primary">
-                                <Target className="w-6 h-6" />
+                          <h3 className="text-lg font-bold text-primary flex items-center gap-2">
+                            <Building2 className="w-5 h-5" /> 3. Departmental Seeding
+                          </h3>
+                          <div className="grid grid-cols-1 gap-3">
+                            {DEPARTMENTS.map((dept) => (
+                              <FormField
+                                key={dept}
+                                control={form.control}
+                                name="departments"
+                                render={({ field }) => {
+                                  return (
+                                    <FormItem key={dept} className="flex flex-row items-center space-x-3 space-y-0 p-4 bg-card border rounded-xl hover:bg-muted/50 transition-colors cursor-pointer">
+                                      <FormControl>
+                                        <Checkbox
+                                          checked={field.value?.includes(dept)}
+                                          onCheckedChange={(checked) => {
+                                            return checked
+                                              ? field.onChange([...field.value, dept])
+                                              : field.onChange(field.value?.filter((value) => value !== dept))
+                                          }}
+                                        />
+                                      </FormControl>
+                                      <FormLabel className="text-sm font-bold cursor-pointer flex-1">
+                                        {dept} Department
+                                      </FormLabel>
+                                    </FormItem>
+                                  )
+                                }}
+                              />
+                            ))}
+                            <FormMessage />
+                          </div>
+                        </div>
+                      )}
+
+                      {wizardStep === 4 && (
+                        <div className="space-y-6 animate-in slide-in-from-right-4 duration-300">
+                          <h3 className="text-lg font-bold text-primary flex items-center gap-2">
+                            <PieChartIcon className="w-5 h-5" /> 4. Quarterly Phasing
+                          </h3>
+                          <p className="text-[10px] font-bold uppercase text-muted-foreground tracking-widest px-1">Weight Distribution (%)</p>
+                          <div className="grid grid-cols-2 gap-4">
+                            <FormField control={form.control} name="q1Weight" render={({ field }) => (
+                              <FormItem><FormLabel className="text-[10px] font-black">Q1 Weight</FormLabel><FormControl><Input type="number" {...field} className="h-12" /></FormControl></FormItem>
+                            )} />
+                            <FormField control={form.control} name="q2Weight" render={({ field }) => (
+                              <FormItem><FormLabel className="text-[10px] font-black">Q2 Weight</FormLabel><FormControl><Input type="number" {...field} className="h-12" /></FormControl></FormItem>
+                            )} />
+                            <FormField control={form.control} name="q3Weight" render={({ field }) => (
+                              <FormItem><FormLabel className="text-[10px] font-black">Q3 Weight</FormLabel><FormControl><Input type="number" {...field} className="h-12" /></FormControl></FormItem>
+                            )} />
+                            <FormField control={form.control} name="q4Weight" render={({ field }) => (
+                              <FormItem><FormLabel className="text-[10px] font-black">Q4 Weight</FormLabel><FormControl><Input type="number" {...field} className="h-12" /></FormControl></FormItem>
+                            )} />
+                          </div>
+                          <div className="p-4 bg-accent/5 rounded-xl border border-accent/20">
+                            <div className="flex justify-between items-center text-xs font-bold">
+                              <span>Total Distribution Check</span>
+                              <span className={cn(
+                                (Number(form.watch('q1Weight')) + Number(form.watch('q2Weight')) + Number(form.watch('q3Weight')) + Number(form.watch('q4Weight'))) === 100 
+                                ? "text-accent" : "text-destructive"
+                              )}>
+                                {Number(form.watch('q1Weight')) + Number(form.watch('q2Weight')) + Number(form.watch('q3Weight')) + Number(form.watch('q4Weight'))}%
+                              </span>
+                            </div>
+                          </div>
+                          <FormMessage />
+                        </div>
+                      )}
+
+                      {wizardStep === 5 && (
+                        <div className="space-y-6 animate-in slide-in-from-right-4 duration-300">
+                          <h3 className="text-lg font-bold text-primary flex items-center gap-2">
+                            <ShieldCheck className="w-5 h-5" /> 5. Review & Authorize
+                          </h3>
+                          <div className="space-y-4 p-6 bg-muted/30 border border-border/50 rounded-2xl">
+                            <div className="flex items-center gap-4 pb-4 border-b">
+                              <div className="w-14 h-14 bg-primary text-white rounded-2xl flex items-center justify-center font-black text-xl">
+                                {form.getValues().year.substring(2)}
                               </div>
                               <div>
-                                <p className="text-sm font-black text-primary">FY {form.getValues().year} Initialization</p>
-                                <p className="text-[10px] text-muted-foreground uppercase font-bold">{form.getValues().strategy} Posture</p>
+                                <p className="text-base font-black text-primary">FY {form.getValues().year} Strategy</p>
+                                <Badge variant="secondary" className="text-[10px] font-bold uppercase">{form.getValues().strategy}</Badge>
                               </div>
                             </div>
-                            <div className="space-y-2">
+                            
+                            <div className="space-y-3 pt-2">
                               <div className="flex justify-between items-center text-xs">
-                                <span className="text-muted-foreground font-bold uppercase tracking-tight">Cap Target</span>
+                                <span className="text-muted-foreground font-bold">Global Cap</span>
                                 <span className="font-black text-primary tracking-tighter">Ksh {Number(form.getValues().globalTarget).toLocaleString()}</span>
                               </div>
                               <div className="flex justify-between items-center text-xs">
-                                <span className="text-muted-foreground font-bold uppercase tracking-tight">Status</span>
-                                <Badge variant="outline" className="text-[9px] uppercase font-bold px-1.5 h-4">Pending Authorization</Badge>
+                                <span className="text-muted-foreground font-bold">Depts Seeded</span>
+                                <span className="font-black text-accent">{form.getValues().departments.length} Branches</span>
+                              </div>
+                              <div className="flex justify-between items-center text-xs">
+                                <span className="text-muted-foreground font-bold">Allocation per Dept</span>
+                                <span className="font-black text-primary tracking-tighter">Ksh {(Number(form.getValues().globalTarget) / form.getValues().departments.length).toLocaleString()}</span>
+                              </div>
+                            </div>
+
+                            <Separator />
+
+                            <div className="grid grid-cols-4 gap-2 pt-2">
+                              <div className="text-center">
+                                <p className="text-[10px] font-bold text-muted-foreground uppercase">Q1</p>
+                                <p className="text-sm font-black">{form.getValues().q1Weight}%</p>
+                              </div>
+                              <div className="text-center">
+                                <p className="text-[10px] font-bold text-muted-foreground uppercase">Q2</p>
+                                <p className="text-sm font-black">{form.getValues().q2Weight}%</p>
+                              </div>
+                              <div className="text-center">
+                                <p className="text-[10px] font-bold text-muted-foreground uppercase">Q3</p>
+                                <p className="text-sm font-black">{form.getValues().q3Weight}%</p>
+                              </div>
+                              <div className="text-center">
+                                <p className="text-[10px] font-bold text-muted-foreground uppercase">Q4</p>
+                                <p className="text-sm font-black">{form.getValues().q4Weight}%</p>
                               </div>
                             </div>
                           </div>
                         </div>
                       )}
-
-                      <DialogFooter className="gap-2 sm:gap-0 pt-6 flex-col sm:flex-row border-t">
-                        {wizardStep > 1 && (
-                          <Button type="button" variant="outline" onClick={() => setWizardStep(prev => prev - 1)} className="w-full sm:w-auto font-bold uppercase text-xs h-10">
-                            <ArrowLeft className="w-3.5 h-3.5 mr-2" />
-                            Previous
-                          </Button>
-                        )}
-                        <div className="flex-1" />
-                        {wizardStep < 3 ? (
-                          <Button type="button" onClick={nextStep} className="w-full sm:w-auto bg-primary font-bold uppercase text-xs h-10 shadow-md">
-                            Continue
-                            <ArrowRight className="w-3.5 h-3.5 ml-2" />
-                          </Button>
-                        ) : (
-                          <Button type="submit" className="w-full sm:w-auto bg-accent hover:bg-accent/90 text-white font-bold uppercase text-xs h-10 shadow-md">
-                            Confirm & Establish
-                          </Button>
-                        )}
-                      </DialogFooter>
                     </form>
                   </Form>
                 </div>
-              </DialogContent>
-            </Dialog>
+
+                <SheetFooter className="pt-6 border-t flex-col sm:flex-row gap-2">
+                  {wizardStep > 1 && (
+                    <Button type="button" variant="outline" onClick={() => setWizardStep(prev => prev - 1)} className="w-full sm:w-auto font-bold uppercase text-xs h-11">
+                      <ArrowLeft className="w-4 h-4 mr-2" />
+                      Back
+                    </Button>
+                  )}
+                  <div className="flex-1" />
+                  {wizardStep < 5 ? (
+                    <Button type="button" onClick={nextStep} className="w-full sm:w-auto bg-primary font-bold uppercase text-xs h-11 shadow-md">
+                      Continue
+                      <ArrowRight className="w-4 h-4 ml-2" />
+                    </Button>
+                  ) : (
+                    <Button 
+                      type="button" 
+                      onClick={() => onWizardSubmit(form.getValues())}
+                      className="w-full sm:w-auto bg-accent hover:bg-accent/90 text-white font-bold uppercase text-xs h-11 shadow-xl"
+                    >
+                      Establish Fiscal Year
+                      <ShieldCheck className="w-4 h-4 ml-2" />
+                    </Button>
+                  )}
+                </SheetFooter>
+              </SheetContent>
+            </Sheet>
           </RoleGuard>
         </div>
       </div>
