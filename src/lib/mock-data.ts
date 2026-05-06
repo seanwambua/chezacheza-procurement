@@ -1,11 +1,11 @@
 
-import { PurchaseRequisition, Vendor, LPO, BudgetLine } from './types';
+import { PurchaseRequisition, Vendor, LPO, BudgetLine, GRN } from './types';
 
 export const MOCK_BUDGET_LINES: BudgetLine[] = [
-  { id: 'BL-001', name: 'Office Equipment', allocation: 50000, spent: 12000, committed: 5000 },
-  { id: 'BL-002', name: 'IT Infrastructure', allocation: 150000, spent: 45000, committed: 20000 },
-  { id: 'BL-003', name: 'Marketing Supplies', allocation: 30000, spent: 8000, committed: 2500 },
-  { id: 'BL-004', name: 'General Stationery', allocation: 10000, spent: 4000, committed: 500 },
+  { id: 'BL-001', name: 'Office Equipment', allocation: 500000, spent: 120000, committed: 50000 },
+  { id: 'BL-002', name: 'IT Infrastructure', allocation: 1500000, spent: 450000, committed: 200000 },
+  { id: 'BL-003', name: 'Marketing Supplies', allocation: 300000, spent: 80000, committed: 25000 },
+  { id: 'BL-004', name: 'General Stationery', allocation: 100000, spent: 40000, committed: 5000 },
 ];
 
 export const MOCK_VENDORS: Vendor[] = [
@@ -51,7 +51,7 @@ export const MOCK_PRS: PurchaseRequisition[] = [
     requesterName: 'Jane Doe',
     itemDescription: 'High-performance Laptops for Dev Team',
     quantity: 5,
-    estimatedCost: 7500,
+    estimatedCost: 150000,
     budgetLine: 'IT Infrastructure',
     status: 'Pending Manager',
     createdAt: '2024-03-01T10:00:00Z',
@@ -62,7 +62,7 @@ export const MOCK_PRS: PurchaseRequisition[] = [
     requesterName: 'John Smith',
     itemDescription: 'Ergonomic Office Chairs',
     quantity: 12,
-    estimatedCost: 3600,
+    estimatedCost: 35000,
     budgetLine: 'Office Equipment',
     status: 'Approved',
     createdAt: '2024-03-02T14:30:00Z',
@@ -73,7 +73,7 @@ export const MOCK_PRS: PurchaseRequisition[] = [
     requesterName: 'Alice Wambui',
     itemDescription: 'Branded Notebooks and Pens',
     quantity: 500,
-    estimatedCost: 1500,
+    estimatedCost: 350,
     budgetLine: 'Marketing Supplies',
     status: 'Draft',
     createdAt: '2024-03-05T09:15:00Z',
@@ -88,12 +88,34 @@ export const MOCK_LPOS: LPO[] = [
     vendorId: 'V-003',
     vendorName: 'Furniture Pro Kenya',
     items: [
-      { description: 'Ergonomic Office Chairs', quantity: 12, unitPrice: 300, total: 3600 }
+      { description: 'Ergonomic Office Chairs', quantity: 12, unitPrice: 35000, total: 420000 }
     ],
-    totalValue: 3600,
+    totalValue: 420000,
     deliveryDate: '2024-03-20',
     paymentTerms: '30 Days Net',
     status: 'Dispatched',
     createdAt: '2024-03-04T11:00:00Z',
+  }
+];
+
+export const MOCK_GRNS: GRN[] = [
+  {
+    id: 'GRN-9001',
+    lpoId: 'LPO-5001',
+    lpoNumber: 'LPO/2024/201',
+    receivedDate: '2024-03-21T09:00:00Z',
+    receivedBy: 'Jane Doe',
+    items: [
+      {
+        description: 'Ergonomic Office Chairs',
+        orderedQty: 12,
+        receivedQty: 10,
+        qualityRating: 3,
+        specificationMatch: true,
+        condition: 'Good'
+      }
+    ],
+    disputeFlag: true,
+    disputeReason: 'Short delivery: Received 10 out of 12 chairs.'
   }
 ];

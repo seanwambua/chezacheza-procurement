@@ -27,7 +27,7 @@ import { Badge } from '@/components/ui/badge';
 import { useStore } from '@/lib/store';
 
 export default function DashboardPage() {
-  const { prs, budgetLines, vendors } = useStore();
+  const { prs, budgetLines, vendors, lpos, grns } = useStore();
   const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
@@ -35,6 +35,13 @@ export default function DashboardPage() {
   }, []);
 
   if (!mounted) return null;
+
+  // Dynamic calculations
+  const totalSpendVal = budgetLines.reduce((acc, bl) => acc + bl.spent, 0);
+  const pendingApprovals = prs.filter(pr => pr.status.includes('Pending')).length;
+  const activeLposCount = lpos.filter(lpo => lpo.status !== 'Closed').length;
+  const awaitingDelivery = lpos.filter(lpo => lpo.status === 'Dispatched').length;
+  const activeDisputes = grns.filter(grn => grn.disputeFlag).length;
 
   const budgetData = budgetLines.map(bl => ({
     name: bl.name,
@@ -48,8 +55,7 @@ export default function DashboardPage() {
     { name: 'Needs Review', value: vendors.filter(v => v.rating < 3).length, color: 'hsl(var(--chart-3))' },
   ];
 
-  const pendingApprovals = prs.filter(pr => pr.status.startsWith('Pending')).length;
-  const recentPrs = prs.slice(0, 3);
+  const recentPrs = prs.slice(0, 5);
 
   return (
     <div className="space-y-8 animate-in fade-in duration-500">
@@ -67,19 +73,19 @@ export default function DashboardPage() {
         />
         <StatCard 
           title="Active LPOs" 
-          value={24} 
-          description="12 awaiting delivery" 
+          value={activeLposCount} 
+          description={`${awaitingDelivery} awaiting delivery`} 
           icon={ShoppingCart} 
         />
         <StatCard 
           title="Total Spend (MTD)" 
-          value="Ksh 4,250,000" 
+          value={`Ksh ${totalSpendVal.toLocaleString()}`} 
           trend={{ value: 12, isUp: true }}
           icon={TrendingUp} 
         />
         <StatCard 
           title="GRN Disputes" 
-          value={3} 
+          value={activeDisputes} 
           description="Blocking payments" 
           icon={AlertCircle} 
         />
@@ -106,7 +112,7 @@ export default function DashboardPage() {
                   />
                   <Tooltip 
                     cursor={{ fill: 'transparent' }}
-                    contentStyle={{ borderRadius: '8px', border: '1px solid #ddd' }}
+                    contentStyle={{ borderRadius: '8px', border: '1px solid #border' }}
                     formatter={(value: any) => [`Ksh ${value.toLocaleString()}`, '']}
                   />
                   <Bar dataKey="spent" fill="hsl(var(--accent))" radius={[0, 4, 4, 0]} barSize={20} />
@@ -163,25 +169,29 @@ export default function DashboardPage() {
           </CardHeader>
           <CardContent>
             <div className="space-y-4">
-              {recentPrs.map((req) => (
-                <div key={req.id} className="flex items-center justify-between p-3 rounded-lg hover:bg-muted/50 transition-colors">
-                  <div className="flex items-center gap-4">
-                    <div className="p-2 bg-muted rounded-full">
-                      <FileCheck className="w-4 h-4 text-primary" />
+              {recentPrs.length > 0 ? (
+                recentPrs.map((req) => (
+                  <div key={req.id} className="flex items-center justify-between p-3 rounded-lg hover:bg-muted/50 transition-colors">
+                    <div className="flex items-center gap-4">
+                      <div className="p-2 bg-muted rounded-full">
+                        <FileCheck className="w-4 h-4 text-primary" />
+                      </div>
+                      <div>
+                        <p className="font-semibold text-sm">{req.itemDescription}</p>
+                        <p className="text-xs text-muted-foreground">{req.refNumber} • {req.budgetLine}</p>
+                      </div>
                     </div>
-                    <div>
-                      <p className="font-semibold text-sm">{req.itemDescription}</p>
-                      <p className="text-xs text-muted-foreground">{req.refNumber} • {req.budgetLine}</p>
+                    <div className="text-right">
+                      <p className="text-sm font-bold">Ksh {(req.estimatedCost * req.quantity).toLocaleString()}</p>
+                      <Badge variant={req.status === 'Approved' ? 'secondary' : 'outline'} className="text-[10px]">
+                        {req.status}
+                      </Badge>
                     </div>
                   </div>
-                  <div className="text-right">
-                    <p className="text-sm font-bold">Ksh {(req.estimatedCost * req.quantity).toLocaleString()}</p>
-                    <Badge variant={req.status === 'Approved' ? 'secondary' : 'outline'} className="text-[10px]">
-                      {req.status}
-                    </Badge>
-                  </div>
-                </div>
-              ))}
+                ))
+              ) : (
+                <p className="text-sm text-center text-muted-foreground py-4">No recent requisitions found.</p>
+              )}
             </div>
           </CardContent>
         </Card>

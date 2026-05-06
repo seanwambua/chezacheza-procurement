@@ -1,13 +1,14 @@
 
 import { create } from 'zustand';
 import { persist, createJSONStorage } from 'zustand/middleware';
-import { PurchaseRequisition, Vendor, LPO, BudgetLine } from './types';
-import { MOCK_PRS, MOCK_VENDORS, MOCK_LPOS, MOCK_BUDGET_LINES } from './mock-data';
+import { PurchaseRequisition, Vendor, LPO, BudgetLine, GRN } from './types';
+import { MOCK_PRS, MOCK_VENDORS, MOCK_LPOS, MOCK_BUDGET_LINES, MOCK_GRNS } from './mock-data';
 
 interface ProcurementState {
   prs: PurchaseRequisition[];
   vendors: Vendor[];
   lpos: LPO[];
+  grns: GRN[];
   budgetLines: BudgetLine[];
   
   // Actions
@@ -15,6 +16,7 @@ interface ProcurementState {
   updatePRStatus: (id: string, status: PurchaseRequisition['status']) => void;
   addVendor: (vendor: Vendor) => void;
   addLPO: (lpo: LPO) => void;
+  addGRN: (grn: GRN) => void;
   updateBudgetLine: (id: string, updates: Partial<BudgetLine>) => void;
 }
 
@@ -24,6 +26,7 @@ export const useStore = create<ProcurementState>()(
       prs: MOCK_PRS,
       vendors: MOCK_VENDORS,
       lpos: MOCK_LPOS,
+      grns: MOCK_GRNS,
       budgetLines: MOCK_BUDGET_LINES,
 
       addPR: (prData) => set((state) => {
@@ -48,6 +51,10 @@ export const useStore = create<ProcurementState>()(
 
       addLPO: (lpo) => set((state) => ({
         lpos: [...state.lpos, lpo]
+      })),
+
+      addGRN: (grn) => set((state) => ({
+        grns: [grn, ...state.grns]
       })),
 
       updateBudgetLine: (id, updates) => set((state) => ({
