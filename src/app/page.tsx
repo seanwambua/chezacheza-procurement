@@ -1,4 +1,3 @@
-
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { 
@@ -50,12 +49,12 @@ export default function Home() {
             </h1>
             <p className="text-lg text-muted-foreground max-w-2xl mx-auto font-medium">
               A unified portal for Chezacheza staff and leadership to manage requisitions, 
-              track quarterly budgets, and optimize vendor performance with AI.
+              track quarterly budgets, and optimize vendor performance with data.
             </p>
             <div className="flex flex-col sm:flex-row items-center justify-center gap-4 pt-4">
               <Link href="/dashboard">
-                <Button size="lg" className="h-14 px-8 text-base font-bold bg-primary shadow-xl hover:shadow-accent/20 transition-all">
-                  Enter Portal <ArrowRight className="ml-2 w-5 h-5" />
+                <Button size="lg" className="h-14 px-8 text-base font-bold bg-primary shadow-xl hover:shadow-accent/20 transition-all group">
+                  Enter Portal <ArrowRight className="ml-2 w-5 h-5 group-hover:translate-x-1 transition-transform" />
                 </Button>
               </Link>
               <Link href="/how-to">
@@ -99,7 +98,7 @@ export default function Home() {
                 </div>
                 <h3 className="text-xl font-bold text-primary">Vendor Intel</h3>
                 <p className="text-sm text-muted-foreground leading-relaxed">
-                  AI-powered performance summaries and dispute tracking. 
+                  Performance summaries and dispute tracking. 
                   Optimize your supply chain with data-driven insights.
                 </p>
               </div>
@@ -133,25 +132,25 @@ export default function Home() {
                 </div>
               </div>
               <div className="grid grid-cols-2 gap-4 w-full md:w-auto relative z-10">
-                <div className="p-6 bg-white/5 rounded-2xl backdrop-blur-sm border border-white/10 text-center">
-                  <LayoutDashboard className="w-6 h-6 mx-auto mb-2 opacity-50" />
-                  <p className="text-2xl font-black tracking-tighter">Live</p>
-                  <p className="text-[10px] uppercase font-bold opacity-50">Dashboard</p>
+                <div className="p-4 sm:p-6 bg-white/10 rounded-2xl backdrop-blur-sm border border-white/20 text-center hover:scale-105 transition-transform duration-300">
+                  <LayoutDashboard className="w-5 h-5 sm:w-6 sm:h-6 mx-auto mb-2 opacity-70" />
+                  <p className="text-xl sm:text-2xl font-black tracking-tighter">Live</p>
+                  <p className="text-[9px] sm:text-[10px] uppercase font-bold opacity-50">Dashboard</p>
                 </div>
-                <div className="p-6 bg-white/5 rounded-2xl backdrop-blur-sm border border-white/10 text-center">
-                  <Building2 className="w-6 h-6 mx-auto mb-2 opacity-50" />
-                  <p className="text-2xl font-black tracking-tighter">5+</p>
-                  <p className="text-[10px] uppercase font-bold opacity-50">Depts</p>
+                <div className="p-4 sm:p-6 bg-white/10 rounded-2xl backdrop-blur-sm border border-white/20 text-center hover:scale-105 transition-transform duration-300">
+                  <Building2 className="w-5 h-5 sm:w-6 sm:h-6 mx-auto mb-2 opacity-70" />
+                  <p className="text-xl sm:text-2xl font-black tracking-tighter">5+</p>
+                  <p className="text-[9px] sm:text-[10px] uppercase font-bold opacity-50">Depts</p>
                 </div>
-                <div className="p-6 bg-white/5 rounded-2xl backdrop-blur-sm border border-white/10 text-center">
-                  <FileText className="w-6 h-6 mx-auto mb-2 opacity-50" />
-                  <p className="text-2xl font-black tracking-tighter">100%</p>
-                  <p className="text-[10px] uppercase font-bold opacity-50">Audited</p>
+                <div className="p-4 sm:p-6 bg-white/10 rounded-2xl backdrop-blur-sm border border-white/20 text-center hover:scale-105 transition-transform duration-300">
+                  <FileText className="w-5 h-5 sm:w-6 sm:h-6 mx-auto mb-2 opacity-70" />
+                  <p className="text-xl sm:text-2xl font-black tracking-tighter">100%</p>
+                  <p className="text-[9px] sm:text-[10px] uppercase font-bold opacity-50">Audited</p>
                 </div>
-                <div className="p-6 bg-white/5 rounded-2xl backdrop-blur-sm border border-white/10 text-center">
-                  <ShieldCheck className="w-6 h-6 mx-auto mb-2 opacity-50" />
-                  <p className="text-2xl font-black tracking-tighter">RBAC</p>
-                  <p className="text-[10px] uppercase font-bold opacity-50">Secured</p>
+                <div className="p-4 sm:p-6 bg-white/10 rounded-2xl backdrop-blur-sm border border-white/20 text-center hover:scale-105 transition-transform duration-300">
+                  <ShieldCheck className="w-5 h-5 sm:w-6 sm:h-6 mx-auto mb-2 opacity-70" />
+                  <p className="text-xl sm:text-2xl font-black tracking-tighter">RBAC</p>
+                  <p className="text-[9px] sm:text-[10px] uppercase font-bold opacity-50">Secured</p>
                 </div>
               </div>
               {/* Background Decoration */}
