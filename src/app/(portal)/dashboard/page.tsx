@@ -137,8 +137,13 @@ export default function DashboardPage() {
   const recentPrs = prs.slice(0, isDetailed ? 5 : 3);
 
   const onWizardSubmit = (values: FiscalYearValues) => {
+    // Prevent submission if not on the final step
+    if (wizardStep < 3) {
+      nextStep();
+      return;
+    }
+
     // To "establish" the year, we create a primary general budget for it
-    // In a real app, this might create several departmental defaults
     addBudget({
       name: `General Operations - ${values.year}`,
       department: 'Operations',
@@ -166,7 +171,10 @@ export default function DashboardPage() {
     let isValid = false;
     if (wizardStep === 1) isValid = await form.trigger(['year']);
     if (wizardStep === 2) isValid = await form.trigger(['globalTarget', 'strategy']);
-    if (isValid) setWizardStep(prev => prev + 1);
+    
+    if (isValid) {
+      setWizardStep(prev => prev + 1);
+    }
   };
 
   return (
@@ -239,7 +247,7 @@ export default function DashboardPage() {
                   </div>
 
                   <Form {...form}>
-                    <form onSubmit={form.handleSubmit(onWizardSubmit)} className="space-y-6">
+                    <form onSubmit={form.handleSubmit(onWizardSubmit)} className="space-y-6" onKeyDown={(e) => { if (e.key === 'Enter') e.preventDefault(); }}>
                       {wizardStep === 1 && (
                         <div className="space-y-4 animate-in slide-in-from-right-4 duration-300">
                           <FormField control={form.control} name="year" render={({ field }) => (
