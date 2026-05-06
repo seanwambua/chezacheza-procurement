@@ -74,18 +74,21 @@ export default function DashboardPage() {
   const recentPrs = prs.slice(0, isDetailed ? 5 : 3);
 
   return (
-    <div className="space-y-8 animate-in fade-in duration-500">
+    <div className="space-y-6 md:space-y-8 animate-in fade-in duration-500 pb-10">
       <div className="flex flex-col md:flex-row md:items-end justify-between gap-4">
-        <div>
-          <h2 className={isDetailed ? "text-3xl font-headline font-bold text-primary" : "text-4xl font-black text-primary"}>
+        <div className="space-y-1">
+          <h2 className={cn(
+            "font-headline font-bold text-primary tracking-tighter leading-none",
+            isDetailed ? "text-2xl md:text-3xl" : "text-3xl md:text-4xl"
+          )}>
             Overview
           </h2>
-          <p className="text-muted-foreground">Strategic procurement metrics and fiscal health.</p>
+          <p className="text-sm text-muted-foreground font-medium">Strategic procurement metrics and fiscal health.</p>
         </div>
         <div className="flex items-center gap-2">
           <CalendarDays className="w-4 h-4 text-muted-foreground" />
           <Select value={selectedYear} onValueChange={setSelectedYear}>
-            <SelectTrigger className="w-[180px] h-9 text-xs font-bold uppercase tracking-wider">
+            <SelectTrigger className="w-full md:w-[200px] h-9 text-[10px] font-bold uppercase tracking-wider bg-card shadow-sm">
               <SelectValue placeholder="Fiscal Year" />
             </SelectTrigger>
             <SelectContent>
@@ -97,19 +100,22 @@ export default function DashboardPage() {
         </div>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-        <div className={isDetailed ? "lg:col-span-2" : "lg:col-span-4"}>
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6">
+        <div className={cn(
+          "md:col-span-2",
+          isDetailed ? "lg:col-span-2" : "lg:col-span-4"
+        )}>
           <StatCard 
             title={`Total Spend (Actual - ${selectedYear})`} 
             value={`Ksh ${totalSpendVal.toLocaleString()}`} 
             trend={{ value: 12, isUp: true }}
             icon={TrendingUp} 
             tooltip="The actual verified expenditure across all departmental budgets for the current fiscal period."
-            description={isDetailed ? "Verified actuals vs last month" : undefined}
+            description={isDetailed ? "Verified actuals vs last month" : "Actual verified expenditure"}
           />
         </div>
 
-        <div className="lg:col-span-1">
+        <div className="md:col-span-1">
           <StatCard 
             title="Pending Approvals" 
             value={pendingApprovals} 
@@ -117,7 +123,7 @@ export default function DashboardPage() {
             icon={Clock} 
           />
         </div>
-        <div className="lg:col-span-1">
+        <div className="md:col-span-1">
           <StatCard 
             title="Active LPOs" 
             value={activeLposCount} 
@@ -128,17 +134,17 @@ export default function DashboardPage() {
 
         {isDetailed && (
           <>
-            <div className="lg:col-span-2 lg:row-span-2">
+            <div className="md:col-span-2 lg:row-span-2">
               <Card className="h-full shadow-none border border-border">
-                <CardHeader>
-                  <CardTitle className="text-lg font-headline">Budget Utilization vs Allocation ({selectedYear})</CardTitle>
+                <CardHeader className="py-4">
+                  <CardTitle className="text-base md:text-lg font-headline">Budget Utilization vs Allocation</CardTitle>
                 </CardHeader>
                 <CardContent>
-                  <div className="h-[320px]">
+                  <div className="h-[250px] md:h-[320px]">
                     {budgetData.length > 0 ? (
                       <ResponsiveContainer width="100%" height="100%">
-                        <BarChart data={budgetData} layout="vertical">
-                          <CartesianGrid strokeDasharray="3 3" horizontal={true} vertical={false} />
+                        <BarChart data={budgetData} layout="vertical" margin={{ left: -10, right: 20 }}>
+                          <CartesianGrid strokeDasharray="3 3" horizontal={true} vertical={false} opacity={0.3} />
                           <XAxis type="number" hide />
                           <YAxis 
                             dataKey="name" 
@@ -146,21 +152,22 @@ export default function DashboardPage() {
                             width={100} 
                             axisLine={false}
                             tickLine={false}
-                            fontSize={11}
+                            fontSize={10}
+                            fontWeight={600}
                           />
                           <Tooltip 
                             cursor={{ fill: 'transparent' }}
-                            contentStyle={{ borderRadius: '8px', border: '1px solid #border', backgroundColor: 'hsl(var(--card))', color: 'hsl(var(--foreground))' }}
+                            contentStyle={{ borderRadius: '8px', border: '1px solid hsl(var(--border))', backgroundColor: 'hsl(var(--card))' }}
                             formatter={(value: any) => [`Ksh ${value.toLocaleString()}`, '']}
                           />
-                          <Bar dataKey="spent" fill="hsl(var(--accent))" radius={[0, 4, 4, 0]} barSize={24} />
-                          <Bar dataKey="budget" fill="hsl(var(--muted))" radius={[0, 4, 4, 0]} barSize={8} />
+                          <Bar dataKey="spent" fill="hsl(var(--accent))" radius={[0, 4, 4, 0]} barSize={20} />
+                          <Bar dataKey="budget" fill="hsl(var(--muted))" radius={[0, 4, 4, 0]} barSize={6} />
                         </BarChart>
                       </ResponsiveContainer>
                     ) : (
-                      <div className="flex flex-col items-center justify-center h-full text-muted-foreground space-y-2">
-                        <AlertCircle className="w-8 h-8 opacity-20" />
-                        <p className="text-sm">No budget data for {selectedYear}</p>
+                      <div className="flex flex-col items-center justify-center h-full text-muted-foreground space-y-2 opacity-50">
+                        <AlertCircle className="w-8 h-8" />
+                        <p className="text-xs">No budget data for {selectedYear}</p>
                       </div>
                     )}
                   </div>
@@ -168,7 +175,7 @@ export default function DashboardPage() {
               </Card>
             </div>
 
-            <div className="lg:col-span-1">
+            <div className="md:col-span-1">
                <StatCard 
                 title="GRN Disputes" 
                 value={activeDisputes} 
@@ -176,13 +183,13 @@ export default function DashboardPage() {
               />
             </div>
 
-            <div className="lg:col-span-1 lg:row-span-2">
+            <div className="md:col-span-1 lg:row-span-2">
               <Card className="h-full shadow-none border border-border overflow-hidden">
-                <CardHeader>
-                  <CardTitle className="text-lg font-headline">Vendor Quality</CardTitle>
+                <CardHeader className="py-4">
+                  <CardTitle className="text-base md:text-lg font-headline">Vendor Quality</CardTitle>
                 </CardHeader>
-                <CardContent className="flex flex-col items-center">
-                  <div className="h-[180px] w-full">
+                <CardContent className="flex flex-col items-center pb-6">
+                  <div className="h-[160px] md:h-[180px] w-full">
                     <ResponsiveContainer width="100%" height="100%">
                       <PieChart>
                         <Pie
@@ -200,11 +207,22 @@ export default function DashboardPage() {
                       </PieChart>
                     </ResponsiveContainer>
                   </div>
+                  <div className="w-full space-y-2 mt-2">
+                    {vendorPerformance.map((p, i) => (
+                      <div key={i} className="flex items-center justify-between text-[10px] font-bold">
+                        <div className="flex items-center gap-1.5">
+                          <div className="w-2 h-2 rounded-full" style={{ backgroundColor: p.color }} />
+                          <span className="text-muted-foreground">{p.name}</span>
+                        </div>
+                        <span>{p.value}</span>
+                      </div>
+                    ))}
+                  </div>
                 </CardContent>
               </Card>
             </div>
 
-            <div className="lg:col-span-1">
+            <div className="md:col-span-1">
                <StatCard 
                 title="Onboarded Vendors" 
                 value={vendors.length} 
@@ -214,42 +232,47 @@ export default function DashboardPage() {
           </>
         )}
 
-        <div className={isDetailed ? "lg:col-span-3" : "lg:col-span-4"}>
-          <Card className="shadow-none border border-border overflow-hidden">
-            <CardHeader className="flex flex-row items-center justify-between py-4">
-              <CardTitle className="text-lg font-headline">Recent Requisitions</CardTitle>
-              <Link href="/requisitions" className="text-xs font-bold text-accent flex items-center gap-1 hover:underline">
-                View All <ArrowRight className="w-3 h-3" />
+        <div className={cn(
+          "md:col-span-2",
+          isDetailed ? "lg:col-span-3" : "lg:col-span-4"
+        )}>
+          <Card className="shadow-none border border-border overflow-hidden bg-card">
+            <CardHeader className="flex flex-row items-center justify-between py-4 px-6 border-b border-border/50">
+              <CardTitle className="text-base md:text-lg font-headline">Recent Requisitions</CardTitle>
+              <Link href="/requisitions" className="text-xs font-bold text-accent flex items-center gap-1 hover:underline group">
+                View All <ArrowRight className="w-3 h-3 group-hover:translate-x-0.5 transition-transform" />
               </Link>
             </CardHeader>
-            <CardContent>
+            <CardContent className="p-2 sm:p-6">
               <div className="space-y-3">
                 {recentPrs.length > 0 ? (
                   recentPrs.map((req) => (
                     <Link 
                       key={req.id} 
                       href={`/requisitions?id=${req.id}`}
-                      className="flex items-center justify-between p-4 rounded-xl hover:bg-muted/50 transition-all border border-border/50 group"
+                      className="flex items-center justify-between p-3 sm:p-4 rounded-xl hover:bg-muted/50 transition-all border border-border/50 group bg-background/50"
                     >
-                      <div className="flex items-center gap-4 min-w-0 flex-1">
+                      <div className="flex items-center gap-3 sm:gap-4 min-w-0 flex-1">
                         <div className="p-2 bg-muted rounded-lg shrink-0 group-hover:bg-accent/10 transition-colors">
                           <FileCheck className="w-4 h-4 text-primary group-hover:text-accent" />
                         </div>
                         <div className="overflow-hidden min-w-0">
-                          <p className="font-bold text-sm truncate">{req.items?.[0]?.description || 'Untitled Request'}</p>
-                          {isDetailed && <p className="text-[10px] text-muted-foreground uppercase truncate">{req.refNumber} • {req.budgetLine}</p>}
+                          <p className="font-bold text-xs sm:text-sm truncate pr-2">{req.items?.[0]?.description || 'Untitled Request'}</p>
+                          <p className="text-[9px] sm:text-[10px] text-muted-foreground uppercase font-bold tracking-tight truncate opacity-70">
+                            {req.refNumber} • {req.budgetLine}
+                          </p>
                         </div>
                       </div>
-                      <div className="text-right shrink-0 ml-4 flex flex-col items-end gap-1.5 justify-center min-w-[100px] sm:min-w-[120px]">
+                      <div className="text-right shrink-0 ml-2 sm:ml-4 flex flex-col items-end gap-1 sm:gap-1.5 justify-center min-w-[90px] sm:min-w-[120px]">
                         <p className={cn(
                           "font-black tracking-tighter text-primary truncate w-full",
-                          isDetailed ? "text-xs sm:text-sm" : "text-base sm:text-lg"
+                          isDetailed ? "text-xs sm:text-sm" : "text-sm sm:text-lg"
                         )}>
                           Ksh {calculatePRTotal(req).toLocaleString()}
                         </p>
                         <Badge 
                           variant={req.status === 'Approved' ? 'secondary' : 'outline'} 
-                          className="text-[9px] px-1.5 py-0 h-4 uppercase tracking-tighter whitespace-nowrap"
+                          className="text-[8px] sm:text-[9px] px-1 sm:px-1.5 py-0 h-4 uppercase tracking-tighter whitespace-nowrap"
                         >
                           {req.status}
                         </Badge>
@@ -257,7 +280,10 @@ export default function DashboardPage() {
                     </Link>
                   ))
                 ) : (
-                  <p className="text-sm text-center text-muted-foreground py-8">No recent requisitions found.</p>
+                  <div className="flex flex-col items-center justify-center py-12 text-center space-y-2 opacity-50">
+                    <FileCheck className="w-8 h-8 text-muted-foreground" />
+                    <p className="text-sm font-medium">No recent requisitions found.</p>
+                  </div>
                 )}
               </div>
             </CardContent>
