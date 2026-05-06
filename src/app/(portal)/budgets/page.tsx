@@ -1,4 +1,3 @@
-
 "use client";
 
 import { useState, useEffect } from 'react';
@@ -19,7 +18,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { StatCard } from '@/components/dashboard/StatCard';
 import { 
   PieChart, 
-  TrendingDown, 
+  TrendingUp, 
   Lock, 
   Plus, 
   Pencil, 
