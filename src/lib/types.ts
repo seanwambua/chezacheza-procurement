@@ -69,6 +69,9 @@ export interface BudgetLine {
   allocation: number;
   spent: number;
   committed: number;
+  department: string;
+  description: string;
+  fiscalYear: string;
 }
 
 export type UserRole = 'Admin' | 'Manager' | 'Staff' | 'Finance';

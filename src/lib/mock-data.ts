@@ -3,10 +3,46 @@ import { PurchaseRequisition, Vendor, LPO, BudgetLine, GRN, User } from './types
 
 // Synchronized mock data: Committed totals reflect the sum of non-rejected/non-draft PRs
 export const MOCK_BUDGET_LINES: BudgetLine[] = [
-  { id: 'BL-001', name: 'Office Equipment', allocation: 1000000, spent: 120000, committed: 420000 },
-  { id: 'BL-002', name: 'IT Infrastructure', allocation: 2500000, spent: 450000, committed: 750000 },
-  { id: 'BL-003', name: 'Marketing Supplies', allocation: 500000, spent: 80000, committed: 0 },
-  { id: 'BL-004', name: 'General Stationery', allocation: 200000, spent: 40000, committed: 0 },
+  { 
+    id: 'BL-001', 
+    name: 'Office Equipment', 
+    allocation: 1000000, 
+    spent: 120000, 
+    committed: 420000,
+    department: 'Operations',
+    description: 'Furniture, small electronics, and general office gear',
+    fiscalYear: '2024'
+  },
+  { 
+    id: 'BL-002', 
+    name: 'IT Infrastructure', 
+    allocation: 2500000, 
+    spent: 450000, 
+    committed: 750000,
+    department: 'IT',
+    description: 'Cloud hosting, hardware maintenance, and software licenses',
+    fiscalYear: '2024'
+  },
+  { 
+    id: 'BL-003', 
+    name: 'Marketing Supplies', 
+    allocation: 500000, 
+    spent: 80000, 
+    committed: 0,
+    department: 'Marketing',
+    description: 'Promotional materials, events, and branding assets',
+    fiscalYear: '2024'
+  },
+  { 
+    id: 'BL-004', 
+    name: 'General Stationery', 
+    allocation: 200000, 
+    spent: 40000, 
+    committed: 0,
+    department: 'Operations',
+    description: 'Paper, ink, pens, and basic supplies',
+    fiscalYear: '2024'
+  },
 ];
 
 export const MOCK_VENDORS: Vendor[] = [
