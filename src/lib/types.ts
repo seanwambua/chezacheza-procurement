@@ -136,18 +136,24 @@ export function getCurrentQuarter(): number {
 }
 
 export function calculatePRTotal(pr: PurchaseRequisition): number {
-  return pr.items.reduce((sum, item) => sum + (item.quantity * item.estimatedUnitPrice), 0);
+  if (!pr || !pr.items || !Array.isArray(pr.items)) return 0;
+  return pr.items.reduce((sum, item) => sum + ((item.quantity || 0) * (item.estimatedUnitPrice || 0)), 0);
 }
 
 export function getBudgetStats(budget: Budget) {
   const currentQ = getCurrentQuarter();
-  const qAllocations = [budget.q1Allocation, budget.q2Allocation, budget.q3Allocation, budget.q4Allocation];
+  const qAllocations = [
+    budget.q1Allocation || 0, 
+    budget.q2Allocation || 0, 
+    budget.q3Allocation || 0, 
+    budget.q4Allocation || 0
+  ];
   
   // Total allocation up to current quarter (rolling)
   const cumulativeAllocation = qAllocations.slice(0, currentQ).reduce((acc, val) => acc + val, 0);
   const totalAllocation = qAllocations.reduce((acc, val) => acc + val, 0);
   
-  const totalUsed = budget.spent + budget.committed;
+  const totalUsed = (budget.spent || 0) + (budget.committed || 0);
   const isPaused = totalUsed >= cumulativeAllocation;
   const remainingInQuarter = Math.max(0, cumulativeAllocation - totalUsed);
   const remainingTotal = Math.max(0, totalAllocation - totalUsed);

@@ -47,16 +47,16 @@ export default function DashboardPage() {
   if (!mounted) return null;
 
   const filteredBudgets = budgets.filter(b => b.fiscalYear === selectedYear);
-  const totalSpendVal = filteredBudgets.reduce((acc, bl) => acc + bl.spent, 0);
-  const pendingApprovals = prs.filter(pr => pr.status.includes('Pending')).length;
+  const totalSpendVal = filteredBudgets.reduce((acc, bl) => acc + (bl.spent || 0), 0);
+  const pendingApprovals = prs.filter(pr => pr.status?.includes('Pending')).length;
   const activeLposCount = lpos.filter(lpo => lpo.status !== 'Closed').length;
   const awaitingDelivery = lpos.filter(lpo => lpo.status === 'Dispatched').length;
   const activeDisputes = grns.filter(grn => grn.disputeFlag).length;
 
   const budgetData = filteredBudgets.map(bl => ({
     name: bl.name,
-    spent: bl.spent,
-    budget: [bl.q1Allocation, bl.q2Allocation, bl.q3Allocation, bl.q4Allocation].reduce((a, b) => a + b, 0)
+    spent: bl.spent || 0,
+    budget: [bl.q1Allocation || 0, bl.q2Allocation || 0, bl.q3Allocation || 0, bl.q4Allocation || 0].reduce((a, b) => a + b, 0)
   }));
 
   const vendorPerformance = [
