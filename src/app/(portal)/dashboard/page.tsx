@@ -232,25 +232,25 @@ export default function DashboardPage() {
                       href={`/requisitions?id=${req.id}`}
                       className="flex items-center justify-between p-4 rounded-xl hover:bg-muted/50 transition-all border border-border/50 group"
                     >
-                      <div className="flex items-center gap-4">
+                      <div className="flex items-center gap-4 min-w-0 flex-1">
                         <div className="p-2 bg-muted rounded-lg shrink-0 group-hover:bg-accent/10 transition-colors">
                           <FileCheck className="w-4 h-4 text-primary group-hover:text-accent" />
                         </div>
-                        <div className="overflow-hidden">
+                        <div className="overflow-hidden min-w-0">
                           <p className="font-bold text-sm truncate">{req.items?.[0]?.description || 'Untitled Request'}</p>
-                          {isDetailed && <p className="text-[10px] text-muted-foreground uppercase">{req.refNumber} • {req.budgetLine}</p>}
+                          {isDetailed && <p className="text-[10px] text-muted-foreground uppercase truncate">{req.refNumber} • {req.budgetLine}</p>}
                         </div>
                       </div>
-                      <div className="text-right shrink-0 ml-4 flex flex-col items-end gap-1.5 justify-center min-w-[120px]">
+                      <div className="text-right shrink-0 ml-4 flex flex-col items-end gap-1.5 justify-center min-w-[100px] sm:min-w-[120px]">
                         <p className={cn(
-                          "font-black tracking-tighter text-primary",
-                          isDetailed ? "text-sm" : "text-lg"
+                          "font-black tracking-tighter text-primary truncate w-full",
+                          isDetailed ? "text-xs sm:text-sm" : "text-base sm:text-lg"
                         )}>
                           Ksh {calculatePRTotal(req).toLocaleString()}
                         </p>
                         <Badge 
                           variant={req.status === 'Approved' ? 'secondary' : 'outline'} 
-                          className="text-[9px] px-1.5 py-0 h-4 uppercase tracking-tighter"
+                          className="text-[9px] px-1.5 py-0 h-4 uppercase tracking-tighter whitespace-nowrap"
                         >
                           {req.status}
                         </Badge>
