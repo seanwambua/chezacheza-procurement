@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useEffect, useState } from 'react';
@@ -26,6 +27,7 @@ import {
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { useStore } from '@/lib/store';
+import { useUserStore } from '@/lib/user-store';
 import {
   Select,
   SelectContent,
@@ -37,6 +39,7 @@ import { calculatePRTotal } from '@/lib/types';
 
 export default function DashboardPage() {
   const { prs, budgets, vendors, lpos, grns } = useStore();
+  const { viewPreference } = useUserStore();
   const [mounted, setMounted] = useState(false);
   const [selectedYear, setSelectedYear] = useState('2024');
 
@@ -46,6 +49,7 @@ export default function DashboardPage() {
 
   if (!mounted) return null;
 
+  const isDetailed = viewPreference === 'detailed';
   const filteredBudgets = budgets.filter(b => b.fiscalYear === selectedYear);
   const totalSpendVal = filteredBudgets.reduce((acc, bl) => acc + (bl.spent || 0), 0);
   const pendingApprovals = prs.filter(pr => pr.status?.includes('Pending')).length;
@@ -65,13 +69,15 @@ export default function DashboardPage() {
     { name: 'Needs Review', value: vendors.filter(v => v.rating < 3).length, color: 'hsl(var(--chart-3))' },
   ];
 
-  const recentPrs = prs.slice(0, 5);
+  const recentPrs = prs.slice(0, isDetailed ? 5 : 3);
 
   return (
     <div className="space-y-8 animate-in fade-in duration-500">
       <div className="flex flex-col md:flex-row md:items-end justify-between gap-4">
         <div>
-          <h2 className="text-3xl font-headline font-bold text-primary">Portal Overview</h2>
+          <h2 className={isDetailed ? "text-3xl font-headline font-bold text-primary" : "text-4xl font-black text-primary"}>
+            Portal Overview
+          </h2>
           <p className="text-muted-foreground">Strategic procurement metrics and fiscal health.</p>
         </div>
         <div className="flex items-center gap-2">
@@ -90,14 +96,14 @@ export default function DashboardPage() {
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-        <div className="lg:col-span-2 lg:row-span-1">
+        <div className={isDetailed ? "lg:col-span-2" : "lg:col-span-4"}>
           <StatCard 
             title={`Total Spend (Actual - ${selectedYear})`} 
             value={`Ksh ${totalSpendVal.toLocaleString()}`} 
             trend={{ value: 12, isUp: true }}
             icon={TrendingUp} 
             tooltip="The actual verified expenditure across all departmental budgets for the current fiscal period."
-            description="Verified actuals vs last month"
+            description={isDetailed ? "Verified actuals vs last month" : undefined}
           />
         </div>
 
@@ -105,142 +111,128 @@ export default function DashboardPage() {
           <StatCard 
             title="Pending Approvals" 
             value={pendingApprovals} 
-            description="Awaiting your review" 
+            description={isDetailed ? "Awaiting your review" : undefined}
             icon={Clock} 
-            tooltip="Number of purchase requisitions currently awaiting manager or finance approval."
           />
         </div>
         <div className="lg:col-span-1">
           <StatCard 
             title="Active LPOs" 
             value={activeLposCount} 
-            description={`${awaitingDelivery} out for delivery`} 
+            description={isDetailed ? `${awaitingDelivery} out for delivery` : undefined}
             icon={ShoppingCart} 
-            tooltip="Purchase orders that have been sent to vendors but are not yet closed."
           />
         </div>
 
-        <div className="lg:col-span-2 lg:row-span-2">
-          <Card className="h-full shadow-none border border-border">
-            <CardHeader>
-              <CardTitle className="text-lg font-headline">Budget Utilization vs Allocation ({selectedYear})</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="h-[320px]">
-                {budgetData.length > 0 ? (
-                  <ResponsiveContainer width="100%" height="100%">
-                    <BarChart data={budgetData} layout="vertical">
-                      <CartesianGrid strokeDasharray="3 3" horizontal={true} vertical={false} />
-                      <XAxis type="number" hide />
-                      <YAxis 
-                        dataKey="name" 
-                        type="category" 
-                        width={100} 
-                        axisLine={false}
-                        tickLine={false}
-                        fontSize={11}
-                      />
-                      <Tooltip 
-                        cursor={{ fill: 'transparent' }}
-                        contentStyle={{ borderRadius: '8px', border: '1px solid #border', backgroundColor: 'hsl(var(--card))', color: 'hsl(var(--foreground))' }}
-                        formatter={(value: any) => [`Ksh ${value.toLocaleString()}`, '']}
-                      />
-                      <Bar dataKey="spent" fill="hsl(var(--accent))" radius={[0, 4, 4, 0]} barSize={24} />
-                      <Bar dataKey="budget" fill="hsl(var(--muted))" radius={[0, 4, 4, 0]} barSize={8} />
-                    </BarChart>
-                  </ResponsiveContainer>
-                ) : (
-                  <div className="flex flex-col items-center justify-center h-full text-muted-foreground space-y-2">
-                    <AlertCircle className="w-8 h-8 opacity-20" />
-                    <p className="text-sm">No budget data for {selectedYear}</p>
+        {isDetailed && (
+          <>
+            <div className="lg:col-span-2 lg:row-span-2">
+              <Card className="h-full shadow-none border border-border">
+                <CardHeader>
+                  <CardTitle className="text-lg font-headline">Budget Utilization vs Allocation ({selectedYear})</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="h-[320px]">
+                    {budgetData.length > 0 ? (
+                      <ResponsiveContainer width="100%" height="100%">
+                        <BarChart data={budgetData} layout="vertical">
+                          <CartesianGrid strokeDasharray="3 3" horizontal={true} vertical={false} />
+                          <XAxis type="number" hide />
+                          <YAxis 
+                            dataKey="name" 
+                            type="category" 
+                            width={100} 
+                            axisLine={false}
+                            tickLine={false}
+                            fontSize={11}
+                          />
+                          <Tooltip 
+                            cursor={{ fill: 'transparent' }}
+                            contentStyle={{ borderRadius: '8px', border: '1px solid #border', backgroundColor: 'hsl(var(--card))', color: 'hsl(var(--foreground))' }}
+                            formatter={(value: any) => [`Ksh ${value.toLocaleString()}`, '']}
+                          />
+                          <Bar dataKey="spent" fill="hsl(var(--accent))" radius={[0, 4, 4, 0]} barSize={24} />
+                          <Bar dataKey="budget" fill="hsl(var(--muted))" radius={[0, 4, 4, 0]} barSize={8} />
+                        </BarChart>
+                      </ResponsiveContainer>
+                    ) : (
+                      <div className="flex flex-col items-center justify-center h-full text-muted-foreground space-y-2">
+                        <AlertCircle className="w-8 h-8 opacity-20" />
+                        <p className="text-sm">No budget data for {selectedYear}</p>
+                      </div>
+                    )}
                   </div>
-                )}
-              </div>
-            </CardContent>
-          </Card>
-        </div>
+                </CardContent>
+              </Card>
+            </div>
 
-        <div className="lg:col-span-1">
-           <StatCard 
-            title="GRN Disputes" 
-            value={activeDisputes} 
-            description="Needs immediate action" 
-            icon={AlertCircle} 
-            tooltip="Goods Received Notes with quality issues blocking payment."
-          />
-        </div>
+            <div className="lg:col-span-1">
+               <StatCard 
+                title="GRN Disputes" 
+                value={activeDisputes} 
+                icon={AlertCircle} 
+              />
+            </div>
 
-        <div className="lg:col-span-1 lg:row-span-2">
-          <Card className="h-full shadow-none border border-border overflow-hidden">
-            <CardHeader>
-              <CardTitle className="text-lg font-headline">Vendor Quality</CardTitle>
-            </CardHeader>
-            <CardContent className="flex flex-col items-center">
-              <div className="h-[180px] w-full">
-                <ResponsiveContainer width="100%" height="100%">
-                  <PieChart>
-                    <Pie
-                      data={vendorPerformance}
-                      innerRadius={50}
-                      outerRadius={70}
-                      paddingAngle={5}
-                      dataKey="value"
-                    >
-                      {vendorPerformance.map((entry, index) => (
-                        <Cell key={`cell-${index}`} fill={entry.color} />
-                      ))}
-                    </Pie>
-                    <Tooltip />
-                  </PieChart>
-                </ResponsiveContainer>
-              </div>
-              <div className="w-full space-y-2 mt-4">
-                {vendorPerformance.map((item) => (
-                  <div key={item.name} className="flex items-center justify-between text-xs">
-                    <div className="flex items-center gap-2">
-                      <div className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: item.color }} />
-                      <span className="text-muted-foreground">{item.name}</span>
-                    </div>
-                    <span className="font-semibold">{item.value}</span>
+            <div className="lg:col-span-1 lg:row-span-2">
+              <Card className="h-full shadow-none border border-border overflow-hidden">
+                <CardHeader>
+                  <CardTitle className="text-lg font-headline">Vendor Quality</CardTitle>
+                </CardHeader>
+                <CardContent className="flex flex-col items-center">
+                  <div className="h-[180px] w-full">
+                    <ResponsiveContainer width="100%" height="100%">
+                      <PieChart>
+                        <Pie
+                          data={vendorPerformance}
+                          innerRadius={50}
+                          outerRadius={70}
+                          paddingAngle={5}
+                          dataKey="value"
+                        >
+                          {vendorPerformance.map((entry, index) => (
+                            <Cell key={`cell-${index}`} fill={entry.color} />
+                          ))}
+                        </Pie>
+                        <Tooltip />
+                      </PieChart>
+                    </ResponsiveContainer>
                   </div>
-                ))}
-              </div>
-            </CardContent>
-          </Card>
-        </div>
+                </CardContent>
+              </Card>
+            </div>
 
-        <div className="lg:col-span-1">
-           <StatCard 
-            title="Onboarded Vendors" 
-            value={vendors.length} 
-            description="Active supplier network" 
-            icon={Users} 
-            tooltip="Total number of approved vendors in the database."
-          />
-        </div>
+            <div className="lg:col-span-1">
+               <StatCard 
+                title="Onboarded Vendors" 
+                value={vendors.length} 
+                icon={Users} 
+              />
+            </div>
+          </>
+        )}
 
-        <div className="lg:col-span-3">
+        <div className={isDetailed ? "lg:col-span-3" : "lg:col-span-4"}>
           <Card className="shadow-none border border-border overflow-hidden">
             <CardHeader className="flex flex-row items-center justify-between py-4">
               <CardTitle className="text-lg font-headline">Recent Requisitions</CardTitle>
-              <Badge variant="outline" className="cursor-pointer hover:bg-muted transition-colors">Full History</Badge>
             </CardHeader>
             <CardContent>
-              <div className="space-y-3 overflow-x-auto">
+              <div className="space-y-3">
                 {recentPrs.length > 0 ? (
                   recentPrs.map((req) => (
-                    <div key={req.id} className="flex items-center justify-between p-3 rounded-xl hover:bg-muted/50 transition-all border border-transparent hover:border-border">
+                    <div key={req.id} className="flex items-center justify-between p-4 rounded-xl hover:bg-muted/50 transition-all border border-border/50">
                       <div className="flex items-center gap-4">
                         <div className="p-2 bg-muted rounded-lg shrink-0">
                           <FileCheck className="w-4 h-4 text-primary" />
                         </div>
                         <div className="overflow-hidden">
                           <p className="font-bold text-sm truncate">{req.items?.[0]?.description || 'Untitled Request'}</p>
-                          <p className="text-[10px] text-muted-foreground uppercase">{req.refNumber} • {req.budgetLine}</p>
+                          {isDetailed && <p className="text-[10px] text-muted-foreground uppercase">{req.refNumber} • {req.budgetLine}</p>}
                         </div>
                       </div>
                       <div className="text-right shrink-0 ml-4">
-                        <p className="text-sm font-black">Ksh {calculatePRTotal(req).toLocaleString()}</p>
+                        <p className={isDetailed ? "text-sm font-black" : "text-lg font-bold"}>Ksh {calculatePRTotal(req).toLocaleString()}</p>
                         <Badge variant={req.status === 'Approved' ? 'secondary' : 'outline'} className="text-[9px] px-1.5 py-0">
                           {req.status}
                         </Badge>

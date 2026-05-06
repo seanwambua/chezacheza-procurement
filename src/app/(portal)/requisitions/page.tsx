@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useState, useEffect } from 'react';
@@ -46,7 +47,6 @@ import { useUserStore } from '@/lib/user-store';
 import { PurchaseRequisition, getBudgetStats, calculatePRTotal } from '@/lib/types';
 import { RoleGuard } from '@/components/auth/RoleGuard';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
-import { Separator } from '@/components/ui/separator';
 
 const requisitionSchema = z.object({
   budgetLine: z.string().min(1, "Please select a budget"),
@@ -61,11 +61,13 @@ type RequisitionFormValues = z.infer<typeof requisitionSchema>;
 
 export default function RequisitionsPage() {
   const { prs, budgets, addPR, updatePR, deletePR, updatePRStatus } = useStore();
-  const { currentUser } = useUserStore();
+  const { currentUser, viewPreference } = useUserStore();
   const [search, setSearch] = useState('');
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [editingPr, setEditingPr] = useState<PurchaseRequisition | null>(null);
   const [mounted, setMounted] = useState(false);
+
+  const isDetailed = viewPreference === 'detailed';
 
   const form = useForm<RequisitionFormValues>({
     resolver: zodResolver(requisitionSchema),
@@ -156,7 +158,9 @@ export default function RequisitionsPage() {
     <div className="space-y-6 animate-in fade-in duration-500 pb-10">
       <div className="flex items-center justify-between">
         <div>
-          <h2 className="text-3xl font-headline font-bold text-primary">Purchase Requisitions</h2>
+          <h2 className={isDetailed ? "text-3xl font-headline font-bold text-primary" : "text-4xl font-black text-primary"}>
+            Purchase Requisitions
+          </h2>
           <p className="text-muted-foreground">Submit and track multi-item internal purchase requests.</p>
         </div>
         
@@ -315,9 +319,9 @@ export default function RequisitionsPage() {
         <Table>
           <TableHeader>
             <TableRow className="bg-muted/30 border-none">
-              <TableHead className="font-bold uppercase text-[10px]">Reference</TableHead>
+              {isDetailed && <TableHead className="font-bold uppercase text-[10px]">Reference</TableHead>}
               <TableHead className="font-bold uppercase text-[10px]">Description Summary</TableHead>
-              <TableHead className="font-bold uppercase text-[10px]">Originator</TableHead>
+              {isDetailed && <TableHead className="font-bold uppercase text-[10px]">Originator</TableHead>}
               <TableHead className="font-bold uppercase text-[10px]">Budget Line</TableHead>
               <TableHead className="font-bold uppercase text-[10px]">Progress</TableHead>
               <TableHead className="text-right font-bold uppercase text-[10px]">Net Total</TableHead>
@@ -334,16 +338,16 @@ export default function RequisitionsPage() {
                 
                 return (
                   <TableRow key={pr.id} className="group hover:bg-muted/5">
-                    <TableCell className="font-black text-primary text-xs">{pr.refNumber}</TableCell>
+                    {isDetailed && <TableCell className="font-black text-primary text-xs">{pr.refNumber}</TableCell>}
                     <TableCell>
                       <div className="flex flex-col">
-                        <span className="text-sm font-medium">{firstItem}</span>
+                        <span className={isDetailed ? "text-sm font-medium" : "text-base font-bold"}>{firstItem}</span>
                         {(pr.items?.length || 0) > 1 && (
                           <span className="text-[10px] text-muted-foreground italic">+ {pr.items.length - 1} more line items</span>
                         )}
                       </div>
                     </TableCell>
-                    <TableCell className="text-xs">{pr.requesterName}</TableCell>
+                    {isDetailed && <TableCell className="text-xs">{pr.requesterName}</TableCell>}
                     <TableCell>
                       <div className="flex flex-col">
                         <span className="text-xs font-semibold">{pr.budgetLine}</span>
@@ -358,7 +362,9 @@ export default function RequisitionsPage() {
                         {pr.status}
                       </Badge>
                     </TableCell>
-                    <TableCell className="text-right font-black text-xs">Ksh {total.toLocaleString()}</TableCell>
+                    <TableCell className={isDetailed ? "text-right font-black text-xs" : "text-right font-black text-base"}>
+                      Ksh {total.toLocaleString()}
+                    </TableCell>
                     <TableCell>
                       <DropdownMenu>
                         <DropdownMenuTrigger asChild>

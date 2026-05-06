@@ -1,3 +1,4 @@
+
 "use client";
 
 import Link from 'next/link';
@@ -15,7 +16,9 @@ import {
   Wallet,
   UserRound,
   ChevronDown,
-  Building2
+  Building2,
+  Maximize2,
+  Minimize2
 } from 'lucide-react';
 import { useUserStore } from '@/lib/user-store';
 import { UserRole, User } from '@/lib/types';
@@ -29,6 +32,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { useEffect, useState } from 'react';
 import { ThemeToggle } from './ThemeToggle';
+import { Button } from '@/components/ui/button';
 
 const navItems = [
   { name: 'Dashboard', href: '/dashboard', icon: LayoutDashboard, roles: ['Admin', 'Manager', 'Staff', 'Finance'] as UserRole[] },
@@ -46,7 +50,7 @@ const navItems = [
 export function SidebarNav() {
   const pathname = usePathname();
   const router = useRouter();
-  const { currentUser, users, setCurrentUser } = useUserStore();
+  const { currentUser, users, setCurrentUser, viewPreference, setViewPreference } = useUserStore();
   const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
@@ -78,6 +82,10 @@ export function SidebarNav() {
     router.refresh();
   };
 
+  const toggleView = () => {
+    setViewPreference(viewPreference === 'detailed' ? 'simple' : 'detailed');
+  };
+
   return (
     <div className="flex flex-col h-full bg-sidebar border-r border-sidebar-border">
       <div className="p-6 flex items-center justify-between">
@@ -87,7 +95,18 @@ export function SidebarNav() {
           </h1>
           <p className="text-[10px] text-muted-foreground uppercase tracking-widest mt-1">Chezacheza Procurement</p>
         </div>
-        <ThemeToggle />
+        <div className="flex items-center gap-1">
+          <Button 
+            variant="ghost" 
+            size="icon" 
+            className="w-8 h-8"
+            onClick={toggleView}
+            title={viewPreference === 'detailed' ? 'Switch to Simple View' : 'Switch to Detailed View'}
+          >
+            {viewPreference === 'detailed' ? <Minimize2 className="w-4 h-4" /> : <Maximize2 className="w-4 h-4" />}
+          </Button>
+          <ThemeToggle />
+        </div>
       </div>
       
       <nav className="flex-1 px-4 space-y-1">
@@ -138,7 +157,12 @@ export function SidebarNav() {
 
         <Link
           href="/settings"
-          className="flex items-center gap-3 px-3 py-2 text-sm font-medium text-sidebar-foreground rounded-md hover:bg-sidebar-accent transition-all duration-200"
+          className={cn(
+            "flex items-center gap-3 px-3 py-2 text-sm font-medium rounded-md transition-all duration-200",
+            pathname === '/settings' 
+              ? "bg-primary text-primary-foreground shadow-sm" 
+              : "text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground"
+          )}
         >
           <Settings className="w-4 h-4" />
           Settings

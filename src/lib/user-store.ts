@@ -4,9 +4,12 @@ import { persist, createJSONStorage } from 'zustand/middleware';
 import { User, UserRole, ROLE_PERMISSIONS } from './types';
 import { MOCK_USERS } from './mock-data';
 
+export type ViewPreference = 'simple' | 'detailed';
+
 interface UserState {
   users: User[];
   currentUser: User | null;
+  viewPreference: ViewPreference;
   
   // Actions
   addUser: (userData: Omit<User, 'id' | 'createdAt'>) => void;
@@ -14,6 +17,7 @@ interface UserState {
   deleteUser: (id: string) => void;
   toggleUserStatus: (id: string) => void;
   setCurrentUser: (user: User | null) => void;
+  setViewPreference: (pref: ViewPreference) => void;
   hasPermission: (permission: string) => boolean;
   hasRole: (roles: UserRole[]) => boolean;
 }
@@ -22,7 +26,8 @@ export const useUserStore = create<UserState>()(
   persist(
     (set, get) => ({
       users: MOCK_USERS,
-      currentUser: MOCK_USERS[0], // Default to first mock user (Admin)
+      currentUser: MOCK_USERS[0],
+      viewPreference: 'detailed',
 
       addUser: (userData) => set((state) => {
         const id = `U-${Math.floor(Math.random() * 10000)}`;
@@ -51,6 +56,8 @@ export const useUserStore = create<UserState>()(
       })),
 
       setCurrentUser: (user) => set({ currentUser: user }),
+      
+      setViewPreference: (viewPreference) => set({ viewPreference }),
 
       hasPermission: (permission) => {
         const user = get().currentUser;
