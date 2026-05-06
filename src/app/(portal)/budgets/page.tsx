@@ -93,10 +93,12 @@ type BudgetFormValues = z.infer<typeof budgetSchema>;
 
 export default function BudgetsPage() {
   const { budgets, prs, lpos, addBudget, updateBudget, deleteBudget } = useStore();
-  const { currentUser } = useUserStore();
+  const { currentUser, viewPreference } = useUserStore();
   const [mounted, setMounted] = useState(false);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [editingBudget, setEditingBudget] = useState<Budget | null>(null);
+
+  const isDetailed = viewPreference === 'detailed';
 
   const form = useForm<BudgetFormValues>({
     resolver: zodResolver(budgetSchema),
@@ -197,8 +199,14 @@ export default function BudgetsPage() {
     <div className="space-y-8 animate-in fade-in duration-500 pb-10">
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
-          <h2 className="text-2xl md:text-3xl font-headline font-bold text-primary">Budget & Quarterly Planning</h2>
-          <p className="text-sm text-muted-foreground">Rolling quarterly allocations with automatic procurement pausing.</p>
+          <h2 className={isDetailed ? "text-2xl md:text-3xl font-headline font-bold text-primary" : "text-4xl font-black text-primary"}>
+            {isDetailed ? 'Budget & Quarterly Planning' : 'Budgets'}
+          </h2>
+          <p className="text-sm text-muted-foreground">
+            {isDetailed 
+              ? 'Rolling quarterly allocations with automatic procurement pausing.' 
+              : 'Review departmental spend and remaining funds.'}
+          </p>
         </div>
         
         <RoleGuard allowedRoles={['Admin', 'Finance']}>
@@ -275,11 +283,13 @@ export default function BudgetsPage() {
             <CalendarDays className="w-32 h-32" />
           </div>
           <CardHeader>
-             <CardTitle className="text-xs font-bold text-muted-foreground uppercase tracking-widest">Global Fiscal Status</CardTitle>
+             <CardTitle className="text-xs font-bold text-muted-foreground uppercase tracking-widest">
+               {isDetailed ? 'Global Fiscal Status' : 'Overall Spend'}
+             </CardTitle>
           </CardHeader>
           <CardContent>
             <div className="flex flex-col sm:flex-row items-center gap-10">
-              <div className="relative w-36 h-36 shrink-0">
+              <div className={isDetailed ? "relative w-36 h-36 shrink-0" : "relative w-40 h-40 shrink-0"}>
                 <svg className="w-full h-full transform -rotate-90" viewBox="0 0 100 100">
                   <circle className="text-muted/20 stroke-current" strokeWidth="8" fill="transparent" r="40" cx="50" cy="50" />
                   <circle
@@ -292,25 +302,29 @@ export default function BudgetsPage() {
                   />
                 </svg>
                 <div className="absolute inset-0 flex flex-col items-center justify-center">
-                  <span className="text-2xl font-black">{overallUtilization}%</span>
+                  <span className={isDetailed ? "text-2xl font-black" : "text-3xl font-black"}>{overallUtilization}%</span>
                   <span className="text-[8px] uppercase font-bold text-muted-foreground">Total Use</span>
                 </div>
               </div>
               <div className="flex-1 space-y-4 w-full">
                 <div className="text-center sm:text-left">
-                  <p className="text-2xl md:text-3xl font-black text-primary tracking-tighter">Ksh {totalAllocation.toLocaleString()}</p>
+                  <p className={isDetailed ? "text-2xl md:text-3xl font-black text-primary tracking-tighter" : "text-3xl md:text-4xl font-black text-primary tracking-tighter"}>
+                    Ksh {totalAllocation.toLocaleString()}
+                  </p>
                   <p className="text-[10px] text-muted-foreground font-medium uppercase tracking-tight">Consolidated Annual Pool</p>
                 </div>
-                <div className="grid grid-cols-2 gap-4 pt-4 border-t border-border/50">
-                   <div className="text-center sm:text-left">
-                      <p className="text-sm font-bold text-destructive">{pausedBudgetsCount}</p>
-                      <p className="text-[9px] uppercase font-bold text-muted-foreground">Paused Budgets</p>
-                   </div>
-                   <div className="text-center sm:text-left">
-                      <p className="text-sm font-bold text-accent">Q{Math.floor(new Date().getMonth() / 3) + 1}</p>
-                      <p className="text-[9px] uppercase font-bold text-muted-foreground">Active Quarter</p>
-                   </div>
-                </div>
+                {isDetailed && (
+                  <div className="grid grid-cols-2 gap-4 pt-4 border-t border-border/50">
+                    <div className="text-center sm:text-left">
+                        <p className="text-sm font-bold text-destructive">{pausedBudgetsCount}</p>
+                        <p className="text-[9px] uppercase font-bold text-muted-foreground">Paused Budgets</p>
+                    </div>
+                    <div className="text-center sm:text-left">
+                        <p className="text-sm font-bold text-accent">Q{Math.floor(new Date().getMonth() / 3) + 1}</p>
+                        <p className="text-[9px] uppercase font-bold text-muted-foreground">Active Quarter</p>
+                    </div>
+                  </div>
+                )}
               </div>
             </div>
           </CardContent>
@@ -320,20 +334,22 @@ export default function BudgetsPage() {
             title="Total Utilized" 
             value={`Ksh ${totalUsed.toLocaleString()}`} 
             icon={TrendingUp} 
-            tooltip="Sum of actual expenditure and current commitments (approved requisitions/LPOs) across all departments."
+            tooltip={isDetailed ? "Sum of actual expenditure and current commitments (approved requisitions/LPOs) across all departments." : undefined}
           />
           <StatCard 
             title="Remaining" 
             value={`Ksh ${(totalAllocation - totalUsed).toLocaleString()}`} 
             icon={PieChart} 
-            tooltip="Total funds available for the remainder of the fiscal year across all planning phases."
+            tooltip={isDetailed ? "Total funds available for the remainder of the fiscal year across all planning phases." : undefined}
           />
         </div>
       </div>
 
       <Card className="border-none shadow-none bg-card overflow-hidden">
         <CardHeader className="border-b border-border/50 py-4 px-4 md:px-6">
-          <CardTitle className="text-lg">Budget Analysis & Quarterly Health</CardTitle>
+          <CardTitle className="text-lg">
+            {isDetailed ? 'Budget Analysis & Quarterly Health' : 'Budget Health'}
+          </CardTitle>
         </CardHeader>
         <CardContent className="p-0">
           <div className="overflow-x-auto w-full">
@@ -341,10 +357,10 @@ export default function BudgetsPage() {
               <TableHeader>
                 <TableRow className="bg-muted/30">
                   <TableHead className="min-w-[180px]">Budget</TableHead>
-                  <TableHead className="min-w-[140px]">Current Q Health</TableHead>
-                  <TableHead className="text-right min-w-[120px]">Q Allocation</TableHead>
-                  <TableHead className="text-right min-w-[140px]">Available in Q</TableHead>
-                  <TableHead className="text-right min-w-[140px]">Annual Pool</TableHead>
+                  <TableHead className="min-w-[140px]">Status</TableHead>
+                  {isDetailed && <TableHead className="text-right min-w-[120px]">Q Allocation</TableHead>}
+                  <TableHead className="text-right min-w-[140px]">Remaining in Q</TableHead>
+                  {isDetailed && <TableHead className="text-right min-w-[140px]">Annual Pool</TableHead>}
                   <TableHead className="w-[50px]"></TableHead>
                 </TableRow>
               </TableHeader>
@@ -359,9 +375,9 @@ export default function BudgetsPage() {
                           <Tooltip delayDuration={0}>
                             <TooltipTrigger asChild>
                               <div className="flex flex-col cursor-help">
-                                <span className="font-bold text-primary flex items-center gap-2 whitespace-nowrap">
+                                <span className={isDetailed ? "font-bold text-primary flex items-center gap-2 whitespace-nowrap" : "font-black text-primary flex items-center gap-2 whitespace-nowrap text-base"}>
                                   {b.name}
-                                  <Info className="w-3.5 h-3.5 text-muted-foreground opacity-50 group-hover:opacity-100" />
+                                  {isDetailed && <Info className="w-3.5 h-3.5 text-muted-foreground opacity-50 group-hover:opacity-100" />}
                                   {stats.isPaused ? (
                                     <PauseCircle className="w-3.5 h-3.5 text-destructive" />
                                   ) : (
@@ -421,7 +437,7 @@ export default function BudgetsPage() {
                       </TableCell>
                       <TableCell>
                         <div className="flex items-center gap-2 min-w-[120px]">
-                           <div className="h-1.5 flex-1 bg-muted rounded-full overflow-hidden flex">
+                           <div className={isDetailed ? "h-1.5 flex-1 bg-muted rounded-full overflow-hidden flex" : "h-2.5 flex-1 bg-muted rounded-full overflow-hidden flex"}>
                               <div 
                                 className={`h-full transition-all duration-500 ${stats.isPaused ? 'bg-destructive' : 'bg-accent'}`}
                                 style={{ width: `${Math.min(100, (stats.totalUsed / stats.cumulativeAllocation) * 100)}%` }}
@@ -432,24 +448,28 @@ export default function BudgetsPage() {
                            </Badge>
                         </div>
                       </TableCell>
-                      <TableCell className="text-right font-medium whitespace-nowrap">
-                        Ksh {(b as any)[`q${stats.currentQ}Allocation`].toLocaleString()}
-                      </TableCell>
+                      {isDetailed && (
+                        <TableCell className="text-right font-medium whitespace-nowrap">
+                          Ksh {(b as any)[`q${stats.currentQ}Allocation`].toLocaleString()}
+                        </TableCell>
+                      )}
                       <TableCell className="text-right">
                         <div className="flex flex-col items-end">
-                          <span className={`font-black whitespace-nowrap ${stats.isPaused ? 'text-destructive' : 'text-primary'}`}>
+                          <span className={isDetailed ? "font-black whitespace-nowrap" : "font-black whitespace-nowrap text-primary text-base"}>
                             Ksh {stats.remainingInQuarter.toLocaleString()}
                           </span>
-                          {stats.isPaused && (
+                          {stats.isPaused && isDetailed && (
                              <span className="text-[9px] text-muted-foreground uppercase flex items-center gap-1 whitespace-nowrap">
                                To Q{stats.currentQ + 1} <ArrowRight className="w-2 h-2" />
                              </span>
                           )}
                         </div>
                       </TableCell>
-                      <TableCell className="text-right text-muted-foreground text-xs whitespace-nowrap">
-                        Ksh {stats.totalAllocation.toLocaleString()}
-                      </TableCell>
+                      {isDetailed && (
+                        <TableCell className="text-right text-muted-foreground text-xs whitespace-nowrap">
+                          Ksh {stats.totalAllocation.toLocaleString()}
+                        </TableCell>
+                      )}
                       <TableCell>
                         <DropdownMenu>
                           <DropdownMenuTrigger asChild>
