@@ -479,7 +479,7 @@ export default function LPOsPage() {
       </Card>
 
       <Dialog open={!!receivingLpo} onOpenChange={(open) => !open && setReceivingLpo(null)}>
-        <DialogContent className="max-w-md w-[90vw]">
+        <DialogContent className="max-w-md w-[95vw] max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2 text-xl font-black tracking-tight">
               <PackageCheck className="w-5 h-5 text-accent" />
@@ -492,7 +492,7 @@ export default function LPOsPage() {
           <div className="p-4 bg-muted/30 rounded-lg text-xs space-y-3 border border-border/50">
             <div className="flex justify-between items-center pb-2 border-b border-border/50">
               <span className="text-muted-foreground uppercase font-bold tracking-tight">Vendor</span>
-              <span className="font-bold text-primary">{receivingLpo?.vendorName}</span>
+              <span className="font-bold text-primary text-right">{receivingLpo?.vendorName}</span>
             </div>
             <div className="flex justify-between items-center">
               <span className="text-muted-foreground uppercase font-bold tracking-tight">Total Line Items</span>
@@ -503,9 +503,9 @@ export default function LPOsPage() {
               <span className="font-black text-primary tracking-tighter">Ksh {receivingLpo?.totalValue.toLocaleString()}</span>
             </div>
           </div>
-          <DialogFooter className="gap-2 sm:gap-0 pt-4 flex-col sm:flex-row">
-            <Button variant="outline" onClick={() => setReceivingLpo(null)} className="w-full sm:w-auto font-bold uppercase text-xs">Cancel</Button>
-            <Button className="bg-accent hover:bg-accent/90 w-full sm:w-auto font-bold uppercase text-xs shadow-md" onClick={() => receivingLpo && handleReceiveGoods(receivingLpo)}>
+          <DialogFooter className="gap-2 pt-4 flex-col sm:flex-row">
+            <Button variant="outline" onClick={() => setReceivingLpo(null)} className="w-full sm:w-auto font-bold uppercase text-xs h-10">Cancel</Button>
+            <Button className="bg-accent hover:bg-accent/90 w-full sm:w-auto font-bold uppercase text-xs shadow-md h-10" onClick={() => receivingLpo && handleReceiveGoods(receivingLpo)}>
               Confirm Delivery
             </Button>
           </DialogFooter>
