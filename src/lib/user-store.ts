@@ -10,6 +10,7 @@ interface UserState {
   users: User[];
   currentUser: User | null;
   viewPreference: ViewPreference;
+  isSidebarCollapsed: boolean;
   
   // Actions
   addUser: (userData: Omit<User, 'id' | 'createdAt'>) => void;
@@ -18,6 +19,7 @@ interface UserState {
   toggleUserStatus: (id: string) => void;
   setCurrentUser: (user: User | null) => void;
   setViewPreference: (pref: ViewPreference) => void;
+  setSidebarCollapsed: (collapsed: boolean) => void;
   hasPermission: (permission: string) => boolean;
   hasRole: (roles: UserRole[]) => boolean;
 }
@@ -28,6 +30,7 @@ export const useUserStore = create<UserState>()(
       users: MOCK_USERS,
       currentUser: MOCK_USERS[0],
       viewPreference: 'simple',
+      isSidebarCollapsed: false,
 
       addUser: (userData) => set((state) => {
         const id = `U-${Math.floor(Math.random() * 10000)}`;
@@ -58,6 +61,8 @@ export const useUserStore = create<UserState>()(
       setCurrentUser: (user) => set({ currentUser: user }),
       
       setViewPreference: (viewPreference) => set({ viewPreference }),
+      
+      setSidebarCollapsed: (isSidebarCollapsed) => set({ isSidebarCollapsed }),
 
       hasPermission: (permission) => {
         const user = get().currentUser;
