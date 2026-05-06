@@ -1,4 +1,3 @@
-
 "use client";
 
 import { useEffect, useState } from 'react';
@@ -11,6 +10,7 @@ import {
   TrendingUp,
   Users,
   CalendarDays,
+  ArrowRight
 } from 'lucide-react';
 import { 
   BarChart, 
@@ -36,6 +36,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { calculatePRTotal } from '@/lib/types';
+import Link from 'next/link';
 
 export default function DashboardPage() {
   const { prs, budgets, vendors, lpos, grns } = useStore();
@@ -216,15 +217,22 @@ export default function DashboardPage() {
           <Card className="shadow-none border border-border overflow-hidden">
             <CardHeader className="flex flex-row items-center justify-between py-4">
               <CardTitle className="text-lg font-headline">Recent Requisitions</CardTitle>
+              <Link href="/requisitions" className="text-xs font-bold text-accent flex items-center gap-1 hover:underline">
+                View All <ArrowRight className="w-3 h-3" />
+              </Link>
             </CardHeader>
             <CardContent>
               <div className="space-y-3">
                 {recentPrs.length > 0 ? (
                   recentPrs.map((req) => (
-                    <div key={req.id} className="flex items-center justify-between p-4 rounded-xl hover:bg-muted/50 transition-all border border-border/50">
+                    <Link 
+                      key={req.id} 
+                      href={`/requisitions?id=${req.id}`}
+                      className="flex items-center justify-between p-4 rounded-xl hover:bg-muted/50 transition-all border border-border/50 group"
+                    >
                       <div className="flex items-center gap-4">
-                        <div className="p-2 bg-muted rounded-lg shrink-0">
-                          <FileCheck className="w-4 h-4 text-primary" />
+                        <div className="p-2 bg-muted rounded-lg shrink-0 group-hover:bg-accent/10 transition-colors">
+                          <FileCheck className="w-4 h-4 text-primary group-hover:text-accent" />
                         </div>
                         <div className="overflow-hidden">
                           <p className="font-bold text-sm truncate">{req.items?.[0]?.description || 'Untitled Request'}</p>
@@ -237,7 +245,7 @@ export default function DashboardPage() {
                           {req.status}
                         </Badge>
                       </div>
-                    </div>
+                    </Link>
                   ))
                 ) : (
                   <p className="text-sm text-center text-muted-foreground py-8">No recent requisitions found.</p>

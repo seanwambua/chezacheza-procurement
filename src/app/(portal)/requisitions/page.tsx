@@ -1,4 +1,3 @@
-
 "use client";
 
 import { useState, useEffect } from 'react';
@@ -47,6 +46,7 @@ import { useUserStore } from '@/lib/user-store';
 import { PurchaseRequisition, getBudgetStats, calculatePRTotal } from '@/lib/types';
 import { RoleGuard } from '@/components/auth/RoleGuard';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
+import { useSearchParams, useRouter } from 'next/navigation';
 
 const requisitionSchema = z.object({
   budgetLine: z.string().min(1, "Please select a budget"),
@@ -68,6 +68,8 @@ export default function RequisitionsPage() {
   const [mounted, setMounted] = useState(false);
 
   const isDetailed = viewPreference === 'detailed';
+  const searchParams = useSearchParams();
+  const router = useRouter();
 
   const form = useForm<RequisitionFormValues>({
     resolver: zodResolver(requisitionSchema),
@@ -85,6 +87,20 @@ export default function RequisitionsPage() {
   useEffect(() => {
     setMounted(true);
   }, []);
+
+  // Handle deep-linking from Dashboard
+  useEffect(() => {
+    if (mounted) {
+      const prId = searchParams.get('id');
+      if (prId) {
+        const foundPr = prs.find(p => p.id === prId);
+        if (foundPr) {
+          setEditingPr(foundPr);
+          setIsDialogOpen(true);
+        }
+      }
+    }
+  }, [mounted, searchParams, prs]);
 
   useEffect(() => {
     if (editingPr) {
@@ -139,8 +155,7 @@ export default function RequisitionsPage() {
         status: 'Pending Manager',
       });
     }
-    setIsDialogOpen(false);
-    setEditingPr(null);
+    handleCloseDialog();
   };
 
   const handleEdit = (pr: PurchaseRequisition) => {
@@ -151,6 +166,15 @@ export default function RequisitionsPage() {
   const handleDelete = (id: string) => {
     if (confirm('Are you sure you want to delete this requisition?')) {
       deletePR(id);
+    }
+  };
+
+  const handleCloseDialog = () => {
+    setIsDialogOpen(false);
+    setEditingPr(null);
+    // Clear URL param if it exists
+    if (searchParams.get('id')) {
+      router.replace('/requisitions');
     }
   };
 
@@ -166,8 +190,8 @@ export default function RequisitionsPage() {
         
         <RoleGuard permission="create_requisitions">
           <Dialog open={isDialogOpen} onOpenChange={(open) => {
-            setIsDialogOpen(open);
-            if (!open) setEditingPr(null);
+            if (!open) handleCloseDialog();
+            else setIsDialogOpen(true);
           }}>
             <DialogTrigger asChild>
               <Button className="bg-primary shadow-sm" onClick={() => setEditingPr(null)}>
@@ -177,7 +201,7 @@ export default function RequisitionsPage() {
             </DialogTrigger>
             <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
               <DialogHeader>
-                <DialogTitle className="text-2xl font-black">{editingPr ? 'Update Requisition' : 'Draft New Requisition'}</DialogTitle>
+                <DialogTitle className="text-2xl font-black">{editingPr ? 'Review Requisition' : 'Draft New Requisition'}</DialogTitle>
                 <DialogDescription>
                   List all required items for this procurement. Total cost is subject to quarterly budget limits.
                 </DialogDescription>
@@ -287,7 +311,7 @@ export default function RequisitionsPage() {
                       <span className="text-xl font-black text-primary">Ksh {currentTotal.toLocaleString()}</span>
                     </div>
                     <DialogFooter className="gap-2 sm:gap-0">
-                      <Button type="button" variant="outline" onClick={() => setIsDialogOpen(false)}>Cancel</Button>
+                      <Button type="button" variant="outline" onClick={handleCloseDialog}>Cancel</Button>
                       <Button type="submit" disabled={isBudgetPaused && !editingPr} className="bg-primary">
                         {editingPr ? 'Save Revisions' : 'Launch for Approval'}
                       </Button>
@@ -390,10 +414,10 @@ export default function RequisitionsPage() {
                           </RoleGuard>
 
                           <RoleGuard allowedRoles={['Admin', 'Staff']}>
-                            {(pr.status === 'Draft' || currentUser.role === 'Admin') && (
+                            {(pr.status === 'Draft' || currentUser.role === 'Admin' || pr.requesterName === currentUser.name) && (
                                <DropdownMenuItem onClick={() => handleEdit(pr)}>
                                 <Pencil className="w-4 h-4 mr-2" />
-                                Edit Request
+                                {pr.status === 'Pending Manager' ? 'Review Request' : 'Edit Request'}
                               </DropdownMenuItem>
                             )}
                           </RoleGuard>
