@@ -2,6 +2,9 @@
 "use client";
 
 import { useState, useEffect } from 'react';
+import { useForm } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
+import * as z from 'zod';
 import { Button } from '@/components/ui/button';
 import { 
   Table, 
@@ -12,7 +15,7 @@ import {
   TableRow 
 } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
-import { Plus, Search, Filter } from 'lucide-react';
+import { Plus, Search, Filter, Loader2 } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import {
   Dialog,
@@ -24,7 +27,25 @@ import {
 } from "@/components/ui/dialog";
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import {
+  Form,
+  FormControl,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from "@/components/ui/form";
 import { useStore } from '@/lib/store';
+
+// Define the schema with Zod
+const requisitionSchema = z.object({
+  itemDescription: z.string().min(3, "Description must be at least 3 characters"),
+  quantity: z.coerce.number().min(1, "Quantity must be at least 1"),
+  estimatedCost: z.coerce.number().min(0.01, "Cost must be greater than 0"),
+  budgetLine: z.string().min(1, "Please select a budget line"),
+});
+
+type RequisitionFormValues = z.infer<typeof requisitionSchema>;
 
 export default function RequisitionsPage() {
   const { prs, budgetLines, addPR } = useStore();
@@ -32,11 +53,15 @@ export default function RequisitionsPage() {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [mounted, setMounted] = useState(false);
 
-  // Form State
-  const [description, setDescription] = useState('');
-  const [quantity, setQuantity] = useState('1');
-  const [cost, setCost] = useState('');
-  const [budgetLine, setBudgetLine] = useState('');
+  const form = useForm<RequisitionFormValues>({
+    resolver: zodResolver(requisitionSchema),
+    defaultValues: {
+      itemDescription: '',
+      quantity: 1,
+      estimatedCost: 0,
+      budgetLine: '',
+    },
+  });
 
   useEffect(() => {
     setMounted(true);
@@ -49,21 +74,14 @@ export default function RequisitionsPage() {
     pr.refNumber.toLowerCase().includes(search.toLowerCase())
   );
 
-  const handleSubmit = () => {
+  const onSubmit = (values: RequisitionFormValues) => {
     addPR({
-      itemDescription: description,
-      quantity: parseInt(quantity),
-      estimatedCost: parseFloat(cost),
-      budgetLine: budgetLine,
+      ...values,
       requesterName: 'Jane Doe',
       status: 'Pending Manager',
     });
     setIsDialogOpen(false);
-    // Reset form
-    setDescription('');
-    setQuantity('1');
-    setCost('');
-    setBudgetLine('');
+    form.reset();
   };
 
   return (
@@ -74,7 +92,10 @@ export default function RequisitionsPage() {
           <p className="text-muted-foreground">Manage and track internal purchase requests.</p>
         </div>
         
-        <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+        <Dialog open={isDialogOpen} onOpenChange={(open) => {
+          setIsDialogOpen(open);
+          if (!open) form.reset();
+        }}>
           <DialogTrigger asChild>
             <Button className="bg-primary hover:bg-primary/90">
               <Plus className="w-4 h-4 mr-2" />
@@ -85,54 +106,84 @@ export default function RequisitionsPage() {
             <DialogHeader>
               <DialogTitle>Submit New PR</DialogTitle>
             </DialogHeader>
-            <div className="grid grid-cols-2 gap-4 py-4">
-              <div className="space-y-2 col-span-2">
-                <Label htmlFor="desc">Item Description</Label>
-                <Input 
-                  id="desc" 
-                  placeholder="e.g. 10x Office Keyboards" 
-                  value={description}
-                  onChange={(e) => setDescription(e.target.value)}
-                />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="qty">Quantity</Label>
-                <Input 
-                  id="qty" 
-                  type="number" 
-                  placeholder="1" 
-                  value={quantity}
-                  onChange={(e) => setQuantity(e.target.value)}
-                />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="cost">Estimated Unit Cost (Ksh)</Label>
-                <Input 
-                  id="cost" 
-                  type="number" 
-                  placeholder="0.00" 
-                  value={cost}
-                  onChange={(e) => setCost(e.target.value)}
-                />
-              </div>
-              <div className="space-y-2 col-span-2">
-                <Label htmlFor="budget">Budget Line</Label>
-                <Select onValueChange={setBudgetLine} value={budgetLine}>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select budget line" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {budgetLines.map(bl => (
-                      <SelectItem key={bl.id} value={bl.name}>{bl.name}</SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-            </div>
-            <DialogFooter>
-              <Button variant="outline" onClick={() => setIsDialogOpen(false)}>Cancel</Button>
-              <Button onClick={handleSubmit}>Submit for Approval</Button>
-            </DialogFooter>
+            <Form {...form}>
+              <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4 py-4">
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="col-span-2">
+                    <FormField
+                      control={form.control}
+                      name="itemDescription"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Item Description</FormLabel>
+                          <FormControl>
+                            <Input placeholder="e.g. 10x Office Keyboards" {...field} />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                  </div>
+                  
+                  <FormField
+                    control={form.control}
+                    name="quantity"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Quantity</FormLabel>
+                        <FormControl>
+                          <Input type="number" {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+
+                  <FormField
+                    control={form.control}
+                    name="estimatedCost"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Estimated Unit Cost (Ksh)</FormLabel>
+                        <FormControl>
+                          <Input type="number" step="0.01" {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+
+                  <div className="col-span-2">
+                    <FormField
+                      control={form.control}
+                      name="budgetLine"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Budget Line</FormLabel>
+                          <Select onValueChange={field.onChange} defaultValue={field.value}>
+                            <FormControl>
+                              <SelectTrigger>
+                                <SelectValue placeholder="Select budget line" />
+                              </SelectTrigger>
+                            </FormControl>
+                            <SelectContent>
+                              {budgetLines.map(bl => (
+                                <SelectItem key={bl.id} value={bl.name}>{bl.name}</SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                  </div>
+                </div>
+                <DialogFooter className="pt-4">
+                  <Button type="button" variant="outline" onClick={() => setIsDialogOpen(false)}>Cancel</Button>
+                  <Button type="submit">Submit for Approval</Button>
+                </DialogFooter>
+              </form>
+            </Form>
           </DialogContent>
         </Dialog>
       </div>
@@ -165,23 +216,31 @@ export default function RequisitionsPage() {
             </TableRow>
           </TableHeader>
           <TableBody>
-            {filteredPrs.map((pr) => (
-              <TableRow key={pr.id} className="cursor-pointer hover:bg-muted/30">
-                <TableCell className="font-medium">{pr.refNumber}</TableCell>
-                <TableCell>{pr.itemDescription}</TableCell>
-                <TableCell>{pr.requesterName}</TableCell>
-                <TableCell className="text-xs text-muted-foreground">{pr.budgetLine}</TableCell>
-                <TableCell>
-                  <Badge variant={
-                    pr.status === 'Approved' ? 'secondary' : 
-                    pr.status === 'Rejected' ? 'destructive' : 'outline'
-                  }>
-                    {pr.status}
-                  </Badge>
+            {filteredPrs.length > 0 ? (
+              filteredPrs.map((pr) => (
+                <TableRow key={pr.id} className="cursor-pointer hover:bg-muted/30">
+                  <TableCell className="font-medium">{pr.refNumber}</TableCell>
+                  <TableCell>{pr.itemDescription}</TableCell>
+                  <TableCell>{pr.requesterName}</TableCell>
+                  <TableCell className="text-xs text-muted-foreground">{pr.budgetLine}</TableCell>
+                  <TableCell>
+                    <Badge variant={
+                      pr.status === 'Approved' ? 'secondary' : 
+                      pr.status === 'Rejected' ? 'destructive' : 'outline'
+                    }>
+                      {pr.status}
+                    </Badge>
+                  </TableCell>
+                  <TableCell className="text-right font-semibold">Ksh {(pr.estimatedCost * pr.quantity).toLocaleString()}</TableCell>
+                </TableRow>
+              ))
+            ) : (
+              <TableRow>
+                <TableCell colSpan={6} className="h-24 text-center text-muted-foreground">
+                  No requisitions found.
                 </TableCell>
-                <TableCell className="text-right font-semibold">Ksh {(pr.estimatedCost * pr.quantity).toLocaleString()}</TableCell>
               </TableRow>
-            ))}
+            )}
           </TableBody>
         </Table>
       </div>
