@@ -247,19 +247,20 @@ export default function DashboardPage() {
                 ))}
               </SelectContent>
             </Select>
-          </div>
-          
-          <RoleGuard allowedRoles={['Admin', 'Finance']}>
-            <div className="flex items-center gap-2">
+            <RoleGuard allowedRoles={['Admin']}>
               <Button 
                 variant="outline" 
                 size="icon" 
-                className="h-9 w-9 bg-card shadow-sm hover:bg-destructive hover:text-white transition-all text-destructive border-destructive/20"
+                className="h-9 w-9 bg-card shadow-sm hover:bg-destructive hover:text-white transition-all text-destructive border-destructive/20 shrink-0"
                 onClick={handleDeleteYear}
               >
                 <Trash2 className="w-4 h-4" />
               </Button>
-
+            </RoleGuard>
+          </div>
+          
+          <RoleGuard allowedRoles={['Admin', 'Finance']}>
+            <div className="flex items-center gap-2">
               <Sheet open={isWizardOpen} onOpenChange={(open) => {
                 setIsWizardOpen(open);
                 if (!open) {
@@ -339,7 +340,7 @@ export default function DashboardPage() {
                             <FormField control={form.control} name="globalTarget" render={({ field }) => (
                               <FormItem>
                                 <FormLabel className="text-[10px] uppercase font-bold text-muted-foreground">Global Allocation Target (Ksh)</FormLabel>
-                                <FormControl><Input type="number" {...field} className="h-12 text-lg font-black tracking-tight" /></FormControl>
+                                <FormControl><Input type="number" {...field} className="h-12 font-black tracking-tight" /></FormControl>
                                 <FormDescription className="text-[10px]">Total organizational spend cap for the year.</FormDescription>
                                 <FormMessage />
                               </FormItem>
@@ -562,7 +563,7 @@ export default function DashboardPage() {
                 <CardHeader className="py-4">
                   <CardTitle className="text-base md:text-lg font-headline">Budget Utilization vs Allocation</CardTitle>
                 </CardHeader>
-                <CardContent>
+                <CardTitle>
                   <div className="h-[250px] md:h-[320px]">
                     {budgetData.length > 0 ? (
                       <ResponsiveContainer width="100%" height="100%">
@@ -594,7 +595,7 @@ export default function DashboardPage() {
                       </div>
                     )}
                   </div>
-                </CardContent>
+                </CardTitle>
               </Card>
             </div>
 
