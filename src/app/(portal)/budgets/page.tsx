@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useState, useEffect } from 'react';
@@ -215,7 +216,7 @@ export default function BudgetsPage() {
             if (!open) setEditingBudget(null);
           }}>
             <DialogTrigger asChild>
-              <Button className="bg-primary w-full md:w-auto">
+              <Button className="bg-primary w-full md:w-auto font-bold uppercase text-xs">
                 <Plus className="w-4 h-4 mr-2" />
                 Plan Budget
               </Button>
@@ -285,7 +286,7 @@ export default function BudgetsPage() {
              </CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="flex flex-col sm:flex-row items-center gap-8 md:gap-10">
+            <div className="flex flex-col sm:flex-row items-center gap-6 sm:gap-10">
               <div className={cn(
                 "relative shrink-0",
                 isDetailed ? "w-32 h-32 md:w-36 md:h-36" : "w-36 h-36 md:w-40 md:h-40"
@@ -306,10 +307,10 @@ export default function BudgetsPage() {
                   <span className="text-[8px] uppercase font-bold text-muted-foreground">Total Use</span>
                 </div>
               </div>
-              <div className="flex-1 space-y-4 min-w-0 w-full">
+              <div className="flex-1 space-y-4 min-w-0 w-full mt-2 sm:mt-0">
                 <div className="text-center sm:text-left space-y-1">
                   <p className={cn(
-                    "font-black text-primary tracking-tighter truncate leading-none",
+                    "font-black text-primary tracking-tighter truncate leading-tight",
                     isDetailed ? "text-2xl md:text-3xl" : "text-3xl md:text-4xl"
                   )}>
                     Ksh {totalAllocation.toLocaleString()}
