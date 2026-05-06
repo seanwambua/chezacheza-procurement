@@ -1,21 +1,29 @@
 
 "use client";
 
-import { useState } from 'react';
-import { MOCK_VENDORS } from '@/lib/mock-data';
+import { useState, useEffect } from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { Star, Phone, Mail, ArrowRight, UserPlus, Search } from 'lucide-react';
+import { Star, Phone, Mail, UserPlus, Search, Users } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { PerformanceSummary } from '@/components/vendors/PerformanceSummary';
 import { Vendor } from '@/lib/types';
+import { useStore } from '@/lib/store';
 
 export default function VendorsPage() {
+  const { vendors } = useStore();
   const [selectedVendor, setSelectedVendor] = useState<Vendor | null>(null);
   const [search, setSearch] = useState('');
+  const [mounted, setMounted] = useState(false);
 
-  const filteredVendors = MOCK_VENDORS.filter(v => 
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  if (!mounted) return null;
+
+  const filteredVendors = vendors.filter(v => 
     v.name.toLowerCase().includes(search.toLowerCase()) ||
     v.category.toLowerCase().includes(search.toLowerCase())
   );
@@ -129,5 +137,3 @@ export default function VendorsPage() {
     </div>
   );
 }
-
-import { Users } from 'lucide-react';

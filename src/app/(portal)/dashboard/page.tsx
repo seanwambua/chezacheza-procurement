@@ -1,6 +1,7 @@
 
 "use client";
 
+import { useEffect, useState } from 'react';
 import { StatCard } from '@/components/dashboard/StatCard';
 import { 
   ShoppingCart, 
@@ -8,7 +9,6 @@ import {
   Clock, 
   AlertCircle,
   TrendingUp,
-  Package
 } from 'lucide-react';
 import { 
   BarChart, 
@@ -24,21 +24,33 @@ import {
 } from 'recharts';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-
-const budgetData = [
-  { name: 'IT Infrastructure', spent: 65000, budget: 150000 },
-  { name: 'Office Equip', spent: 17000, budget: 50000 },
-  { name: 'Marketing', spent: 10500, budget: 30000 },
-  { name: 'Stationery', spent: 4500, budget: 10000 },
-];
-
-const vendorPerformance = [
-  { name: 'Top Performing', value: 12, color: 'hsl(var(--accent))' },
-  { name: 'Average', value: 45, color: 'hsl(var(--primary))' },
-  { name: 'Needs Review', value: 8, color: 'hsl(var(--chart-3))' },
-];
+import { useStore } from '@/lib/store';
 
 export default function DashboardPage() {
+  const { prs, budgetLines, vendors } = useStore();
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  if (!mounted) return null;
+
+  const budgetData = budgetLines.map(bl => ({
+    name: bl.name,
+    spent: bl.spent,
+    budget: bl.allocation
+  }));
+
+  const vendorPerformance = [
+    { name: 'Top Performing', value: vendors.filter(v => v.rating >= 4.5).length, color: 'hsl(var(--accent))' },
+    { name: 'Average', value: vendors.filter(v => v.rating >= 3 && v.rating < 4.5).length, color: 'hsl(var(--primary))' },
+    { name: 'Needs Review', value: vendors.filter(v => v.rating < 3).length, color: 'hsl(var(--chart-3))' },
+  ];
+
+  const pendingApprovals = prs.filter(pr => pr.status.startsWith('Pending')).length;
+  const recentPrs = prs.slice(0, 3);
+
   return (
     <div className="space-y-8 animate-in fade-in duration-500">
       <div>
@@ -49,7 +61,7 @@ export default function DashboardPage() {
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
         <StatCard 
           title="Pending Approvals" 
-          value={8} 
+          value={pendingApprovals} 
           description="Requires your attention" 
           icon={Clock} 
         />
@@ -61,7 +73,7 @@ export default function DashboardPage() {
         />
         <StatCard 
           title="Total Spend (MTD)" 
-          value="$42,500" 
+          value="Ksh 4,250,000" 
           trend={{ value: 12, isUp: true }}
           icon={TrendingUp} 
         />
@@ -76,7 +88,7 @@ export default function DashboardPage() {
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         <Card className="lg:col-span-2 shadow-none border border-border">
           <CardHeader>
-            <CardTitle className="text-lg font-headline">Budget Utilization vs Allocation</CardTitle>
+            <CardTitle className="text-lg font-headline">Budget Utilization vs Allocation (Ksh)</CardTitle>
           </CardHeader>
           <CardContent>
             <div className="h-[300px]">
@@ -95,6 +107,7 @@ export default function DashboardPage() {
                   <Tooltip 
                     cursor={{ fill: 'transparent' }}
                     contentStyle={{ borderRadius: '8px', border: '1px solid #ddd' }}
+                    formatter={(value: any) => [`Ksh ${value.toLocaleString()}`, '']}
                   />
                   <Bar dataKey="spent" fill="hsl(var(--accent))" radius={[0, 4, 4, 0]} barSize={20} />
                   <Bar dataKey="budget" fill="hsl(var(--muted))" radius={[0, 4, 4, 0]} barSize={10} />
@@ -150,23 +163,19 @@ export default function DashboardPage() {
           </CardHeader>
           <CardContent>
             <div className="space-y-4">
-              {[
-                { ref: 'REQ/24/012', desc: '5x MacBook Pro M3', dept: 'IT', status: 'Approved', amount: '$12,500' },
-                { ref: 'REQ/24/013', desc: 'Ergonomic Desks', dept: 'Facilities', status: 'Pending Manager', amount: '$4,200' },
-                { ref: 'REQ/24/014', desc: 'Marketing Swag', dept: 'Marketing', status: 'Approved', amount: '$1,800' },
-              ].map((req) => (
-                <div key={req.ref} className="flex items-center justify-between p-3 rounded-lg hover:bg-muted/50 transition-colors">
+              {recentPrs.map((req) => (
+                <div key={req.id} className="flex items-center justify-between p-3 rounded-lg hover:bg-muted/50 transition-colors">
                   <div className="flex items-center gap-4">
                     <div className="p-2 bg-muted rounded-full">
                       <FileCheck className="w-4 h-4 text-primary" />
                     </div>
                     <div>
-                      <p className="font-semibold text-sm">{req.desc}</p>
-                      <p className="text-xs text-muted-foreground">{req.ref} • {req.dept}</p>
+                      <p className="font-semibold text-sm">{req.itemDescription}</p>
+                      <p className="text-xs text-muted-foreground">{req.refNumber} • {req.budgetLine}</p>
                     </div>
                   </div>
                   <div className="text-right">
-                    <p className="text-sm font-bold">{req.amount}</p>
+                    <p className="text-sm font-bold">Ksh {(req.estimatedCost * req.quantity).toLocaleString()}</p>
                     <Badge variant={req.status === 'Approved' ? 'secondary' : 'outline'} className="text-[10px]">
                       {req.status}
                     </Badge>

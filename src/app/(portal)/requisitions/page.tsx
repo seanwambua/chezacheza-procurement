@@ -1,8 +1,7 @@
 
 "use client";
 
-import { useState } from 'react';
-import { MOCK_PRS, MOCK_BUDGET_LINES } from '@/lib/mock-data';
+import { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { 
   Table, 
@@ -25,15 +24,47 @@ import {
 } from "@/components/ui/dialog";
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { useStore } from '@/lib/store';
 
 export default function RequisitionsPage() {
-  const [prs, setPrs] = useState(MOCK_PRS);
+  const { prs, budgetLines, addPR } = useStore();
   const [search, setSearch] = useState('');
+  const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [mounted, setMounted] = useState(false);
+
+  // Form State
+  const [description, setDescription] = useState('');
+  const [quantity, setQuantity] = useState('1');
+  const [cost, setCost] = useState('');
+  const [budgetLine, setBudgetLine] = useState('');
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  if (!mounted) return null;
 
   const filteredPrs = prs.filter(pr => 
     pr.itemDescription.toLowerCase().includes(search.toLowerCase()) || 
     pr.refNumber.toLowerCase().includes(search.toLowerCase())
   );
+
+  const handleSubmit = () => {
+    addPR({
+      itemDescription: description,
+      quantity: parseInt(quantity),
+      estimatedCost: parseFloat(cost),
+      budgetLine: budgetLine,
+      requesterName: 'Jane Doe',
+      status: 'Pending Manager',
+    });
+    setIsDialogOpen(false);
+    // Reset form
+    setDescription('');
+    setQuantity('1');
+    setCost('');
+    setBudgetLine('');
+  };
 
   return (
     <div className="space-y-6 animate-in fade-in duration-500">
@@ -43,7 +74,7 @@ export default function RequisitionsPage() {
           <p className="text-muted-foreground">Manage and track internal purchase requests.</p>
         </div>
         
-        <Dialog>
+        <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
           <DialogTrigger asChild>
             <Button className="bg-primary hover:bg-primary/90">
               <Plus className="w-4 h-4 mr-2" />
@@ -57,24 +88,41 @@ export default function RequisitionsPage() {
             <div className="grid grid-cols-2 gap-4 py-4">
               <div className="space-y-2 col-span-2">
                 <Label htmlFor="desc">Item Description</Label>
-                <Input id="desc" placeholder="e.g. 10x Office Keyboards" />
+                <Input 
+                  id="desc" 
+                  placeholder="e.g. 10x Office Keyboards" 
+                  value={description}
+                  onChange={(e) => setDescription(e.target.value)}
+                />
               </div>
               <div className="space-y-2">
                 <Label htmlFor="qty">Quantity</Label>
-                <Input id="qty" type="number" placeholder="1" />
+                <Input 
+                  id="qty" 
+                  type="number" 
+                  placeholder="1" 
+                  value={quantity}
+                  onChange={(e) => setQuantity(e.target.value)}
+                />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="cost">Estimated Unit Cost ($)</Label>
-                <Input id="cost" type="number" placeholder="0.00" />
+                <Label htmlFor="cost">Estimated Unit Cost (Ksh)</Label>
+                <Input 
+                  id="cost" 
+                  type="number" 
+                  placeholder="0.00" 
+                  value={cost}
+                  onChange={(e) => setCost(e.target.value)}
+                />
               </div>
               <div className="space-y-2 col-span-2">
                 <Label htmlFor="budget">Budget Line</Label>
-                <Select>
+                <Select onValueChange={setBudgetLine} value={budgetLine}>
                   <SelectTrigger>
                     <SelectValue placeholder="Select budget line" />
                   </SelectTrigger>
                   <SelectContent>
-                    {MOCK_BUDGET_LINES.map(bl => (
+                    {budgetLines.map(bl => (
                       <SelectItem key={bl.id} value={bl.name}>{bl.name}</SelectItem>
                     ))}
                   </SelectContent>
@@ -82,8 +130,8 @@ export default function RequisitionsPage() {
               </div>
             </div>
             <DialogFooter>
-              <Button variant="outline">Cancel</Button>
-              <Button>Submit for Approval</Button>
+              <Button variant="outline" onClick={() => setIsDialogOpen(false)}>Cancel</Button>
+              <Button onClick={handleSubmit}>Submit for Approval</Button>
             </DialogFooter>
           </DialogContent>
         </Dialog>
@@ -131,7 +179,7 @@ export default function RequisitionsPage() {
                     {pr.status}
                   </Badge>
                 </TableCell>
-                <TableCell className="text-right font-semibold">${(pr.estimatedCost * pr.quantity).toLocaleString()}</TableCell>
+                <TableCell className="text-right font-semibold">Ksh {(pr.estimatedCost * pr.quantity).toLocaleString()}</TableCell>
               </TableRow>
             ))}
           </TableBody>

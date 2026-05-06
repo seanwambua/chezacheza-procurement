@@ -1,6 +1,7 @@
 
 import { Card, CardContent } from "@/components/ui/card";
 import { LucideIcon } from "lucide-react";
+import { cn } from "@/lib/utils";
 
 interface StatCardProps {
   title: string;
@@ -28,7 +29,7 @@ export function StatCard({ title, value, description, icon: Icon, trend }: StatC
               "text-xs font-medium",
               trend.isUp ? "text-green-600" : "text-red-600"
             )}>
-              {trend.isUp ? '+' : '-'}{trend.value}%
+              {trend.isUp ? '↑' : '↓'} {trend.value}%
             </span>
           )}
         </div>
@@ -37,5 +38,3 @@ export function StatCard({ title, value, description, icon: Icon, trend }: StatC
     </Card>
   );
 }
-
-import { cn } from "@/lib/utils";
