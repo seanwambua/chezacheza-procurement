@@ -10,6 +10,7 @@ import {
   AlertCircle,
   TrendingUp,
   Users,
+  CalendarDays,
 } from 'lucide-react';
 import { 
   BarChart, 
@@ -26,10 +27,18 @@ import {
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { useStore } from '@/lib/store';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 
 export default function DashboardPage() {
   const { prs, budgets, vendors, lpos, grns } = useStore();
   const [mounted, setMounted] = useState(false);
+  const [selectedYear, setSelectedYear] = useState('2024');
 
   useEffect(() => {
     setMounted(true);
@@ -37,14 +46,17 @@ export default function DashboardPage() {
 
   if (!mounted) return null;
 
-  // Dynamic calculations
-  const totalSpendVal = budgets.reduce((acc, bl) => acc + bl.spent, 0);
+  // Filter budgets based on selected year
+  const filteredBudgets = budgets.filter(b => b.fiscalYear === selectedYear);
+
+  // Dynamic calculations based on filtered budgets
+  const totalSpendVal = filteredBudgets.reduce((acc, bl) => acc + bl.spent, 0);
   const pendingApprovals = prs.filter(pr => pr.status.includes('Pending')).length;
   const activeLposCount = lpos.filter(lpo => lpo.status !== 'Closed').length;
   const awaitingDelivery = lpos.filter(lpo => lpo.status === 'Dispatched').length;
   const activeDisputes = grns.filter(grn => grn.disputeFlag).length;
 
-  const budgetData = budgets.map(bl => ({
+  const budgetData = filteredBudgets.map(bl => ({
     name: bl.name,
     spent: bl.spent,
     budget: [bl.q1Allocation, bl.q2Allocation, bl.q3Allocation, bl.q4Allocation].reduce((a, b) => a + b, 0)
@@ -60,13 +72,23 @@ export default function DashboardPage() {
 
   return (
     <div className="space-y-8 animate-in fade-in duration-500">
-      <div className="flex items-end justify-between">
+      <div className="flex flex-col md:flex-row md:items-end justify-between gap-4">
         <div>
           <h2 className="text-3xl font-headline font-bold text-primary">Portal Overview</h2>
           <p className="text-muted-foreground">Strategic procurement metrics and fiscal health.</p>
         </div>
-        <div className="hidden md:block">
-          <Badge variant="outline" className="text-[10px] uppercase py-1">Fiscal Year 2024</Badge>
+        <div className="flex items-center gap-2">
+          <CalendarDays className="w-4 h-4 text-muted-foreground" />
+          <Select value={selectedYear} onValueChange={setSelectedYear}>
+            <SelectTrigger className="w-[180px] h-9 text-xs font-bold uppercase tracking-wider">
+              <SelectValue placeholder="Fiscal Year" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="2023">Fiscal Year 2023</SelectItem>
+              <SelectItem value="2024">Fiscal Year 2024</SelectItem>
+              <SelectItem value="2025">Fiscal Year 2025</SelectItem>
+            </SelectContent>
+          </Select>
         </div>
       </div>
 
@@ -75,7 +97,7 @@ export default function DashboardPage() {
         {/* Main Stat Card - Prominent */}
         <div className="lg:col-span-2 lg:row-span-1">
           <StatCard 
-            title="Total Spend (Actual)" 
+            title={`Total Spend (Actual - ${selectedYear})`} 
             value={`Ksh ${totalSpendVal.toLocaleString()}`} 
             trend={{ value: 12, isUp: true }}
             icon={TrendingUp} 
@@ -108,31 +130,38 @@ export default function DashboardPage() {
         <div className="lg:col-span-2 lg:row-span-2">
           <Card className="h-full shadow-none border border-border">
             <CardHeader>
-              <CardTitle className="text-lg font-headline">Budget Utilization vs Allocation</CardTitle>
+              <CardTitle className="text-lg font-headline">Budget Utilization vs Allocation ({selectedYear})</CardTitle>
             </CardHeader>
             <CardContent>
               <div className="h-[320px]">
-                <ResponsiveContainer width="100%" height="100%">
-                  <BarChart data={budgetData} layout="vertical">
-                    <CartesianGrid strokeDasharray="3 3" horizontal={true} vertical={false} />
-                    <XAxis type="number" hide />
-                    <YAxis 
-                      dataKey="name" 
-                      type="category" 
-                      width={100} 
-                      axisLine={false}
-                      tickLine={false}
-                      fontSize={11}
-                    />
-                    <Tooltip 
-                      cursor={{ fill: 'transparent' }}
-                      contentStyle={{ borderRadius: '8px', border: '1px solid #border' }}
-                      formatter={(value: any) => [`Ksh ${value.toLocaleString()}`, '']}
-                    />
-                    <Bar dataKey="spent" fill="hsl(var(--accent))" radius={[0, 4, 4, 0]} barSize={24} />
-                    <Bar dataKey="budget" fill="hsl(var(--muted))" radius={[0, 4, 4, 0]} barSize={8} />
-                  </BarChart>
-                </ResponsiveContainer>
+                {budgetData.length > 0 ? (
+                  <ResponsiveContainer width="100%" height="100%">
+                    <BarChart data={budgetData} layout="vertical">
+                      <CartesianGrid strokeDasharray="3 3" horizontal={true} vertical={false} />
+                      <XAxis type="number" hide />
+                      <YAxis 
+                        dataKey="name" 
+                        type="category" 
+                        width={100} 
+                        axisLine={false}
+                        tickLine={false}
+                        fontSize={11}
+                      />
+                      <Tooltip 
+                        cursor={{ fill: 'transparent' }}
+                        contentStyle={{ borderRadius: '8px', border: '1px solid #border', backgroundColor: 'hsl(var(--card))', color: 'hsl(var(--foreground))' }}
+                        formatter={(value: any) => [`Ksh ${value.toLocaleString()}`, '']}
+                      />
+                      <Bar dataKey="spent" fill="hsl(var(--accent))" radius={[0, 4, 4, 0]} barSize={24} />
+                      <Bar dataKey="budget" fill="hsl(var(--muted))" radius={[0, 4, 4, 0]} barSize={8} />
+                    </BarChart>
+                  </ResponsiveContainer>
+                ) : (
+                  <div className="flex flex-col items-center justify-center h-full text-muted-foreground space-y-2">
+                    <AlertCircle className="w-8 h-8 opacity-20" />
+                    <p className="text-sm">No budget data for {selectedYear}</p>
+                  </div>
+                )}
               </div>
             </CardContent>
           </Card>
