@@ -138,7 +138,7 @@ export default function UsersPage() {
             "font-headline font-bold text-primary tracking-tighter leading-tight truncate",
             isDetailed ? "text-2xl md:text-3xl" : "text-3xl md:text-4xl"
           )}>
-            System Users
+            Users
           </h2>
           <p className="text-muted-foreground text-sm font-medium">Manage user accounts, roles, and access permissions.</p>
         </div>
