@@ -30,7 +30,11 @@ import {
   CalendarDays,
   PauseCircle,
   PlayCircle,
-  ArrowRight
+  ArrowRight,
+  FileText,
+  ShoppingCart,
+  CheckCircle2,
+  Clock
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import {
@@ -71,9 +75,15 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
 import { RoleGuard } from '@/components/auth/RoleGuard';
 import { Budget, getBudgetStats } from '@/lib/types';
 import { Badge } from '@/components/ui/badge';
+import { Separator } from '@/components/ui/separator';
 
 const budgetSchema = z.object({
   name: z.string().min(2, "Name must be at least 2 characters"),
@@ -89,7 +99,7 @@ const budgetSchema = z.object({
 type BudgetFormValues = z.infer<typeof budgetSchema>;
 
 export default function BudgetsPage() {
-  const { budgets, addBudget, updateBudget, deleteBudget } = useStore();
+  const { budgets, prs, lpos, addBudget, updateBudget, deleteBudget } = useStore();
   const { currentUser } = useUserStore();
   const [mounted, setMounted] = useState(false);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
@@ -174,6 +184,20 @@ export default function BudgetsPage() {
     if (confirm('Are you sure you want to delete this budget? All historical data will be removed.')) {
       deleteBudget(id);
     }
+  };
+
+  const getBudgetDetails = (budgetName: string) => {
+    const relatedPrs = prs.filter(pr => pr.budgetLine === budgetName);
+    const relatedPrIds = relatedPrs.map(pr => pr.id);
+    const relatedLpos = lpos.filter(lpo => relatedPrIds.includes(lpo.prId));
+
+    return {
+      prsRequested: relatedPrs.length,
+      prsApproved: relatedPrs.filter(pr => pr.status === 'Approved' || pr.status === 'LPO Generated').length,
+      prsFulfilled: relatedPrs.filter(pr => pr.status === 'LPO Generated').length,
+      lposPending: relatedLpos.filter(lpo => lpo.status === 'Dispatched' || lpo.status === 'Draft').length,
+      lposDelivered: relatedLpos.filter(lpo => ['Fulfilled', 'Matched', 'Closed'].includes(lpo.status)).length,
+    };
   };
 
   return (
@@ -323,25 +347,69 @@ export default function BudgetsPage() {
             <TableBody>
               {budgets.map((b) => {
                 const stats = getBudgetStats(b);
+                const details = getBudgetDetails(b.name);
                 return (
                   <TableRow key={b.id} className="group hover:bg-muted/10">
                     <TableCell>
                       <div className="flex flex-col">
-                        <span className="font-bold text-primary flex items-center gap-2">
-                          {b.name}
-                          {stats.isPaused ? (
-                             <TooltipProvider>
-                               <Tooltip>
-                                 <TooltipTrigger><PauseCircle className="w-3.5 h-3.5 text-destructive" /></TooltipTrigger>
-                                 <TooltipContent className="bg-destructive text-white border-none">
-                                   <p className="text-xs">Procurements Paused: Allocation exhausted for Q{stats.currentQ}.</p>
-                                 </TooltipContent>
-                               </Tooltip>
-                             </TooltipProvider>
-                          ) : (
-                             <PlayCircle className="w-3.5 h-3.5 text-green-500" />
-                          )}
-                        </span>
+                        <Popover>
+                          <PopoverTrigger asChild>
+                            <span className="font-bold text-primary flex items-center gap-2 cursor-pointer hover:underline">
+                              {b.name}
+                              <Info className="w-3.5 h-3.5 text-muted-foreground opacity-50 group-hover:opacity-100" />
+                              {stats.isPaused ? (
+                                <PauseCircle className="w-3.5 h-3.5 text-destructive" />
+                              ) : (
+                                <PlayCircle className="w-3.5 h-3.5 text-green-500" />
+                              )}
+                            </span>
+                          </PopoverTrigger>
+                          <PopoverContent className="w-80 shadow-2xl border-primary/20 p-0">
+                            <div className="bg-primary p-4 text-primary-foreground">
+                              <h4 className="font-bold text-sm uppercase tracking-tight">{b.name} Metrics</h4>
+                              <p className="text-[10px] opacity-70 mt-1 line-clamp-2">{b.description}</p>
+                            </div>
+                            <div className="p-4 space-y-4">
+                              <div className="grid grid-cols-2 gap-4">
+                                <div className="space-y-1">
+                                  <p className="text-[9px] uppercase font-bold text-muted-foreground">Requisitions</p>
+                                  <div className="flex items-center gap-2 text-xs font-semibold">
+                                    <FileText className="w-3 h-3 text-accent" />
+                                    <span>{details.prsRequested} Requested</span>
+                                  </div>
+                                  <div className="flex items-center gap-2 text-[10px] text-muted-foreground pl-5">
+                                    <CheckCircle2 className="w-2.5 h-2.5 text-green-500" />
+                                    <span>{details.prsApproved} Approved</span>
+                                  </div>
+                                </div>
+                                <div className="space-y-1">
+                                  <p className="text-[9px] uppercase font-bold text-muted-foreground">LPO Status</p>
+                                  <div className="flex items-center gap-2 text-xs font-semibold">
+                                    <ShoppingCart className="w-3 h-3 text-accent" />
+                                    <span>{details.lposPending + details.lposDelivered} Total</span>
+                                  </div>
+                                  <div className="flex items-center gap-2 text-[10px] text-muted-foreground pl-5">
+                                    <Clock className="w-2.5 h-2.5 text-orange-400" />
+                                    <span>{details.lposPending} Pending</span>
+                                  </div>
+                                </div>
+                              </div>
+                              <Separator />
+                              <div className="space-y-2">
+                                <div className="flex justify-between items-center text-[10px] font-bold">
+                                  <span className="uppercase text-muted-foreground">Fulfillment Rate</span>
+                                  <span>{details.prsRequested > 0 ? Math.round((details.prsFulfilled / details.prsRequested) * 100) : 0}%</span>
+                                </div>
+                                <div className="h-1.5 w-full bg-muted rounded-full overflow-hidden">
+                                  <div 
+                                    className="h-full bg-accent transition-all duration-500"
+                                    style={{ width: `${details.prsRequested > 0 ? (details.prsFulfilled / details.prsRequested) * 100 : 0}%` }}
+                                  />
+                                </div>
+                              </div>
+                            </div>
+                          </PopoverContent>
+                        </Popover>
                         <span className="text-[10px] text-muted-foreground uppercase">{b.department}</span>
                       </div>
                     </TableCell>
