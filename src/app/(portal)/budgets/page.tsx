@@ -146,7 +146,7 @@ export default function BudgetsPage() {
 
   if (currentUser && !['Admin', 'Finance', 'Manager'].includes(currentUser.role)) {
     return (
-      <div className="flex flex-col items-center justify-center h-[60vh] text-center space-y-4">
+      <div className="flex flex-col items-center justify-center h-[60vh] text-center space-y-4 px-4">
         <div className="w-16 h-16 bg-muted rounded-full flex items-center justify-center">
           <Lock className="w-8 h-8 text-muted-foreground" />
         </div>
@@ -194,11 +194,11 @@ export default function BudgetsPage() {
   };
 
   return (
-    <div className="space-y-8 animate-in fade-in duration-500">
+    <div className="space-y-8 animate-in fade-in duration-500 pb-10">
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
-          <h2 className="text-3xl font-headline font-bold text-primary">Budget & Quarterly Planning</h2>
-          <p className="text-muted-foreground">Rolling quarterly allocations with automatic procurement pausing.</p>
+          <h2 className="text-2xl md:text-3xl font-headline font-bold text-primary">Budget & Quarterly Planning</h2>
+          <p className="text-sm text-muted-foreground">Rolling quarterly allocations with automatic procurement pausing.</p>
         </div>
         
         <RoleGuard allowedRoles={['Admin', 'Finance']}>
@@ -207,12 +207,12 @@ export default function BudgetsPage() {
             if (!open) setEditingBudget(null);
           }}>
             <DialogTrigger asChild>
-              <Button className="bg-primary">
+              <Button className="bg-primary w-full md:w-auto">
                 <Plus className="w-4 h-4 mr-2" />
                 Plan Budget
               </Button>
             </DialogTrigger>
-            <DialogContent className="max-w-3xl">
+            <DialogContent className="max-w-3xl w-[95vw]">
               <DialogHeader>
                 <DialogTitle>{editingBudget ? 'Update Budget Plan' : 'Establish New Budget Plan'}</DialogTitle>
                 <DialogDescription>
@@ -258,7 +258,7 @@ export default function BudgetsPage() {
                     <FormItem><FormLabel>Purpose</FormLabel><FormControl><Textarea {...field} /></FormControl><FormMessage /></FormItem>
                   )} />
 
-                  <DialogFooter>
+                  <DialogFooter className="gap-2 sm:gap-0">
                     <Button type="button" variant="outline" onClick={() => setIsDialogOpen(false)}>Cancel</Button>
                     <Button type="submit">Authorize Budget</Button>
                   </DialogFooter>
@@ -271,15 +271,15 @@ export default function BudgetsPage() {
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
         <Card className="md:col-span-2 border-primary/10 bg-gradient-to-br from-primary/5 to-transparent relative overflow-hidden group">
-          <div className="absolute top-0 right-0 p-8 opacity-5 group-hover:opacity-10 transition-opacity">
+          <div className="absolute top-0 right-0 p-8 opacity-5 group-hover:opacity-10 transition-opacity hidden md:block">
             <CalendarDays className="w-32 h-32" />
           </div>
           <CardHeader>
              <CardTitle className="text-xs font-bold text-muted-foreground uppercase tracking-widest">Global Fiscal Status</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="flex flex-col md:flex-row items-center gap-10">
-              <div className="relative w-36 h-36">
+            <div className="flex flex-col sm:flex-row items-center gap-10">
+              <div className="relative w-36 h-36 shrink-0">
                 <svg className="w-full h-full transform -rotate-90" viewBox="0 0 100 100">
                   <circle className="text-muted/20 stroke-current" strokeWidth="8" fill="transparent" r="40" cx="50" cy="50" />
                   <circle
@@ -296,17 +296,17 @@ export default function BudgetsPage() {
                   <span className="text-[8px] uppercase font-bold text-muted-foreground">Total Use</span>
                 </div>
               </div>
-              <div className="flex-1 space-y-4">
-                <div>
-                  <p className="text-3xl font-black text-primary tracking-tighter">Ksh {totalAllocation.toLocaleString()}</p>
-                  <p className="text-xs text-muted-foreground font-medium uppercase tracking-tight">Consolidated Annual Pool</p>
+              <div className="flex-1 space-y-4 w-full">
+                <div className="text-center sm:text-left">
+                  <p className="text-2xl md:text-3xl font-black text-primary tracking-tighter">Ksh {totalAllocation.toLocaleString()}</p>
+                  <p className="text-[10px] text-muted-foreground font-medium uppercase tracking-tight">Consolidated Annual Pool</p>
                 </div>
                 <div className="grid grid-cols-2 gap-4 pt-4 border-t border-border/50">
-                   <div>
+                   <div className="text-center sm:text-left">
                       <p className="text-sm font-bold text-destructive">{pausedBudgetsCount}</p>
                       <p className="text-[9px] uppercase font-bold text-muted-foreground">Paused Budgets</p>
                    </div>
-                   <div>
+                   <div className="text-center sm:text-left">
                       <p className="text-sm font-bold text-accent">Q{Math.floor(new Date().getMonth() / 3) + 1}</p>
                       <p className="text-[9px] uppercase font-bold text-muted-foreground">Active Quarter</p>
                    </div>
@@ -315,7 +315,7 @@ export default function BudgetsPage() {
             </div>
           </CardContent>
         </Card>
-        <div className="space-y-6">
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-1 gap-6">
           <StatCard 
             title="Total Utilized" 
             value={`Ksh ${totalUsed.toLocaleString()}`} 
@@ -332,19 +332,19 @@ export default function BudgetsPage() {
       </div>
 
       <Card className="border-none shadow-none bg-white overflow-hidden">
-        <CardHeader className="border-b border-border/50 py-4">
+        <CardHeader className="border-b border-border/50 py-4 px-4 md:px-6">
           <CardTitle className="text-lg">Budget Analysis & Quarterly Health</CardTitle>
         </CardHeader>
         <CardContent className="p-0">
-          <div className="overflow-x-auto">
+          <div className="overflow-x-auto w-full">
             <Table>
               <TableHeader>
                 <TableRow className="bg-muted/30">
-                  <TableHead>Budget</TableHead>
-                  <TableHead>Current Q Health</TableHead>
-                  <TableHead className="text-right">Q Allocation</TableHead>
-                  <TableHead className="text-right">Available in Q</TableHead>
-                  <TableHead className="text-right">Total Annual Pool</TableHead>
+                  <TableHead className="min-w-[180px]">Budget</TableHead>
+                  <TableHead className="min-w-[140px]">Current Q Health</TableHead>
+                  <TableHead className="text-right min-w-[120px]">Q Allocation</TableHead>
+                  <TableHead className="text-right min-w-[140px]">Available in Q</TableHead>
+                  <TableHead className="text-right min-w-[140px]">Annual Pool</TableHead>
                   <TableHead className="w-[50px]"></TableHead>
                 </TableRow>
               </TableHeader>
@@ -359,7 +359,7 @@ export default function BudgetsPage() {
                           <Tooltip delayDuration={0}>
                             <TooltipTrigger asChild>
                               <div className="flex flex-col cursor-help">
-                                <span className="font-bold text-primary flex items-center gap-2">
+                                <span className="font-bold text-primary flex items-center gap-2 whitespace-nowrap">
                                   {b.name}
                                   <Info className="w-3.5 h-3.5 text-muted-foreground opacity-50 group-hover:opacity-100" />
                                   {stats.isPaused ? (
@@ -371,7 +371,7 @@ export default function BudgetsPage() {
                                 <span className="text-[10px] text-muted-foreground uppercase">{b.department}</span>
                               </div>
                             </TooltipTrigger>
-                            <TooltipContent side="right" className="w-80 p-0 overflow-hidden border-primary/20 shadow-2xl bg-white text-foreground">
+                            <TooltipContent side="right" className="w-80 p-0 overflow-hidden border-primary/20 shadow-2xl bg-white text-foreground hidden sm:block">
                               <div className="bg-primary p-4 text-primary-foreground">
                                 <h4 className="font-bold text-sm uppercase tracking-tight">{b.name} Metrics</h4>
                                 <p className="text-[10px] opacity-70 mt-1 line-clamp-2">{b.description}</p>
@@ -442,7 +442,7 @@ export default function BudgetsPage() {
                           </span>
                           {stats.isPaused && (
                              <span className="text-[9px] text-muted-foreground uppercase flex items-center gap-1 whitespace-nowrap">
-                               Forwarding to Q{stats.currentQ + 1} <ArrowRight className="w-2 h-2" />
+                               To Q{stats.currentQ + 1} <ArrowRight className="w-2 h-2" />
                              </span>
                           )}
                         </div>
