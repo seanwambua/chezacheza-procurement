@@ -25,7 +25,6 @@ import {
   Trash2, 
   MoreVertical, 
   Info,
-  CalendarDays,
   PauseCircle,
   PlayCircle,
   ArrowRight,
@@ -279,9 +278,6 @@ export default function BudgetsPage() {
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
         <Card className="md:col-span-2 border-primary/10 bg-gradient-to-br from-primary/5 to-transparent relative overflow-hidden group">
-          <div className="absolute top-0 right-0 p-8 opacity-5 group-hover:opacity-10 transition-opacity hidden md:block">
-            <CalendarDays className="w-32 h-32" />
-          </div>
           <CardHeader>
              <CardTitle className="text-xs font-bold text-muted-foreground uppercase tracking-widest">
                {isDetailed ? 'Global Fiscal Status' : 'Overall Spend'}
