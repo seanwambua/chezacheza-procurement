@@ -92,7 +92,7 @@ export function SidebarNav({ forceExpanded = false }: { forceExpanded?: boolean 
   if (!mounted) {
     return (
       <div className="flex flex-col h-full bg-sidebar border-r border-sidebar-border animate-pulse">
-        <div className="p-6">
+        <div className="p-4">
           <div className="h-8 w-32 bg-muted rounded" />
         </div>
       </div>
@@ -125,15 +125,15 @@ export function SidebarNav({ forceExpanded = false }: { forceExpanded?: boolean 
       )}>
         {/* Header - Fixed */}
         <div className={cn(
-          "p-6 flex items-center justify-between w-full shrink-0",
-          collapsed && "flex-col gap-4 p-4"
+          "p-4 flex items-center justify-between w-full shrink-0",
+          collapsed && "flex-col gap-2 p-2"
         )}>
           {!collapsed ? (
             <div>
               <h1 className="text-xl font-headline font-bold text-primary tracking-tighter">
                 CPP <span className="text-accent">Portal</span>
               </h1>
-              <p className="text-[10px] text-muted-foreground uppercase tracking-widest mt-1">Chezacheza</p>
+              <p className="text-[10px] text-muted-foreground uppercase tracking-widest mt-0.5">Chezacheza</p>
             </div>
           ) : (
             <div className="text-center">
@@ -143,16 +143,16 @@ export function SidebarNav({ forceExpanded = false }: { forceExpanded?: boolean 
         </div>
         
         {/* Navigation Items - Scrollable */}
-        <div className="flex-1 overflow-y-auto px-4 py-2 space-y-6 scrollbar-thin scrollbar-thumb-muted-foreground/20 hover:scrollbar-thumb-muted-foreground/40">
-          <div className="space-y-1">
+        <div className="flex-1 overflow-y-auto px-3 py-1 space-y-2 scrollbar-thin scrollbar-thumb-muted-foreground/20 hover:scrollbar-thumb-muted-foreground/40">
+          <div className="space-y-0.5">
             <Link
               href="/dashboard"
               className={cn(
-                "flex items-center gap-3 px-3 py-2 text-sm font-medium rounded-md transition-all duration-200",
+                "flex items-center gap-3 px-3 py-1.5 text-sm font-medium rounded-md transition-all duration-200",
                 pathname === '/dashboard' 
                   ? "bg-primary text-primary-foreground shadow-sm" 
                   : "text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground",
-                collapsed && "justify-center px-0 w-10 h-10"
+                collapsed && "justify-center px-0 w-9 h-9"
               )}
             >
               <LayoutDashboard className={cn("w-4 h-4 shrink-0", pathname === '/dashboard' ? "text-primary-foreground" : "text-accent")} />
@@ -165,9 +165,9 @@ export function SidebarNav({ forceExpanded = false }: { forceExpanded?: boolean 
             if (visibleItems.length === 0) return null;
 
             return (
-              <div key={group.id} className="space-y-1">
+              <div key={group.id} className="space-y-0.5">
                 {!collapsed && (
-                  <p className="px-3 text-[9px] font-bold uppercase text-muted-foreground tracking-widest mb-2 opacity-60">
+                  <p className="px-3 text-[9px] font-bold uppercase text-muted-foreground tracking-widest mb-1 mt-3 opacity-60">
                     {group.label}
                   </p>
                 )}
@@ -178,11 +178,11 @@ export function SidebarNav({ forceExpanded = false }: { forceExpanded?: boolean 
                       key={item.name}
                       href={item.href}
                       className={cn(
-                        "flex items-center gap-3 px-3 py-2 text-sm font-medium rounded-md transition-all duration-200",
+                        "flex items-center gap-3 px-3 py-1.5 text-sm font-medium rounded-md transition-all duration-200",
                         isActive 
                           ? "bg-primary text-primary-foreground shadow-sm" 
                           : "text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground",
-                        collapsed && "justify-center px-0 w-10 h-10"
+                        collapsed && "justify-center px-0 w-9 h-9"
                       )}
                     >
                       <item.icon className={cn("w-4 h-4 shrink-0", isActive ? "text-primary-foreground" : "text-accent")} />
@@ -212,8 +212,8 @@ export function SidebarNav({ forceExpanded = false }: { forceExpanded?: boolean 
 
         {/* Footer - Pinned */}
         <div className={cn(
-          "p-4 mt-auto border-t border-sidebar-border space-y-4 bg-sidebar w-full shrink-0 shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.05)]",
-          collapsed && "p-2 items-center"
+          "p-3 mt-auto border-t border-sidebar-border space-y-3 bg-sidebar w-full shrink-0 shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.05)]",
+          collapsed && "p-1.5 items-center"
         )}>
           <div className={cn("flex items-center gap-1 justify-center", collapsed && "flex-col")}>
             {!forceExpanded && (
@@ -256,7 +256,7 @@ export function SidebarNav({ forceExpanded = false }: { forceExpanded?: boolean 
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <button className={cn(
-                "flex items-center justify-between p-2 bg-muted/50 rounded-md text-xs hover:bg-muted transition-colors border border-transparent hover:border-sidebar-border w-full",
+                "flex items-center justify-between p-1.5 bg-muted/50 rounded-md text-xs hover:bg-muted transition-colors border border-transparent hover:border-sidebar-border w-full",
                 collapsed && "justify-center"
               )}>
                 {!collapsed ? (
