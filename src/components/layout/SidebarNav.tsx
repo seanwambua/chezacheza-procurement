@@ -44,6 +44,7 @@ const navGroups = [
   {
     id: 'workspace',
     label: 'Workspace',
+    collapsible: false,
     items: [
       { name: 'Dashboard', href: '/dashboard', icon: LayoutDashboard, roles: ['Admin', 'Manager', 'Staff', 'Finance'] as UserRole[] },
     ]
@@ -51,6 +52,7 @@ const navGroups = [
   {
     id: 'procurement',
     label: 'Procurement Cycle',
+    collapsible: true,
     items: [
       { name: 'Requisitions', href: '/requisitions', icon: FileText, roles: ['Admin', 'Manager', 'Staff', 'Finance'] as UserRole[] },
       { name: 'Approvals', href: '/approvals', icon: CheckSquare, roles: ['Admin', 'Manager', 'Finance'] as UserRole[] },
@@ -61,6 +63,7 @@ const navGroups = [
   {
     id: 'strategy',
     label: 'Strategic Assets',
+    collapsible: true,
     items: [
       { name: 'Budgets', href: '/budgets', icon: Wallet, roles: ['Admin', 'Finance', 'Manager'] as UserRole[] },
       { name: 'Departments', href: '/departments', icon: Building2, roles: ['Admin', 'Finance', 'Manager'] as UserRole[] },
@@ -70,6 +73,7 @@ const navGroups = [
   {
     id: 'admin',
     label: 'Administration',
+    collapsible: true,
     items: [
       { name: 'Users', href: '/users', icon: UserRound, roles: ['Admin'] as UserRole[] },
       { name: 'Payments', href: '/payments', icon: CreditCard, roles: ['Admin', 'Finance'] as UserRole[] },
@@ -151,6 +155,31 @@ export function SidebarNav() {
         {navGroups.map((group) => {
           const visibleItems = group.items.filter(item => item.roles.includes(currentUser.role));
           if (visibleItems.length === 0) return null;
+
+          if (!group.collapsible) {
+            return (
+              <div key={group.id} className="space-y-1">
+                {visibleItems.map((item) => {
+                  const isActive = pathname === item.href;
+                  return (
+                    <Link
+                      key={item.name}
+                      href={item.href}
+                      className={cn(
+                        "flex items-center gap-3 px-3 py-2 text-sm font-medium rounded-md transition-all duration-200 ml-1",
+                        isActive 
+                          ? "bg-primary text-primary-foreground shadow-sm" 
+                          : "text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground"
+                      )}
+                    >
+                      <item.icon className={cn("w-4 h-4", isActive ? "text-primary-foreground" : "text-accent")} />
+                      {item.name}
+                    </Link>
+                  );
+                })}
+              </div>
+            );
+          }
 
           return (
             <Collapsible
