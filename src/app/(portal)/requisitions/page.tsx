@@ -4,7 +4,7 @@ import { useState, useEffect, Suspense } from 'react';
 import { useForm, useFieldArray } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
-import { Button } from '@/components/ui/button';
+import { Button } from '@/button';
 import { 
   Table, 
   TableBody, 
@@ -12,11 +12,11 @@ import {
   TableHead, 
   TableHeader, 
   TableRow 
-} from '@/components/ui/table';
-import { Card } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
+} from '@/table';
+import { Card } from '@/card';
+import { Badge } from '@/badge';
 import { Plus, Search, Filter, MoreVertical, Pencil, Trash2, CheckCircle, XCircle, AlertTriangle, PlusCircle, Trash } from 'lucide-react';
-import { Input } from '@/components/ui/input';
+import { Input } from '@/input';
 import {
   Dialog,
   DialogContent,
@@ -25,14 +25,14 @@ import {
   DialogTrigger,
   DialogFooter,
   DialogDescription
-} from "@/components/ui/dialog";
+} from "@/dialog";
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
   DropdownMenuSeparator,
-} from "@/components/ui/dropdown-menu";
+} from "@/dropdown-menu";
 import {
   Form,
   FormControl,
@@ -40,13 +40,23 @@ import {
   FormItem,
   FormLabel,
   FormMessage,
-} from "@/components/ui/form";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+} from "@/form";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/alert-dialog";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/select';
 import { useStore } from '@/lib/store';
 import { useUserStore } from '@/lib/user-store';
 import { PurchaseRequisition, getBudgetStats, calculatePRTotal } from '@/lib/types';
 import { RoleGuard } from '@/components/auth/RoleGuard';
-import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
+import { Alert, AlertDescription, AlertTitle } from '@/alert';
 import { useSearchParams, useRouter } from 'next/navigation';
 import { cn } from '@/lib/utils';
 
@@ -67,6 +77,7 @@ function RequisitionsContent() {
   const [search, setSearch] = useState('');
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [editingPr, setEditingPr] = useState<PurchaseRequisition | null>(null);
+  const [prToDelete, setPrToDelete] = useState<PurchaseRequisition | null>(null);
   const [mounted, setMounted] = useState(false);
 
   const isDetailed = viewPreference === 'detailed';
@@ -165,9 +176,10 @@ function RequisitionsContent() {
     setIsDialogOpen(true);
   };
 
-  const handleDelete = (id: string) => {
-    if (confirm('Are you sure you want to delete this requisition?')) {
-      deletePR(id);
+  const confirmDelete = () => {
+    if (prToDelete) {
+      deletePR(prToDelete.id);
+      setPrToDelete(null);
     }
   };
 
@@ -436,7 +448,7 @@ function RequisitionsContent() {
                             </RoleGuard>
 
                             <RoleGuard allowedRoles={['Admin']}>
-                              <DropdownMenuItem onClick={() => handleDelete(pr.id)} className="text-destructive focus:text-destructive text-xs">
+                              <DropdownMenuItem onClick={() => setPrToDelete(pr)} className="text-destructive focus:text-destructive text-xs">
                                 <Trash2 className="w-4 h-4 mr-2" />
                                 Delete
                               </DropdownMenuItem>
@@ -463,6 +475,24 @@ function RequisitionsContent() {
           </Table>
         </div>
       </Card>
+
+      <AlertDialog open={!!prToDelete} onOpenChange={(open) => !open && setPrToDelete(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle className="text-destructive">Purge Requisition?</AlertDialogTitle>
+            <AlertDialogDescription className="text-xs">
+              This will permanently delete the requisition **{prToDelete?.refNumber}**. 
+              Associated purchase orders and verification receipts will also be removed. This action cannot be undone.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel className="text-xs font-bold uppercase">Cancel</AlertDialogCancel>
+            <AlertDialogAction onClick={confirmDelete} className="bg-destructive text-white hover:bg-destructive/90 text-xs font-bold uppercase">
+              Confirm Delete
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }

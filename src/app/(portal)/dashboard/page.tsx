@@ -43,7 +43,7 @@ import {
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from "@/components/ui/select";
+} from "@/select";
 import { 
   Sheet,
   SheetContent,
@@ -52,7 +52,7 @@ import {
   SheetTrigger,
   SheetFooter,
   SheetDescription
-} from "@/components/ui/sheet";
+} from "@/sheet";
 import {
   Form,
   FormControl,
@@ -61,10 +61,20 @@ import {
   FormLabel,
   FormMessage,
   FormDescription,
-} from "@/components/ui/form";
-import { Input } from '@/components/ui/input';
-import { Button } from '@/components/ui/button';
-import { Checkbox } from '@/components/ui/checkbox';
+} from "@/form";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/alert-dialog";
+import { Input } from '@/input';
+import { Button } from '@/button';
+import { Checkbox } from '@/checkbox';
 import { calculatePRTotal } from '@/lib/types';
 import Link from 'next/link';
 import { cn } from '@/lib/utils';
@@ -73,7 +83,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
 import { useToast } from '@/hooks/use-toast';
 import { RoleGuard } from '@/components/auth/RoleGuard';
-import { Separator } from '@/components/ui/separator';
+import { Separator } from '@/separator';
 
 const fiscalYearSchema = z.object({
   year: z.string().min(4, "Year is required"),
@@ -103,6 +113,7 @@ export default function DashboardPage() {
   
   const [isWizardOpen, setIsWizardOpen] = useState(false);
   const [wizardStep, setWizardStep] = useState(1);
+  const [yearToDelete, setYearToDelete] = useState<string | null>(null);
 
   const form = useForm<FiscalYearValues>({
     resolver: zodResolver(fiscalYearSchema),
@@ -204,24 +215,23 @@ export default function DashboardPage() {
     }
   };
 
-  const handleDeleteYear = (yearToDelete: string) => {
-    if (confirm(`CRITICAL ACTION: Are you sure you want to delete the entire fiscal year ${yearToDelete}? This will remove ALL budgets, requisitions, and orders for this period.`)) {
-      if (confirm(`Confirming deletion for FY ${yearToDelete}. This action is irreversible.`)) {
-        deleteFiscalYear(yearToDelete);
-        toast({
-          variant: "destructive",
-          title: "Fiscal Year Deleted",
-          description: `All records for FY ${yearToDelete} have been purged.`,
-        });
-        
-        if (yearToDelete === selectedYear) {
-          const remainingYears = availableYears.filter(y => y !== yearToDelete);
-          if (remainingYears.length > 0) {
-            setSelectedYear(remainingYears[0]);
-          }
-        }
+  const handleDeleteYear = () => {
+    if (!yearToDelete) return;
+    
+    deleteFiscalYear(yearToDelete);
+    toast({
+      variant: "destructive",
+      title: "Fiscal Year Purged",
+      description: `All associated budgets and commitments for FY ${yearToDelete} have been permanently removed.`,
+    });
+    
+    if (yearToDelete === selectedYear) {
+      const remainingYears = availableYears.filter(y => y !== yearToDelete);
+      if (remainingYears.length > 0) {
+        setSelectedYear(remainingYears[0]);
       }
     }
+    setYearToDelete(null);
   };
 
   return (
@@ -254,7 +264,7 @@ export default function DashboardPage() {
                           onClick={(e) => {
                             e.preventDefault();
                             e.stopPropagation();
-                            handleDeleteYear(year);
+                            setYearToDelete(year);
                           }}
                         >
                           <Trash2 className="w-3 h-3" />
@@ -571,7 +581,7 @@ export default function DashboardPage() {
                 <CardHeader className="py-4">
                   <CardTitle className="text-base md:text-lg font-headline">Budget Utilization vs Allocation</CardTitle>
                 </CardHeader>
-                <CardTitle>
+                <CardContent>
                   <div className="h-[250px] md:h-[320px]">
                     {budgetData.length > 0 ? (
                       <ResponsiveContainer width="100%" height="100%">
@@ -603,7 +613,7 @@ export default function DashboardPage() {
                       </div>
                     )}
                   </div>
-                </CardTitle>
+                </CardContent>
               </Card>
             </div>
 
@@ -722,6 +732,30 @@ export default function DashboardPage() {
           </Card>
         </div>
       </div>
+
+      <AlertDialog open={!!yearToDelete} onOpenChange={(open) => !open && setYearToDelete(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle className="text-destructive flex items-center gap-2">
+              <AlertCircle className="w-5 h-5" />
+              Critical Action: Purge Fiscal Period?
+            </AlertDialogTitle>
+            <AlertDialogDescription className="text-xs">
+              This will permanently delete the entire **FY {yearToDelete}** fiscal period. 
+              All associated budgets, requisitions, and purchase orders will be lost. This action is irreversible.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel className="text-xs font-bold uppercase">Keep Period</AlertDialogCancel>
+            <AlertDialogAction 
+              onClick={handleDeleteYear}
+              className="bg-destructive hover:bg-destructive/90 text-white text-xs font-bold uppercase"
+            >
+              Purge FY {yearToDelete}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }

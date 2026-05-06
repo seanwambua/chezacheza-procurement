@@ -113,9 +113,15 @@ export const useStore = create<ProcurementState>()(
           return b;
         });
 
+        // Also delete any associated LPOs and GRNs
+        const linkedLpos = state.lpos.filter(l => l.prId === id);
+        const linkedLpoIds = linkedLpos.map(l => l.id);
+
         return { 
           prs: state.prs.filter(pr => pr.id !== id),
-          budgets: updatedBudgets
+          budgets: updatedBudgets,
+          lpos: state.lpos.filter(l => l.prId !== id),
+          grns: state.grns.filter(g => !linkedLpoIds.includes(g.lpoId))
         };
       }),
 
@@ -158,9 +164,41 @@ export const useStore = create<ProcurementState>()(
         lpos: state.lpos.map(lpo => lpo.id === id ? { ...lpo, ...updates } : lpo)
       })),
 
-      deleteLPO: (id) => set((state) => ({
-        lpos: state.lpos.filter(lpo => lpo.id !== id)
-      })),
+      deleteLPO: (id) => set((state) => {
+        const lpo = state.lpos.find(l => l.id === id);
+        if (!lpo) return state;
+
+        // Reset PR status if it exists
+        const updatedPrs = state.prs.map(pr => 
+          pr.id === lpo.prId ? { ...pr, status: 'Approved' as PRStatus } : pr
+        );
+
+        // Delete associated GRNs if any
+        const updatedGrns = state.grns.filter(g => g.lpoId !== id);
+
+        // Revert budget spent back to committed if it was already received
+        const linkedGrn = state.grns.find(g => g.lpoId === id);
+        const updatedBudgets = state.budgets.map(b => {
+          const pr = state.prs.find(p => p.id === lpo.prId);
+          if (pr && b.name === pr.budgetLine && b.fiscalYear === pr.fiscalYear) {
+            if (linkedGrn) {
+              return {
+                ...b,
+                spent: Math.max(0, b.spent - lpo.totalValue),
+                committed: b.committed + lpo.totalValue
+              };
+            }
+          }
+          return b;
+        });
+
+        return {
+          lpos: state.lpos.filter(l => l.id !== id),
+          prs: updatedPrs,
+          grns: updatedGrns,
+          budgets: updatedBudgets
+        };
+      }),
 
       updateLPOStatus: (id, status) => set((state) => ({
         lpos: state.lpos.map(lpo => lpo.id === id ? { ...lpo, status } : lpo)
@@ -206,9 +244,25 @@ export const useStore = create<ProcurementState>()(
         budgets: state.budgets.map(b => b.id === id ? { ...b, ...updates } : b)
       })),
 
-      deleteBudget: (id) => set((state) => ({
-        budgets: state.budgets.filter(b => b.id !== id)
-      })),
+      deleteBudget: (id) => set((state) => {
+        const budgetToDelete = state.budgets.find(b => b.id === id);
+        if (!budgetToDelete) return state;
+
+        // Cascade delete PRs and LPOs that use this budget line
+        const updatedPrs = state.prs.filter(p => p.budgetLine !== budgetToDelete.name || p.fiscalYear !== budgetToDelete.fiscalYear);
+        const lposToDelete = state.lpos.filter(l => {
+          const pr = state.prs.find(p => p.id === l.prId);
+          return pr && pr.budgetLine === budgetToDelete.name && pr.fiscalYear === budgetToDelete.fiscalYear;
+        });
+        const lpoIds = lposToDelete.map(l => l.id);
+        
+        return {
+          budgets: state.budgets.filter(b => b.id !== id),
+          prs: updatedPrs,
+          lpos: state.lpos.filter(l => !lpoIds.includes(l.id)),
+          grns: state.grns.filter(g => !lpoIds.includes(g.lpoId))
+        };
+      }),
 
       deleteFiscalYear: (year) => set((state) => ({
         budgets: state.budgets.filter(b => b.fiscalYear !== year),

@@ -6,22 +6,33 @@ import { useUserStore } from '@/lib/user-store';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/table';
+import { Card, CardContent, CardHeader, CardTitle } from '@/card';
 import { StatCard } from '@/components/dashboard/StatCard';
-import { PieChart, TrendingUp, Lock, Plus, Pencil, Trash2, MoreVertical, PauseCircle, PlayCircle, FileText, ShoppingCart } from 'lucide-react';
-import { Button } from '@/components/ui/button';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogFooter, DialogDescription } from "@/components/ui/dialog";
-import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
-import { Input } from '@/components/ui/input';
-import { Textarea } from '@/components/ui/textarea';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+import { PieChart, TrendingUp, Lock, Plus, Pencil, Trash2, MoreVertical, PauseCircle, PlayCircle, FileText, ShoppingCart, AlertCircle } from 'lucide-react';
+import { Button } from '@/button';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogFooter, DialogDescription } from "@/dialog";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/alert-dialog";
+import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/form";
+import { Input } from '@/input';
+import { Textarea } from '@/textarea';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/select";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/dropdown-menu";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/tooltip";
 import { RoleGuard } from '@/components/auth/RoleGuard';
 import { Budget, getBudgetStats } from '@/lib/types';
-import { Badge } from '@/components/ui/badge';
+import { Badge } from '@/badge';
 import { cn } from '@/lib/utils';
+import { useToast } from '@/hooks/use-toast';
 
 const budgetSchema = z.object({
   name: z.string().min(2, "Name required"),
@@ -39,9 +50,11 @@ type BudgetFormValues = z.infer<typeof budgetSchema>;
 export default function BudgetsPage() {
   const { budgets, prs, lpos, addBudget, updateBudget, deleteBudget, selectedYear } = useStore();
   const { currentUser, viewPreference } = useUserStore();
+  const { toast } = useToast();
   const [mounted, setMounted] = useState(false);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [editingBudget, setEditingBudget] = useState<Budget | null>(null);
+  const [budgetToDelete, setBudgetToDelete] = useState<Budget | null>(null);
 
   const isDetailed = viewPreference === 'detailed';
 
@@ -97,6 +110,18 @@ export default function BudgetsPage() {
     else addBudget(values);
     setIsDialogOpen(false);
     setEditingBudget(null);
+  };
+
+  const confirmDeleteBudget = () => {
+    if (budgetToDelete) {
+      deleteBudget(budgetToDelete.id);
+      toast({
+        variant: "destructive",
+        title: "Budget Purged",
+        description: `The budget line '${budgetToDelete.name}' and all associated commitments have been removed.`,
+      });
+      setBudgetToDelete(null);
+    }
   };
 
   return (
@@ -211,7 +236,7 @@ export default function BudgetsPage() {
                       <DropdownMenuTrigger asChild><Button variant="ghost" size="icon" className="h-8 w-8 opacity-0 group-hover:opacity-100"><MoreVertical className="w-4 h-4" /></Button></DropdownMenuTrigger>
                       <DropdownMenuContent align="end">
                         <DropdownMenuItem onClick={() => {setEditingBudget(b); setIsDialogOpen(true);}} className="text-xs font-bold"><Pencil className="w-4 h-4 mr-2" /> Edit</DropdownMenuItem>
-                        <DropdownMenuItem onClick={() => deleteBudget(b.id)} className="text-destructive text-xs font-bold"><Trash2 className="w-4 h-4 mr-2" /> Delete</DropdownMenuItem>
+                        <DropdownMenuItem onClick={() => setBudgetToDelete(b)} className="text-destructive text-xs font-bold"><Trash2 className="w-4 h-4 mr-2" /> Purge</DropdownMenuItem>
                       </DropdownMenuContent>
                     </DropdownMenu>
                   </TableCell>
@@ -221,6 +246,28 @@ export default function BudgetsPage() {
           </TableBody>
         </Table>
       </Card>
+
+      <AlertDialog open={!!budgetToDelete} onOpenChange={(open) => !open && setBudgetToDelete(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle className="text-destructive flex items-center gap-2">
+              <AlertCircle className="w-5 h-5" />
+              Purge Budget Line?
+            </AlertDialogTitle>
+            <AlertDialogDescription className="text-xs">
+              This will permanently delete the budget **{budgetToDelete?.name}**. 
+              **Cascading Impact:** All associated requisitions, purchase orders, and receipts will also be removed from the system. 
+              This action is irreversible.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel className="text-xs font-bold uppercase">Cancel</AlertDialogCancel>
+            <AlertDialogAction onClick={confirmDeleteBudget} className="bg-destructive hover:bg-destructive/90 text-white text-xs font-bold uppercase">
+              Purge Budget
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }

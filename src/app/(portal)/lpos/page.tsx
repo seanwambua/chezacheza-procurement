@@ -17,7 +17,8 @@ import {
   PackageCheck,
   Pencil,
   Trash2,
-  FileText
+  FileText,
+  AlertCircle
 } from 'lucide-react';
 import { 
   Table, 
@@ -26,12 +27,12 @@ import {
   TableHead, 
   TableHeader, 
   TableRow 
-} from '@/components/ui/table';
-import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
-import { Input } from '@/components/ui/input';
-import { Textarea } from '@/components/ui/textarea';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+} from '@/table';
+import { Button } from '@/button';
+import { Badge } from '@/badge';
+import { Input } from '@/input';
+import { Textarea } from '@/textarea';
+import { Card, CardContent, CardHeader, CardTitle } from '@/card';
 import { StatCard } from '@/components/dashboard/StatCard';
 import {
   Dialog,
@@ -41,7 +42,7 @@ import {
   DialogTrigger,
   DialogFooter,
   DialogDescription
-} from "@/components/ui/dialog";
+} from "@/dialog";
 import {
   Form,
   FormControl,
@@ -50,20 +51,30 @@ import {
   FormLabel,
   FormMessage,
   FormDescription,
-} from "@/components/ui/form";
+} from "@/form";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/alert-dialog";
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from "@/components/ui/select";
+} from "@/select";
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
+} from "@/dropdown-menu";
 import { useToast } from '@/hooks/use-toast';
 import { LPO, calculatePRTotal, GRN } from '@/lib/types';
 import { cn } from '@/lib/utils';
@@ -86,6 +97,7 @@ export default function LPOsPage() {
   const [search, setSearch] = useState('');
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [editingLpo, setEditingLpo] = useState<LPO | null>(null);
+  const [lpoToVoid, setLpoToVoid] = useState<LPO | null>(null);
   const [receivingLpo, setReceivingLpo] = useState<LPO | null>(null);
 
   const isDetailed = viewPreference === 'detailed';
@@ -188,10 +200,14 @@ export default function LPOsPage() {
     setEditingLpo(null);
   };
 
-  const handleDeleteLPO = (lpo: LPO) => {
-    if (confirm(`CRITICAL: Void order ${lpo.lpoNumber}?`)) {
-      deleteLPO(lpo.id);
-      updatePRStatus(lpo.prId, 'Approved');
+  const confirmVoid = () => {
+    if (lpoToVoid) {
+      deleteLPO(lpoToVoid.id);
+      toast({
+        title: "Order Voided",
+        description: `LPO ${lpoToVoid.lpoNumber} has been successfully canceled and the source requisition reverted.`,
+      });
+      setLpoToVoid(null);
     }
   };
 
@@ -367,7 +383,7 @@ export default function LPOsPage() {
                           {lpo.status !== 'Fulfilled' && (
                             <DropdownMenuItem className="text-accent text-xs font-bold" onClick={() => setReceivingLpo(lpo)}><PackageCheck className="w-4 h-4 mr-2" /> Confirm Receipt</DropdownMenuItem>
                           )}
-                          <DropdownMenuItem className="text-destructive text-xs font-bold" onClick={() => handleDeleteLPO(lpo)}><Trash2 className="w-4 h-4 mr-2" /> Void</DropdownMenuItem>
+                          <DropdownMenuItem className="text-destructive text-xs font-bold" onClick={() => setLpoToVoid(lpo)}><Trash2 className="w-4 h-4 mr-2" /> Void Order</DropdownMenuItem>
                         </DropdownMenuContent>
                       </DropdownMenu>
                     </TableCell>
@@ -384,6 +400,27 @@ export default function LPOsPage() {
           </Table>
         </div>
       </Card>
+
+      <AlertDialog open={!!lpoToVoid} onOpenChange={(open) => !open && setLpoToVoid(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle className="text-destructive flex items-center gap-2">
+              <AlertCircle className="w-5 h-5" />
+              Void Commitment {lpoToVoid?.lpoNumber}?
+            </AlertDialogTitle>
+            <AlertDialogDescription className="text-xs">
+              This will permanently cancel the order. Any associated Goods Received Notes (GRNs) will also be purged. 
+              The budget commitment will be adjusted, and the source requisition will revert to 'Approved' status.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel className="text-xs font-bold uppercase">Keep Active</AlertDialogCancel>
+            <AlertDialogAction onClick={confirmVoid} className="bg-destructive hover:bg-destructive/90 text-white text-xs font-bold uppercase">
+              Void Order
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
 
       <Dialog open={!!receivingLpo} onOpenChange={(open) => !open && setReceivingLpo(null)}>
         <DialogContent className="max-w-md w-[95vw]">
