@@ -88,7 +88,7 @@ export default function RequisitionsPage() {
     if (editingPr) {
       form.reset({
         budgetLine: editingPr.budgetLine,
-        items: editingPr.items,
+        items: editingPr.items || [{ description: '', quantity: 1, estimatedUnitPrice: 0 }],
       });
     } else {
       form.reset({
@@ -102,8 +102,9 @@ export default function RequisitionsPage() {
 
   const filteredPrs = prs.filter(pr => {
     const searchLower = search.toLowerCase();
-    const matchesSearch = pr.items.some(item => item.description.toLowerCase().includes(searchLower)) || 
-                          pr.refNumber.toLowerCase().includes(searchLower);
+    const items = pr.items || [];
+    const matchesSearch = items.some(item => item.description?.toLowerCase().includes(searchLower)) || 
+                          pr.refNumber?.toLowerCase().includes(searchLower);
     
     if (currentUser.role === 'Staff') {
       return matchesSearch && pr.requesterName === currentUser.name;
@@ -117,8 +118,8 @@ export default function RequisitionsPage() {
   const budgetStats = selectedBudget ? getBudgetStats(selectedBudget) : null;
   const isBudgetPaused = budgetStats?.isPaused;
 
-  const formItems = form.watch('items');
-  const currentTotal = formItems.reduce((acc, item) => acc + (item.quantity * item.estimatedUnitPrice), 0);
+  const formItems = form.watch('items') || [];
+  const currentTotal = formItems.reduce((acc, item) => acc + ((item.quantity || 0) * (item.estimatedUnitPrice || 0)), 0);
 
   const onSubmit = (values: RequisitionFormValues) => {
     if (isBudgetPaused && !editingPr) return;
@@ -126,7 +127,7 @@ export default function RequisitionsPage() {
     if (editingPr) {
       updatePR(editingPr.id, {
         budgetLine: values.budgetLine,
-        items: values.items.map((item, idx) => ({ ...item, id: editingPr.items[idx]?.id || `item-${Math.random()}` }))
+        items: values.items.map((item, idx) => ({ ...item, id: editingPr.items?.[idx]?.id || `item-${Math.random()}` }))
       });
     } else {
       addPR({
@@ -329,14 +330,15 @@ export default function RequisitionsPage() {
                 const budget = budgets.find(b => b.name === pr.budgetLine);
                 const isPaused = budget ? getBudgetStats(budget).isPaused : false;
                 const total = calculatePRTotal(pr);
+                const firstItem = pr.items?.[0]?.description || 'Untitled Request';
                 
                 return (
                   <TableRow key={pr.id} className="group hover:bg-muted/5">
                     <TableCell className="font-black text-primary text-xs">{pr.refNumber}</TableCell>
                     <TableCell>
                       <div className="flex flex-col">
-                        <span className="text-sm font-medium">{pr.items[0]?.description}</span>
-                        {pr.items.length > 1 && (
+                        <span className="text-sm font-medium">{firstItem}</span>
+                        {(pr.items?.length || 0) > 1 && (
                           <span className="text-[10px] text-muted-foreground italic">+ {pr.items.length - 1} more line items</span>
                         )}
                       </div>
