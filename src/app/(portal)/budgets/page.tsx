@@ -76,6 +76,7 @@ import { RoleGuard } from '@/components/auth/RoleGuard';
 import { Budget, getBudgetStats } from '@/lib/types';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
+import { cn } from '@/lib/utils';
 
 const budgetSchema = z.object({
   name: z.string().min(2, "Name must be at least 2 characters"),
@@ -302,9 +303,12 @@ export default function BudgetsPage() {
                   <span className="text-[8px] uppercase font-bold text-muted-foreground">Total Use</span>
                 </div>
               </div>
-              <div className="flex-1 space-y-4 w-full">
+              <div className="flex-1 space-y-4 min-w-0 w-full">
                 <div className="text-center sm:text-left">
-                  <p className={isDetailed ? "text-2xl md:text-3xl font-black text-primary tracking-tighter" : "text-3xl md:text-4xl font-black text-primary tracking-tighter"}>
+                  <p className={cn(
+                    "font-black text-primary tracking-tighter truncate",
+                    isDetailed ? "text-2xl md:text-3xl" : "text-3xl md:text-4xl"
+                  )}>
                     Ksh {totalAllocation.toLocaleString()}
                   </p>
                   <p className="text-[10px] text-muted-foreground font-medium uppercase tracking-tight">Consolidated Annual Pool</p>
