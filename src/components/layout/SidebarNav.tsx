@@ -125,15 +125,15 @@ export function SidebarNav({ forceExpanded = false }: { forceExpanded?: boolean 
       )}>
         {/* Header - Fixed */}
         <div className={cn(
-          "p-4 flex items-center justify-between w-full shrink-0",
-          collapsed && "flex-col gap-2 p-2"
+          "px-4 pt-6 pb-4 flex items-center justify-between w-full shrink-0",
+          collapsed && "flex-col gap-2 px-2 pt-4 pb-4"
         )}>
           {!collapsed ? (
             <div>
-              <h1 className="text-xl font-headline font-bold text-primary tracking-tighter">
+              <h1 className="text-xl font-headline font-bold text-primary tracking-tighter leading-none">
                 CPP <span className="text-accent">Portal</span>
               </h1>
-              <p className="text-[10px] text-muted-foreground uppercase tracking-widest mt-0.5">Chezacheza</p>
+              <p className="text-[10px] text-muted-foreground uppercase font-bold tracking-widest mt-1 opacity-70">Chezacheza</p>
             </div>
           ) : (
             <div className="text-center">
@@ -143,7 +143,7 @@ export function SidebarNav({ forceExpanded = false }: { forceExpanded?: boolean 
         </div>
         
         {/* Navigation Items - Scrollable */}
-        <div className="flex-1 overflow-y-auto px-3 py-1 space-y-2 scrollbar-thin scrollbar-thumb-muted-foreground/20 hover:scrollbar-thumb-muted-foreground/40">
+        <div className="flex-1 overflow-y-auto px-3 py-2 space-y-1.5 scrollbar-thin scrollbar-thumb-muted-foreground/20 hover:scrollbar-thumb-muted-foreground/40">
           <div className="space-y-0.5">
             <Link
               href="/dashboard"
@@ -167,7 +167,7 @@ export function SidebarNav({ forceExpanded = false }: { forceExpanded?: boolean 
             return (
               <div key={group.id} className="space-y-0.5">
                 {!collapsed && (
-                  <p className="px-3 text-[9px] font-bold uppercase text-muted-foreground tracking-widest mb-1 mt-3 opacity-60">
+                  <p className="px-3 text-[9px] font-black uppercase text-muted-foreground/60 tracking-widest mb-1.5 mt-3.5 first:mt-1">
                     {group.label}
                   </p>
                 )}
