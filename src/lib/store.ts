@@ -26,6 +26,7 @@ interface ProcurementState {
   addBudget: (budget: Omit<Budget, 'id' | 'spent' | 'committed'>) => void;
   updateBudget: (id: string, updates: Partial<Budget>) => void;
   deleteBudget: (id: string) => void;
+  deleteFiscalYear: (year: string) => void;
 }
 
 const isCommitted = (status: PRStatus) => status !== 'Draft' && status !== 'Rejected';
@@ -207,6 +208,13 @@ export const useStore = create<ProcurementState>()(
 
       deleteBudget: (id) => set((state) => ({
         budgets: state.budgets.filter(b => b.id !== id)
+      })),
+
+      deleteFiscalYear: (year) => set((state) => ({
+        budgets: state.budgets.filter(b => b.fiscalYear !== year),
+        prs: state.prs.filter(p => p.fiscalYear !== year),
+        lpos: state.lpos.filter(l => l.fiscalYear !== year),
+        grns: state.grns.filter(g => g.fiscalYear !== year),
       })),
     }),
     {
