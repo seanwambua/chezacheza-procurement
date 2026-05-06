@@ -8,8 +8,8 @@ import {
   FileCheck, 
   Clock, 
   AlertCircle,
-  Landmark,
   TrendingUp,
+  Users,
 } from 'lucide-react';
 import { 
   BarChart, 
@@ -60,155 +60,179 @@ export default function DashboardPage() {
 
   return (
     <div className="space-y-8 animate-in fade-in duration-500">
-      <div>
-        <h2 className="text-3xl font-headline font-bold text-primary">Overview</h2>
-        <p className="text-muted-foreground">Welcome back. Here's what's happening today.</p>
+      <div className="flex items-end justify-between">
+        <div>
+          <h2 className="text-3xl font-headline font-bold text-primary">Portal Overview</h2>
+          <p className="text-muted-foreground">Strategic procurement metrics and fiscal health.</p>
+        </div>
+        <div className="hidden md:block">
+          <Badge variant="outline" className="text-[10px] uppercase py-1">Fiscal Year 2024</Badge>
+        </div>
       </div>
 
       {/* Bento Stats Grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-        <div className="lg:col-span-1">
-          <StatCard 
-            title="Pending Approvals" 
-            value={pendingApprovals} 
-            description="Requires your attention" 
-            icon={Clock} 
-            tooltip="Number of purchase requisitions currently awaiting manager or finance approval before they can be processed."
-          />
-        </div>
-        <div className="lg:col-span-1">
-          <StatCard 
-            title="Active LPOs" 
-            value={activeLposCount} 
-            description={`${awaitingDelivery} awaiting delivery`} 
-            icon={ShoppingCart} 
-            tooltip="Purchase orders that have been sent to vendors but are not yet fully fulfilled, delivered, or closed."
-          />
-        </div>
-        <div className="md:col-span-2">
+        {/* Main Stat Card - Prominent */}
+        <div className="lg:col-span-2 lg:row-span-1">
           <StatCard 
             title="Total Spend (Actual)" 
             value={`Ksh ${totalSpendVal.toLocaleString()}`} 
             trend={{ value: 12, isUp: true }}
             icon={TrendingUp} 
             tooltip="The actual verified expenditure across all departmental budgets for the current fiscal period."
+            description="Verified actuals vs last month"
           />
         </div>
+
+        {/* Supporting Stats */}
+        <div className="lg:col-span-1">
+          <StatCard 
+            title="Pending Approvals" 
+            value={pendingApprovals} 
+            description="Awaiting your review" 
+            icon={Clock} 
+            tooltip="Number of purchase requisitions currently awaiting manager or finance approval."
+          />
+        </div>
+        <div className="lg:col-span-1">
+          <StatCard 
+            title="Active LPOs" 
+            value={activeLposCount} 
+            description={`${awaitingDelivery} out for delivery`} 
+            icon={ShoppingCart} 
+            tooltip="Purchase orders that have been sent to vendors but are not yet closed."
+          />
+        </div>
+
+        {/* Secondary Info Grid */}
+        <div className="lg:col-span-2 lg:row-span-2">
+          <Card className="h-full shadow-none border border-border">
+            <CardHeader>
+              <CardTitle className="text-lg font-headline">Budget Utilization vs Allocation</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="h-[320px]">
+                <ResponsiveContainer width="100%" height="100%">
+                  <BarChart data={budgetData} layout="vertical">
+                    <CartesianGrid strokeDasharray="3 3" horizontal={true} vertical={false} />
+                    <XAxis type="number" hide />
+                    <YAxis 
+                      dataKey="name" 
+                      type="category" 
+                      width={100} 
+                      axisLine={false}
+                      tickLine={false}
+                      fontSize={11}
+                    />
+                    <Tooltip 
+                      cursor={{ fill: 'transparent' }}
+                      contentStyle={{ borderRadius: '8px', border: '1px solid #border' }}
+                      formatter={(value: any) => [`Ksh ${value.toLocaleString()}`, '']}
+                    />
+                    <Bar dataKey="spent" fill="hsl(var(--accent))" radius={[0, 4, 4, 0]} barSize={24} />
+                    <Bar dataKey="budget" fill="hsl(var(--muted))" radius={[0, 4, 4, 0]} barSize={8} />
+                  </BarChart>
+                </ResponsiveContainer>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+
         <div className="lg:col-span-1">
            <StatCard 
             title="GRN Disputes" 
             value={activeDisputes} 
-            description="Blocking payments" 
+            description="Needs immediate action" 
             icon={AlertCircle} 
-            tooltip="Goods Received Notes with quality or quantity issues that must be resolved before finance can release payment."
+            tooltip="Goods Received Notes with quality issues blocking payment."
           />
         </div>
-      </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        <Card className="lg:col-span-2 shadow-none border border-border">
-          <CardHeader>
-            <CardTitle className="text-lg font-headline">Budget Utilization vs Allocation (Ksh)</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="h-[300px]">
-              <ResponsiveContainer width="100%" height="100%">
-                <BarChart data={budgetData} layout="vertical">
-                  <CartesianGrid strokeDasharray="3 3" horizontal={true} vertical={false} />
-                  <XAxis type="number" hide />
-                  <YAxis 
-                    dataKey="name" 
-                    type="category" 
-                    width={100} 
-                    axisLine={false}
-                    tickLine={false}
-                    fontSize={12}
-                  />
-                  <Tooltip 
-                    cursor={{ fill: 'transparent' }}
-                    contentStyle={{ borderRadius: '8px', border: '1px solid #border' }}
-                    formatter={(value: any) => [`Ksh ${value.toLocaleString()}`, '']}
-                  />
-                  <Bar dataKey="spent" fill="hsl(var(--accent))" radius={[0, 4, 4, 0]} barSize={20} />
-                  <Bar dataKey="budget" fill="hsl(var(--muted))" radius={[0, 4, 4, 0]} barSize={10} />
-                </BarChart>
-              </ResponsiveContainer>
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card className="shadow-none border border-border overflow-hidden">
-          <CardHeader>
-            <CardTitle className="text-lg font-headline">Vendor Quality</CardTitle>
-          </CardHeader>
-          <CardContent className="flex flex-col items-center">
-            <div className="h-[200px] w-full">
-              <ResponsiveContainer width="100%" height="100%">
-                <PieChart>
-                  <Pie
-                    data={vendorPerformance}
-                    innerRadius={60}
-                    outerRadius={80}
-                    paddingAngle={5}
-                    dataKey="value"
-                  >
-                    {vendorPerformance.map((entry, index) => (
-                      <Cell key={`cell-${index}`} fill={entry.color} />
-                    ))}
-                  </Pie>
-                  <Tooltip />
-                </PieChart>
-              </ResponsiveContainer>
-            </div>
-            <div className="w-full space-y-2 mt-4">
-              {vendorPerformance.map((item) => (
-                <div key={item.name} className="flex items-center justify-between text-sm">
-                  <div className="flex items-center gap-2">
-                    <div className="w-3 h-3 rounded-full" style={{ backgroundColor: item.color }} />
-                    <span className="text-muted-foreground">{item.name}</span>
+        <div className="lg:col-span-1 lg:row-span-2">
+          <Card className="h-full shadow-none border border-border overflow-hidden">
+            <CardHeader>
+              <CardTitle className="text-lg font-headline">Vendor Quality</CardTitle>
+            </CardHeader>
+            <CardContent className="flex flex-col items-center">
+              <div className="h-[180px] w-full">
+                <ResponsiveContainer width="100%" height="100%">
+                  <PieChart>
+                    <Pie
+                      data={vendorPerformance}
+                      innerRadius={50}
+                      outerRadius={70}
+                      paddingAngle={5}
+                      dataKey="value"
+                    >
+                      {vendorPerformance.map((entry, index) => (
+                        <Cell key={`cell-${index}`} fill={entry.color} />
+                      ))}
+                    </Pie>
+                    <Tooltip />
+                  </PieChart>
+                </ResponsiveContainer>
+              </div>
+              <div className="w-full space-y-2 mt-4">
+                {vendorPerformance.map((item) => (
+                  <div key={item.name} className="flex items-center justify-between text-xs">
+                    <div className="flex items-center gap-2">
+                      <div className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: item.color }} />
+                      <span className="text-muted-foreground">{item.name}</span>
+                    </div>
+                    <span className="font-semibold">{item.value}</span>
                   </div>
-                  <span className="font-semibold">{item.value}</span>
-                </div>
-              ))}
-            </div>
-          </CardContent>
-        </Card>
-      </div>
+                ))}
+              </div>
+            </CardContent>
+          </Card>
+        </div>
 
-      <div className="grid grid-cols-1 gap-6">
-        <Card className="shadow-none border border-border overflow-x-auto">
-          <CardHeader className="flex flex-row items-center justify-between">
-            <CardTitle className="text-lg font-headline">Recent Requisitions</CardTitle>
-            <Badge variant="outline">View All</Badge>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-4 min-w-[500px]">
-              {recentPrs.length > 0 ? (
-                recentPrs.map((req) => (
-                  <div key={req.id} className="flex items-center justify-between p-3 rounded-lg hover:bg-muted/50 transition-colors">
-                    <div className="flex items-center gap-4">
-                      <div className="p-2 bg-muted rounded-full shrink-0">
-                        <FileCheck className="w-4 h-4 text-primary" />
+        <div className="lg:col-span-1">
+           <StatCard 
+            title="Onboarded Vendors" 
+            value={vendors.length} 
+            description="Active supplier network" 
+            icon={Users} 
+            tooltip="Total number of approved vendors in the database."
+          />
+        </div>
+
+        {/* Recent Activity - Wide Section */}
+        <div className="lg:col-span-3">
+          <Card className="shadow-none border border-border overflow-hidden">
+            <CardHeader className="flex flex-row items-center justify-between py-4">
+              <CardTitle className="text-lg font-headline">Recent Requisitions</CardTitle>
+              <Badge variant="outline" className="cursor-pointer hover:bg-muted transition-colors">Full History</Badge>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-3 overflow-x-auto">
+                {recentPrs.length > 0 ? (
+                  recentPrs.map((req) => (
+                    <div key={req.id} className="flex items-center justify-between p-3 rounded-xl hover:bg-muted/50 transition-all border border-transparent hover:border-border">
+                      <div className="flex items-center gap-4">
+                        <div className="p-2 bg-muted rounded-lg shrink-0">
+                          <FileCheck className="w-4 h-4 text-primary" />
+                        </div>
+                        <div className="overflow-hidden">
+                          <p className="font-bold text-sm truncate">{req.itemDescription}</p>
+                          <p className="text-[10px] text-muted-foreground uppercase">{req.refNumber} • {req.budgetLine}</p>
+                        </div>
                       </div>
-                      <div className="overflow-hidden">
-                        <p className="font-semibold text-sm truncate">{req.itemDescription}</p>
-                        <p className="text-xs text-muted-foreground">{req.refNumber} • {req.budgetLine}</p>
+                      <div className="text-right shrink-0 ml-4">
+                        <p className="text-sm font-black">Ksh {(req.estimatedCost * req.quantity).toLocaleString()}</p>
+                        <Badge variant={req.status === 'Approved' ? 'secondary' : 'outline'} className="text-[9px] px-1.5 py-0">
+                          {req.status}
+                        </Badge>
                       </div>
                     </div>
-                    <div className="text-right shrink-0 ml-4">
-                      <p className="text-sm font-bold">Ksh {(req.estimatedCost * req.quantity).toLocaleString()}</p>
-                      <Badge variant={req.status === 'Approved' ? 'secondary' : 'outline'} className="text-[10px]">
-                        {req.status}
-                      </Badge>
-                    </div>
-                  </div>
-                ))
-              ) : (
-                <p className="text-sm text-center text-muted-foreground py-4">No recent requisitions found.</p>
-              )}
-            </div>
-          </CardContent>
-        </Card>
+                  ))
+                ) : (
+                  <p className="text-sm text-center text-muted-foreground py-8">No recent requisitions found.</p>
+                )}
+              </div>
+            </CardContent>
+          </Card>
+        </div>
       </div>
     </div>
   );
