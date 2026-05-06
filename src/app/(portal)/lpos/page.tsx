@@ -63,6 +63,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { useToast } from '@/hooks/use-toast';
 import { LPO, calculatePRTotal, GRN } from '@/lib/types';
+import { cn } from '@/lib/utils';
 
 const lpoSchema = z.object({
   prId: z.string().min(1, "Requisition is required"),
@@ -75,12 +76,14 @@ type LPOFormValues = z.infer<typeof lpoSchema>;
 
 export default function LPOsPage() {
   const { lpos, prs, vendors, addLPO, updatePRStatus, addGRN } = useStore();
-  const { currentUser } = useUserStore();
+  const { currentUser, viewPreference } = useUserStore();
   const { toast } = useToast();
   const [mounted, setMounted] = useState(false);
   const [search, setSearch] = useState('');
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [receivingLpo, setReceivingLpo] = useState<LPO | null>(null);
+
+  const isDetailed = viewPreference === 'detailed';
 
   const form = useForm<LPOFormValues>({
     resolver: zodResolver(lpoSchema),
@@ -165,13 +168,18 @@ export default function LPOsPage() {
     <div className="space-y-8 animate-in fade-in duration-500 pb-10">
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
-          <h2 className="text-3xl font-headline font-bold text-primary">Purchase Orders</h2>
+          <h2 className={cn(
+            "font-headline font-bold text-primary",
+            isDetailed ? "text-3xl" : "text-4xl"
+          )}>
+            Purchase Orders
+          </h2>
           <p className="text-muted-foreground">Manage official vendor commitments and logistics.</p>
         </div>
         
         <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
           <DialogTrigger asChild>
-            <Button className="bg-primary">
+            <Button className="bg-primary font-bold uppercase text-xs">
               <Plus className="w-4 h-4 mr-2" />
               Generate LPO
             </Button>
@@ -239,58 +247,80 @@ export default function LPOsPage() {
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        <StatCard title="Active Commitments" value={`Ksh ${totalValue.toLocaleString()}`} icon={ShoppingCart} />
+        <StatCard title="Active Commitments" value={`Ksh ${totalValue.toLocaleString()}`} icon={ShoppingCart} description={isDetailed ? "Verified orders in field" : undefined} />
         <StatCard title="Pending Fulfillment" value={lpos.filter(l => l.status === 'Dispatched').length} icon={Truck} />
         <StatCard title="Cycle Time" value="4.2 Days" icon={Calendar} />
       </div>
 
-      <Card className="border-border shadow-none">
+      <Card className="border-border shadow-none overflow-hidden">
         <CardHeader className="flex flex-row items-center justify-between border-b py-4">
           <CardTitle className="text-lg">LPO Pipeline</CardTitle>
           <div className="relative w-64">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-            <Input placeholder="Search LPOs..." className="pl-9 h-9" value={search} onChange={(e) => setSearch(e.target.value)} />
+            <Input placeholder="Search LPOs..." className="pl-9 h-9 text-xs" value={search} onChange={(e) => setSearch(e.target.value)} />
           </div>
         </CardHeader>
         <CardContent className="p-0">
-          <Table>
-            <TableHeader>
-              <TableRow className="bg-muted/30">
-                <TableHead>LPO #</TableHead>
-                <TableHead>Vendor</TableHead>
-                <TableHead>Status</TableHead>
-                <TableHead className="text-right">Total</TableHead>
-                <TableHead className="w-[50px]"></TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {filteredLpos.map((lpo) => (
-                <TableRow key={lpo.id} className="group hover:bg-muted/5">
-                  <TableCell className="font-bold text-primary">{lpo.lpoNumber}</TableCell>
-                  <TableCell>{lpo.vendorName}</TableCell>
-                  <TableCell>
-                    <Badge variant={lpo.status === 'Fulfilled' ? 'secondary' : 'outline'} className="text-[10px]">
-                      {lpo.status.toUpperCase()}
-                    </Badge>
-                  </TableCell>
-                  <TableCell className="text-right font-black">Ksh {lpo.totalValue.toLocaleString()}</TableCell>
-                  <TableCell>
-                    <DropdownMenu>
-                      <DropdownMenuTrigger asChild><Button variant="ghost" size="icon"><MoreVertical className="w-4 h-4" /></Button></DropdownMenuTrigger>
-                      <DropdownMenuContent align="end">
-                        <DropdownMenuItem><Printer className="w-4 h-4 mr-2" /> Print PDF</DropdownMenuItem>
-                        {lpo.status !== 'Fulfilled' && (
-                          <DropdownMenuItem className="text-green-600" onClick={() => setReceivingLpo(lpo)}>
-                            <PackageCheck className="w-4 h-4 mr-2" /> Receive Goods
-                          </DropdownMenuItem>
-                        )}
-                      </DropdownMenuContent>
-                    </DropdownMenu>
-                  </TableCell>
+          <div className="overflow-x-auto">
+            <Table>
+              <TableHeader>
+                <TableRow className="bg-muted/30">
+                  {isDetailed && <TableHead>LPO #</TableHead>}
+                  <TableHead>Vendor</TableHead>
+                  <TableHead>Status</TableHead>
+                  <TableHead className="text-right">Total</TableHead>
+                  <TableHead className="w-[50px]"></TableHead>
                 </TableRow>
-              ))}
-            </TableBody>
-          </Table>
+              </TableHeader>
+              <TableBody>
+                {filteredLpos.length > 0 ? (
+                  filteredLpos.map((lpo) => (
+                    <TableRow key={lpo.id} className="group hover:bg-muted/5">
+                      {isDetailed && <TableCell className="font-bold text-primary text-xs">{lpo.lpoNumber}</TableCell>}
+                      <TableCell>
+                        <span className={cn(
+                          "font-bold",
+                          isDetailed ? "text-sm" : "text-base text-primary"
+                        )}>
+                          {lpo.vendorName}
+                        </span>
+                      </TableCell>
+                      <TableCell>
+                        <Badge variant={lpo.status === 'Fulfilled' ? 'secondary' : 'outline'} className="text-[9px] uppercase px-1.5 py-0">
+                          {lpo.status}
+                        </Badge>
+                      </TableCell>
+                      <TableCell className={cn(
+                        "text-right font-black tracking-tighter",
+                        isDetailed ? "text-sm" : "text-lg text-primary"
+                      )}>
+                        Ksh {lpo.totalValue.toLocaleString()}
+                      </TableCell>
+                      <TableCell>
+                        <DropdownMenu>
+                          <DropdownMenuTrigger asChild><Button variant="ghost" size="icon" className="h-8 w-8"><MoreVertical className="w-4 h-4" /></Button></DropdownMenuTrigger>
+                          <DropdownMenuContent align="end">
+                            <DropdownMenuItem><Printer className="w-4 h-4 mr-2" /> Print PDF</DropdownMenuItem>
+                            {lpo.status !== 'Fulfilled' && (
+                              <DropdownMenuItem className="text-green-600" onClick={() => setReceivingLpo(lpo)}>
+                                <PackageCheck className="w-4 h-4 mr-2" /> Receive Goods
+                              </DropdownMenuItem>
+                            )}
+                          </DropdownMenuContent>
+                        </DropdownMenu>
+                      </TableCell>
+                    </TableRow>
+                  ))
+                ) : (
+                  <TableRow>
+                    <TableCell colSpan={isDetailed ? 5 : 4} className="h-32 text-center text-muted-foreground">
+                      No active purchase orders found.
+                    </TableCell>
+                  </TableRow>
+                )}
+              </TableBody>
+            </Table>
+          </div>
         </CardContent>
       </Card>
 
