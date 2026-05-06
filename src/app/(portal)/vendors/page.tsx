@@ -1,4 +1,3 @@
-
 "use client";
 
 import { useState, useEffect } from 'react';
@@ -79,7 +78,7 @@ export default function VendorsPage() {
         <div className="lg:col-span-3">
           {selectedVendor ? (
             <div className="space-y-6 animate-in slide-in-from-right-4 duration-500">
-              <div className="bg-white p-8 rounded-xl border border-border">
+              <div className="bg-card p-8 rounded-xl border border-border">
                 <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-8">
                   <div className="flex items-center gap-4">
                     <div className="w-16 h-16 rounded-full bg-muted flex items-center justify-center text-2xl font-bold text-primary">
@@ -114,7 +113,7 @@ export default function VendorsPage() {
                   </div>
                   <div>
                     <p className="text-[10px] text-muted-foreground uppercase font-bold tracking-widest">Compliance</p>
-                    <Badge className="bg-green-100 text-green-800 hover:bg-green-100 border-green-200">Verified</Badge>
+                    <Badge className="bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-400 hover:bg-green-100 dark:hover:bg-green-900/40 border-green-200 dark:border-green-800">Verified</Badge>
                   </div>
                 </div>
 

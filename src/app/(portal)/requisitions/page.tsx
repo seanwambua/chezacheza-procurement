@@ -1,4 +1,3 @@
-
 "use client";
 
 import { useState, useEffect } from 'react';
@@ -189,7 +188,7 @@ export default function RequisitionsPage() {
               <Form {...form}>
                 <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4 py-4">
                   {isBudgetPaused && (
-                    <Alert variant="destructive" className="bg-red-50">
+                    <Alert variant="destructive" className="bg-destructive/10">
                       <AlertTriangle className="h-4 w-4" />
                       <AlertTitle>Budget Exhausted</AlertTitle>
                       <AlertDescription>
@@ -281,7 +280,7 @@ export default function RequisitionsPage() {
         </RoleGuard>
       </div>
 
-      <div className="flex items-center gap-4 bg-white p-4 rounded-lg border border-border">
+      <div className="flex items-center gap-4 bg-card p-4 rounded-lg border border-border">
         <div className="relative flex-1">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
           <Input 
@@ -296,7 +295,7 @@ export default function RequisitionsPage() {
         </Button>
       </div>
 
-      <div className="bg-white rounded-lg border border-border overflow-hidden">
+      <div className="bg-card rounded-lg border border-border overflow-hidden">
         <Table>
           <TableHeader>
             <TableRow>

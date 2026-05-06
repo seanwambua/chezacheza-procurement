@@ -331,7 +331,7 @@ export default function BudgetsPage() {
         </div>
       </div>
 
-      <Card className="border-none shadow-none bg-white overflow-hidden">
+      <Card className="border-none shadow-none bg-card overflow-hidden">
         <CardHeader className="border-b border-border/50 py-4 px-4 md:px-6">
           <CardTitle className="text-lg">Budget Analysis & Quarterly Health</CardTitle>
         </CardHeader>
@@ -371,7 +371,7 @@ export default function BudgetsPage() {
                                 <span className="text-[10px] text-muted-foreground uppercase">{b.department}</span>
                               </div>
                             </TooltipTrigger>
-                            <TooltipContent side="right" className="w-80 p-0 overflow-hidden border-primary/20 shadow-2xl bg-white text-foreground hidden sm:block">
+                            <TooltipContent side="right" className="w-80 p-0 overflow-hidden border-primary/20 shadow-2xl bg-card text-foreground hidden sm:block">
                               <div className="bg-primary p-4 text-primary-foreground">
                                 <h4 className="font-bold text-sm uppercase tracking-tight">{b.name} Metrics</h4>
                                 <p className="text-[10px] opacity-70 mt-1 line-clamp-2">{b.description}</p>
