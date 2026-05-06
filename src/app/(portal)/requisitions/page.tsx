@@ -1,4 +1,3 @@
-
 "use client";
 
 import { useState, useEffect, Suspense } from 'react';
@@ -63,7 +62,7 @@ const requisitionSchema = z.object({
 type RequisitionFormValues = z.infer<typeof requisitionSchema>;
 
 function RequisitionsContent() {
-  const { prs, budgets, addPR, updatePR, deletePR, updatePRStatus } = useStore();
+  const { prs, budgets, addPR, updatePR, deletePR, updatePRStatus, selectedYear } = useStore();
   const { currentUser, viewPreference } = useUserStore();
   const [search, setSearch] = useState('');
   const [isDialogOpen, setIsDialogOpen] = useState(false);
@@ -121,20 +120,21 @@ function RequisitionsContent() {
   if (!mounted || !currentUser) return null;
 
   const filteredPrs = prs.filter(pr => {
+    const isCurrentYear = pr.fiscalYear === selectedYear;
     const searchLower = search.toLowerCase();
     const items = pr.items || [];
     const matchesSearch = items.some(item => item.description?.toLowerCase().includes(searchLower)) || 
                           pr.refNumber?.toLowerCase().includes(searchLower);
     
     if (currentUser.role === 'Staff') {
-      return matchesSearch && pr.requesterName === currentUser.name;
+      return isCurrentYear && matchesSearch && pr.requesterName === currentUser.name;
     }
     
-    return matchesSearch;
+    return isCurrentYear && matchesSearch;
   });
 
   const selectedBudgetName = form.watch('budgetLine');
-  const selectedBudget = budgets.find(b => b.name === selectedBudgetName);
+  const selectedBudget = budgets.find(b => b.name === selectedBudgetName && b.fiscalYear === selectedYear);
   const budgetStats = selectedBudget ? getBudgetStats(selectedBudget) : null;
   const isBudgetPaused = budgetStats?.isPaused;
 
@@ -189,7 +189,7 @@ function RequisitionsContent() {
           )}>
             Purchase Requisitions
           </h2>
-          <p className="text-sm text-muted-foreground font-medium">Submit and track multi-item internal purchase requests.</p>
+          <p className="text-sm text-muted-foreground font-medium">Requisitions for FY {selectedYear}.</p>
         </div>
         
         <RoleGuard permission="create_requisitions">
@@ -207,7 +207,7 @@ function RequisitionsContent() {
               <DialogHeader>
                 <DialogTitle className="text-xl md:text-2xl font-black">{editingPr ? 'Review Requisition' : 'Draft New Requisition'}</DialogTitle>
                 <DialogDescription className="text-xs">
-                  List all required items for this procurement. Total cost is subject to quarterly budget limits.
+                  FY {selectedYear} procurement draft. Total cost is subject to quarterly budget limits.
                 </DialogDescription>
               </DialogHeader>
               <Form {...form}>
@@ -218,7 +218,7 @@ function RequisitionsContent() {
                       name="budgetLine"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel className="text-[10px] uppercase font-bold text-muted-foreground">Target Budget Line</FormLabel>
+                          <FormLabel className="text-[10px] uppercase font-bold text-muted-foreground">Target Budget Line (FY {selectedYear})</FormLabel>
                           <Select onValueChange={field.onChange} value={field.value}>
                             <FormControl>
                               <SelectTrigger className="bg-background">
@@ -226,7 +226,7 @@ function RequisitionsContent() {
                               </SelectTrigger>
                             </FormControl>
                             <SelectContent>
-                              {budgets.map(b => (
+                              {budgets.filter(b => b.fiscalYear === selectedYear).map(b => (
                                 <SelectItem key={b.id} value={b.name}>
                                   {b.name} ({b.department})
                                 </SelectItem>
@@ -243,7 +243,7 @@ function RequisitionsContent() {
                         <AlertTriangle className="h-4 w-4" />
                         <AlertTitle className="text-[10px] font-bold uppercase">Budget Cap Reached</AlertTitle>
                         <AlertDescription className="text-[10px]">
-                          The selected budget line has exhausted its quarterly allocation. Submissions are temporarily paused.
+                          This budget line has exhausted its allocation for this quarter.
                         </AlertDescription>
                       </Alert>
                     )}
@@ -335,16 +335,11 @@ function RequisitionsContent() {
         <div className="relative w-full flex-1">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
           <Input 
-            placeholder="Search by item name or REF#" 
+            placeholder="Search current period requests..." 
             className="w-full pl-9 bg-muted/30 border-none shadow-none focus-visible:ring-1 h-10 text-xs" 
             value={search}
             onChange={(e) => setSearch(e.target.value)}
           />
-        </div>
-        <div className="flex w-full sm:w-auto gap-2">
-          <Button variant="outline" size="icon" className="shrink-0 h-10 w-10">
-            <Filter className="w-4 h-4" />
-          </Button>
         </div>
       </div>
 
@@ -365,7 +360,7 @@ function RequisitionsContent() {
             <TableBody>
               {filteredPrs.length > 0 ? (
                 filteredPrs.map((pr) => {
-                  const budget = budgets.find(b => b.name === pr.budgetLine);
+                  const budget = budgets.find(b => b.name === pr.budgetLine && b.fiscalYear === pr.fiscalYear);
                   const isPaused = budget ? getBudgetStats(budget).isPaused : false;
                   const total = calculatePRTotal(pr);
                   const firstItem = pr.items?.[0]?.description || 'Untitled Request';
@@ -435,7 +430,7 @@ function RequisitionsContent() {
                               {(pr.status === 'Draft' || currentUser.role === 'Admin' || pr.requesterName === currentUser.name) && (
                                  <DropdownMenuItem onClick={() => handleEdit(pr)} className="text-xs">
                                   <Pencil className="w-4 h-4 mr-2" />
-                                  {pr.status === 'Pending Manager' ? 'Review Request' : 'Edit Request'}
+                                  Review
                                 </DropdownMenuItem>
                               )}
                             </RoleGuard>
@@ -459,7 +454,7 @@ function RequisitionsContent() {
                       <div className="p-4 bg-muted rounded-full">
                         <Search className="w-8 h-8" />
                       </div>
-                      <p className="text-sm font-medium">No requisitions match your search filters.</p>
+                      <p className="text-sm font-medium">No requisitions for FY {selectedYear}.</p>
                     </div>
                   </TableCell>
                 </TableRow>
@@ -474,12 +469,7 @@ function RequisitionsContent() {
 
 export default function RequisitionsPage() {
   return (
-    <Suspense fallback={
-      <div className="flex flex-col items-center justify-center h-64 space-y-4">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary" />
-        <p className="text-sm text-muted-foreground font-bold uppercase tracking-widest animate-pulse">Loading Requisitions</p>
-      </div>
-    }>
+    <Suspense fallback={<div className="p-10 text-center font-bold">Syncing Requisitions...</div>}>
       <RequisitionsContent />
     </Suspense>
   );

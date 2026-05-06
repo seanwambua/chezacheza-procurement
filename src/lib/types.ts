@@ -15,6 +15,7 @@ export interface PurchaseRequisition {
   budgetLine: string; // Used as the link to Budget.name
   status: PRStatus;
   createdAt: string;
+  fiscalYear: string; // Tightly coupled with fiscal year
   rejectionReason?: string;
 }
 
@@ -36,6 +37,7 @@ export interface LPO {
   prId: string;
   vendorId: string;
   vendorName: string;
+  fiscalYear: string; // Tightly coupled
   items: {
     description: string;
     quantity: number;
@@ -45,7 +47,7 @@ export interface LPO {
   totalValue: number;
   deliveryDate: string;
   paymentTerms: string;
-  additionalTerms?: string; // New field for documenting specific terms
+  additionalTerms?: string;
   status: 'Draft' | 'Dispatched' | 'Fulfilled' | 'Partially Fulfilled' | 'Matched' | 'Closed';
   createdAt: string;
 }
@@ -54,6 +56,7 @@ export interface GRN {
   id: string;
   lpoId: string;
   lpoNumber: string;
+  fiscalYear: string; // Tightly coupled
   receivedDate: string;
   receivedBy: string;
   items: {
@@ -74,12 +77,10 @@ export interface Budget {
   department: string;
   description: string;
   fiscalYear: string;
-  // Quarterly allocations
   q1Allocation: number;
   q2Allocation: number;
   q3Allocation: number;
   q4Allocation: number;
-  // Global actuals
   spent: number;
   committed: number;
 }
@@ -96,9 +97,8 @@ export interface User {
   createdAt: string;
 }
 
-// RBAC Permissions Mapping
 export const ROLE_PERMISSIONS: Record<UserRole, string[]> = {
-  Admin: ['*'], // Access to everything
+  Admin: ['*'],
   Manager: [
     'view_dashboard',
     'view_budgets',
@@ -130,7 +130,6 @@ export const ROLE_PERMISSIONS: Record<UserRole, string[]> = {
   ],
 };
 
-// Helpers
 export function getCurrentQuarter(): number {
   const month = new Date().getMonth();
   return Math.floor(month / 3) + 1;
@@ -150,7 +149,6 @@ export function getBudgetStats(budget: Budget) {
     budget.q4Allocation || 0
   ];
   
-  // Total allocation up to current quarter (rolling)
   const cumulativeAllocation = qAllocations.slice(0, currentQ).reduce((acc, val) => acc + val, 0);
   const totalAllocation = qAllocations.reduce((acc, val) => acc + val, 0);
   

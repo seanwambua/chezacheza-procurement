@@ -1,4 +1,3 @@
-
 "use client";
 
 import { useEffect, useState } from 'react';
@@ -16,11 +15,9 @@ import {
   ArrowLeft,
   ShieldCheck,
   CheckCircle2,
-  TrendingDown,
   Target,
   Building2,
   PieChart as PieChartIcon,
-  LayoutDashboard,
   FileText
 } from 'lucide-react';
 import { 
@@ -96,13 +93,12 @@ type FiscalYearValues = z.infer<typeof fiscalYearSchema>;
 const DEPARTMENTS = ['IT', 'Operations', 'Marketing', 'Finance', 'Programs', 'HR'];
 
 export default function DashboardPage() {
-  const { prs, budgets, vendors, lpos, grns, addBudget } = useStore();
+  const { prs, budgets, vendors, lpos, grns, addBudget, selectedYear, setSelectedYear } = useStore();
   const { viewPreference } = useUserStore();
   const { toast } = useToast();
   const [mounted, setMounted] = useState(false);
   
   const availableYears = Array.from(new Set(budgets.map(b => b.fiscalYear))).sort((a, b) => Number(b) - Number(a));
-  const [selectedYear, setSelectedYear] = useState(availableYears[0] || '2024');
   
   const [isWizardOpen, setIsWizardOpen] = useState(false);
   const [wizardStep, setWizardStep] = useState(1);
@@ -125,21 +121,20 @@ export default function DashboardPage() {
     setMounted(true);
   }, []);
 
-  useEffect(() => {
-    if (availableYears.length > 0 && !availableYears.includes(selectedYear)) {
-      setSelectedYear(availableYears[0]);
-    }
-  }, [availableYears, selectedYear]);
-
   if (!mounted) return null;
 
   const isDetailed = viewPreference === 'detailed';
   const filteredBudgets = budgets.filter(b => b.fiscalYear === selectedYear);
   const totalSpendVal = filteredBudgets.reduce((acc, bl) => acc + (bl.spent || 0), 0);
-  const pendingApprovals = prs.filter(pr => pr.status?.includes('Pending')).length;
-  const activeLposCount = lpos.filter(lpo => lpo.status !== 'Closed').length;
-  const awaitingDelivery = lpos.filter(lpo => lpo.status === 'Dispatched').length;
-  const activeDisputes = grns.filter(grn => grn.disputeFlag).length;
+  const filteredPrs = prs.filter(pr => pr.fiscalYear === selectedYear);
+  const pendingApprovals = filteredPrs.filter(pr => pr.status?.includes('Pending')).length;
+  
+  const filteredLpos = lpos.filter(lpo => lpo.fiscalYear === selectedYear);
+  const activeLposCount = filteredLpos.filter(lpo => lpo.status !== 'Closed').length;
+  const awaitingDelivery = filteredLpos.filter(lpo => lpo.status === 'Dispatched').length;
+  
+  const filteredGrns = grns.filter(grn => grn.fiscalYear === selectedYear);
+  const activeDisputes = filteredGrns.filter(grn => grn.disputeFlag).length;
 
   const budgetData = filteredBudgets.map(bl => ({
     name: bl.name,
@@ -153,7 +148,7 @@ export default function DashboardPage() {
     { name: 'Needs Review', value: vendors.filter(v => v.rating < 3).length, color: 'hsl(var(--chart-3))' },
   ];
 
-  const recentPrs = prs.slice(0, isDetailed ? 5 : 3);
+  const recentPrs = filteredPrs.slice(0, isDetailed ? 5 : 3);
 
   const onWizardSubmit = (values: FiscalYearValues) => {
     if (wizardStep < 5) {
@@ -198,7 +193,6 @@ export default function DashboardPage() {
     
     if (isValid) {
       if (wizardStep === 4) {
-        // Double check weight sum
         const { q1Weight, q2Weight, q3Weight, q4Weight } = form.getValues();
         if ((q1Weight + q2Weight + q3Weight + q4Weight) !== 100) {
           form.setError('q1Weight', { message: 'Weights must total exactly 100%' });
@@ -219,7 +213,7 @@ export default function DashboardPage() {
           )}>
             Overview
           </h2>
-          <p className="text-sm text-muted-foreground font-medium">Strategic procurement metrics and fiscal health.</p>
+          <p className="text-sm text-muted-foreground font-medium">Strategic procurement metrics for FY {selectedYear}.</p>
         </div>
         <div className="flex flex-wrap items-center gap-3">
           <div className="flex items-center gap-2">
@@ -229,13 +223,9 @@ export default function DashboardPage() {
                 <SelectValue placeholder="Fiscal Year" />
               </SelectTrigger>
               <SelectContent>
-                {availableYears.length > 0 ? (
-                  availableYears.map(year => (
-                    <SelectItem key={year} value={year} className="text-xs">FY {year}</SelectItem>
-                  ))
-                ) : (
-                  <SelectItem value="2024" className="text-xs">FY 2024</SelectItem>
-                )}
+                {availableYears.map(year => (
+                  <SelectItem key={year} value={year} className="text-xs">FY {year}</SelectItem>
+                ))}
               </SelectContent>
             </Select>
           </div>
@@ -513,8 +503,8 @@ export default function DashboardPage() {
             value={`Ksh ${totalSpendVal.toLocaleString()}`} 
             trend={{ value: 12, isUp: true }}
             icon={TrendingUp} 
-            tooltip="The actual verified expenditure across all departmental budgets for the current fiscal period."
-            description={isDetailed ? "Verified actuals vs last month" : "Actual verified expenditure"}
+            tooltip="The actual verified expenditure across all departmental budgets for the selected fiscal period."
+            description={isDetailed ? "Verified actuals for current selection" : "Actual verified expenditure"}
           />
         </div>
 
@@ -522,7 +512,7 @@ export default function DashboardPage() {
           <StatCard 
             title="Pending Approvals" 
             value={pendingApprovals} 
-            description={isDetailed ? "Awaiting your review" : undefined}
+            description={isDetailed ? "Awaiting review for this period" : undefined}
             icon={Clock} 
           />
         </div>
@@ -641,7 +631,7 @@ export default function DashboardPage() {
         )}>
           <Card className="shadow-none border border-border overflow-hidden bg-card">
             <CardHeader className="flex flex-row items-center justify-between py-4 px-6 border-b border-border/50">
-              <CardTitle className="text-base md:text-lg font-headline">Recent Requisitions</CardTitle>
+              <CardTitle className="text-base md:text-lg font-headline">Recent Requisitions ({selectedYear})</CardTitle>
               <Link href="/requisitions" className="text-xs font-bold text-accent flex items-center gap-1 hover:underline group">
                 View All <ArrowRight className="w-3 h-3 group-hover:translate-x-0.5 transition-transform" />
               </Link>
@@ -685,7 +675,7 @@ export default function DashboardPage() {
                 ) : (
                   <div className="flex flex-col items-center justify-center py-12 text-center space-y-2 opacity-50">
                     <FileCheck className="w-8 h-8 text-muted-foreground" />
-                    <p className="text-sm font-medium">No recent requisitions found.</p>
+                    <p className="text-sm font-medium">No requisitions found for FY {selectedYear}.</p>
                   </div>
                 )}
               </div>

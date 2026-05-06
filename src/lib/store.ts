@@ -9,18 +9,20 @@ interface ProcurementState {
   lpos: LPO[];
   grns: GRN[];
   budgets: Budget[];
+  selectedYear: string;
   
   // Actions
-  addPR: (pr: Omit<PurchaseRequisition, 'id' | 'createdAt' | 'refNumber'>) => void;
+  setSelectedYear: (year: string) => void;
+  addPR: (pr: Omit<PurchaseRequisition, 'id' | 'createdAt' | 'refNumber' | 'fiscalYear'>) => void;
   updatePR: (id: string, updates: Partial<PurchaseRequisition>) => void;
   deletePR: (id: string) => void;
   updatePRStatus: (id: string, status: PurchaseRequisition['status']) => void;
   addVendor: (vendor: Vendor) => void;
-  addLPO: (lpo: LPO) => void;
+  addLPO: (lpo: Omit<LPO, 'fiscalYear'>) => void;
   updateLPO: (id: string, updates: Partial<LPO>) => void;
   deleteLPO: (id: string) => void;
   updateLPOStatus: (id: string, status: LPO['status']) => void;
-  addGRN: (grn: GRN) => void;
+  addGRN: (grn: Omit<GRN, 'fiscalYear'>) => void;
   addBudget: (budget: Omit<Budget, 'id' | 'spent' | 'committed'>) => void;
   updateBudget: (id: string, updates: Partial<Budget>) => void;
   deleteBudget: (id: string) => void;
@@ -30,27 +32,31 @@ const isCommitted = (status: PRStatus) => status !== 'Draft' && status !== 'Reje
 
 export const useStore = create<ProcurementState>()(
   persist(
-    (set) => ({
+    (set, get) => ({
       prs: MOCK_PRS,
       vendors: MOCK_VENDORS,
       lpos: MOCK_LPOS,
       grns: MOCK_GRNS,
       budgets: MOCK_BUDGETS,
+      selectedYear: '2024',
+
+      setSelectedYear: (selectedYear) => set({ selectedYear }),
 
       addPR: (prData) => set((state) => {
         const id = `PR-${Math.floor(Math.random() * 10000)}`;
-        const refNumber = `REQ/2024/${String(state.prs.length + 1).padStart(3, '0')}`;
+        const refNumber = `REQ/${state.selectedYear}/${String(state.prs.length + 1).padStart(3, '0')}`;
         const newPR: PurchaseRequisition = {
           ...prData,
           id,
           refNumber,
+          fiscalYear: state.selectedYear,
           createdAt: new Date().toISOString(),
         };
 
         const prTotal = calculatePRTotal(newPR);
 
         const updatedBudgets = state.budgets.map(b => {
-          if (b.name === newPR.budgetLine && isCommitted(newPR.status)) {
+          if (b.name === newPR.budgetLine && b.fiscalYear === state.selectedYear && isCommitted(newPR.status)) {
             return { ...b, committed: b.committed + prTotal };
           }
           return b;
@@ -75,10 +81,10 @@ export const useStore = create<ProcurementState>()(
 
         const updatedBudgets = state.budgets.map(b => {
           let committed = b.committed;
-          if (b.name === oldPR.budgetLine && wasCommitted) {
+          if (b.name === oldPR.budgetLine && b.fiscalYear === oldPR.fiscalYear && wasCommitted) {
             committed -= oldTotal;
           }
-          if (b.name === newPR.budgetLine && isNowCommitted) {
+          if (b.name === newPR.budgetLine && b.fiscalYear === newPR.fiscalYear && isNowCommitted) {
             committed += newTotal;
           }
           return { ...b, committed: Math.max(0, committed) };
@@ -97,7 +103,7 @@ export const useStore = create<ProcurementState>()(
         const prTotal = calculatePRTotal(prToDelete);
 
         const updatedBudgets = state.budgets.map(b => {
-          if (b.name === prToDelete.budgetLine && isCommitted(prToDelete.status)) {
+          if (b.name === prToDelete.budgetLine && b.fiscalYear === prToDelete.fiscalYear && isCommitted(prToDelete.status)) {
             return { 
               ...b, 
               committed: Math.max(0, b.committed - prTotal) 
@@ -121,7 +127,7 @@ export const useStore = create<ProcurementState>()(
         const isNowCommitted = isCommitted(status);
 
         const updatedBudgets = state.budgets.map(b => {
-          if (b.name === pr.budgetLine) {
+          if (b.name === pr.budgetLine && b.fiscalYear === pr.fiscalYear) {
             let committed = b.committed;
             if (wasCommitted && !isNowCommitted) {
               committed -= prTotal;
@@ -143,8 +149,8 @@ export const useStore = create<ProcurementState>()(
         vendors: [...state.vendors, vendor]
       })),
 
-      addLPO: (lpo) => set((state) => ({
-        lpos: [...state.lpos, lpo]
+      addLPO: (lpoData) => set((state) => ({
+        lpos: [...state.lpos, { ...lpoData, fiscalYear: state.selectedYear }]
       })),
 
       updateLPO: (id, updates) => set((state) => ({
@@ -159,17 +165,16 @@ export const useStore = create<ProcurementState>()(
         lpos: state.lpos.map(lpo => lpo.id === id ? { ...lpo, status } : lpo)
       })),
 
-      addGRN: (grn) => set((state) => {
-        // Find LPO and update status
+      addGRN: (grnData) => set((state) => {
+        const grn = { ...grnData, fiscalYear: state.selectedYear };
         const updatedLpos = state.lpos.map(lpo => 
           lpo.id === grn.lpoId ? { ...lpo, status: grn.disputeFlag ? 'Partially Fulfilled' : 'Fulfilled' as any } : lpo
         );
 
-        // Update budget actuals if fulfilled
         const lpo = state.lpos.find(l => l.id === grn.lpoId);
         const updatedBudgets = state.budgets.map(b => {
-          if (lpo && b.id === state.prs.find(p => p.id === lpo.prId)?.budgetLine) {
-            // Simplified: moving commitment to actual spent
+          const pr = state.prs.find(p => p.id === lpo?.prId);
+          if (lpo && pr && b.name === pr.budgetLine && b.fiscalYear === pr.fiscalYear) {
             return {
               ...b,
               committed: Math.max(0, b.committed - lpo.totalValue),

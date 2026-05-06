@@ -76,6 +76,7 @@ export const MOCK_PRS: PurchaseRequisition[] = [
       { id: 'item-1', description: 'MacBook Pro M3', quantity: 1, estimatedUnitPrice: 300000 }
     ],
     budgetLine: 'IT Infrastructure',
+    fiscalYear: '2024',
     status: 'Pending Manager',
     createdAt: '2024-03-01T10:00:00Z',
   },
@@ -88,6 +89,7 @@ export const MOCK_LPOS: LPO[] = [
     prId: 'PR-1002',
     vendorId: 'V-001',
     vendorName: 'TechSolutions Ltd',
+    fiscalYear: '2024',
     items: [{ description: 'Office Chairs', quantity: 10, unitPrice: 35000, total: 350000 }],
     totalValue: 350000,
     deliveryDate: '2024-03-20',
