@@ -123,7 +123,7 @@ export default function ApprovalsPage() {
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
           <h2 className={cn(
-            "font-headline font-bold text-primary",
+            "font-headline font-bold text-primary tracking-tighter",
             isDetailed ? "text-3xl" : "text-4xl"
           )}>
             Approval Pipeline
@@ -178,7 +178,7 @@ export default function ApprovalsPage() {
         </div>
 
         <TabsContent value="queue" className="mt-0">
-          <Card className="border-border shadow-none">
+          <Card className="border-border shadow-none overflow-hidden">
             <CardContent className="p-0">
               <div className="overflow-x-auto">
                 <Table>
@@ -186,7 +186,7 @@ export default function ApprovalsPage() {
                     <TableRow className="bg-muted/30">
                       {isDetailed && <TableHead>Reference</TableHead>}
                       <TableHead>Summary</TableHead>
-                      <TableHead>Requester</TableHead>
+                      {isDetailed && <TableHead>Requester</TableHead>}
                       <TableHead>Budget Health</TableHead>
                       <TableHead className="text-right">Estimated Total</TableHead>
                       <TableHead className="text-right">Actions</TableHead>
@@ -206,8 +206,8 @@ export default function ApprovalsPage() {
                             <TableCell>
                               <div className="flex flex-col">
                                 <span className={cn(
-                                  "font-medium",
-                                  isDetailed ? "text-sm" : "text-base"
+                                  "font-bold",
+                                  isDetailed ? "text-sm" : "text-lg text-primary"
                                 )}>
                                   {pr.items?.[0]?.description || 'Multi-item Request'}
                                 </span>
@@ -216,32 +216,34 @@ export default function ApprovalsPage() {
                                 )}
                               </div>
                             </TableCell>
-                            <TableCell>
-                              <span className="text-xs">{pr.requesterName}</span>
-                            </TableCell>
+                            {isDetailed && (
+                              <TableCell>
+                                <span className="text-xs">{pr.requesterName}</span>
+                              </TableCell>
+                            )}
                             <TableCell>
                               <div className={cn(
                                 "flex items-center gap-2",
                                 isPaused ? "text-destructive" : "text-green-600"
                               )}>
                                 <div className={cn(
-                                  "w-2 h-2 rounded-full",
+                                  "w-2.5 h-2.5 rounded-full",
                                   isPaused ? "bg-destructive animate-pulse" : "bg-green-600"
                                 )} />
-                                <span className="text-xs font-bold uppercase">{isPaused ? 'Exhausted' : 'Healthy'}</span>
+                                {isDetailed && <span className="text-xs font-bold uppercase">{isPaused ? 'Exhausted' : 'Healthy'}</span>}
                               </div>
                             </TableCell>
                             <TableCell className={cn(
-                              "text-right font-black",
-                              isDetailed ? "text-base" : "text-lg text-primary"
+                              "text-right font-black tracking-tighter",
+                              isDetailed ? "text-base" : "text-xl text-primary"
                             )}>
                               Ksh {total.toLocaleString()}
                             </TableCell>
                             <TableCell className="text-right">
                               <Button 
                                 variant="outline" 
-                                size="sm" 
-                                className="h-8"
+                                size={isDetailed ? "sm" : "default"}
+                                className="h-9 font-bold uppercase text-[10px]"
                                 onClick={() => setSelectedPr(pr)}
                               >
                                 <Eye className="w-4 h-4 mr-1.5" />
@@ -253,7 +255,7 @@ export default function ApprovalsPage() {
                       })
                     ) : (
                       <TableRow>
-                        <TableCell colSpan={6} className="h-32 text-center text-muted-foreground">
+                        <TableCell colSpan={isDetailed ? 6 : 5} className="h-32 text-center text-muted-foreground">
                           <p className="text-sm">Your approval queue is empty.</p>
                         </TableCell>
                       </TableRow>
@@ -266,7 +268,7 @@ export default function ApprovalsPage() {
         </TabsContent>
 
         <TabsContent value="history" className="mt-0">
-          <Card className="border-border shadow-none">
+          <Card className="border-border shadow-none overflow-hidden">
             <CardContent className="p-0">
               <div className="overflow-x-auto">
                 <Table>
@@ -275,7 +277,7 @@ export default function ApprovalsPage() {
                       {isDetailed && <TableHead>Reference</TableHead>}
                       <TableHead>Summary</TableHead>
                       <TableHead>Status</TableHead>
-                      <TableHead>Budget Line</TableHead>
+                      {isDetailed && <TableHead>Budget Line</TableHead>}
                       <TableHead className="text-right">Final Total</TableHead>
                       <TableHead className="text-right">Date</TableHead>
                     </TableRow>
@@ -287,7 +289,10 @@ export default function ApprovalsPage() {
                           {isDetailed && <TableCell className="font-bold text-primary text-xs">{pr.refNumber}</TableCell>}
                           <TableCell>
                             <div className="flex flex-col">
-                              <span className="text-xs font-medium">{pr.items?.[0]?.description || 'Multi-item Request'}</span>
+                              <span className={cn(
+                                "font-medium",
+                                isDetailed ? "text-xs" : "text-sm"
+                              )}>{pr.items?.[0]?.description || 'Multi-item Request'}</span>
                             </div>
                           </TableCell>
                           <TableCell>
@@ -295,9 +300,11 @@ export default function ApprovalsPage() {
                               {pr.status}
                             </Badge>
                           </TableCell>
-                          <TableCell className="text-[10px] font-bold uppercase text-muted-foreground">
-                            {pr.budgetLine}
-                          </TableCell>
+                          {isDetailed && (
+                            <TableCell className="text-[10px] font-bold uppercase text-muted-foreground">
+                              {pr.budgetLine}
+                            </TableCell>
+                          )}
                           <TableCell className="text-right font-black text-xs">
                             Ksh {calculatePRTotal(pr).toLocaleString()}
                           </TableCell>
@@ -308,7 +315,7 @@ export default function ApprovalsPage() {
                       ))
                     ) : (
                       <TableRow>
-                        <TableCell colSpan={6} className="h-32 text-center text-muted-foreground">
+                        <TableCell colSpan={isDetailed ? 6 : 5} className="h-32 text-center text-muted-foreground">
                           <p className="text-sm">No historical records found.</p>
                         </TableCell>
                       </TableRow>
