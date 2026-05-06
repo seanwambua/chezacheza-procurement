@@ -221,16 +221,6 @@ export function SidebarNav() {
             </DropdownMenuContent>
           </DropdownMenu>
         </div>
-        
-        <div className="flex items-center gap-3 px-3 py-2 border-t border-sidebar-border/50 pt-4">
-          <div className="w-8 h-8 rounded-full bg-accent flex items-center justify-center text-white text-xs font-bold shrink-0 shadow-sm">
-            {currentUser.name.charAt(0)}
-          </div>
-          <div className="flex flex-col overflow-hidden text-sidebar-foreground">
-            <span className="text-xs font-bold truncate">{currentUser.name}</span>
-            <span className="text-[9px] text-muted-foreground truncate uppercase font-bold tracking-tight">{currentUser.role} • {currentUser.department}</span>
-          </div>
-        </div>
       </div>
     </div>
   );
