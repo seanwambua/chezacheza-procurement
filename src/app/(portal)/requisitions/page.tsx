@@ -49,6 +49,7 @@ import { PurchaseRequisition, getBudgetStats, calculatePRTotal } from '@/lib/typ
 import { RoleGuard } from '@/components/auth/RoleGuard';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { useSearchParams, useRouter } from 'next/navigation';
+import { cn } from '@/lib/utils';
 
 const requisitionSchema = z.object({
   budgetLine: z.string().min(1, "Please select a budget"),
@@ -179,13 +180,16 @@ function RequisitionsContent() {
   };
 
   return (
-    <div className="space-y-6 animate-in fade-in duration-500 pb-10">
-      <div className="flex items-center justify-between">
-        <div>
-          <h2 className={isDetailed ? "text-3xl font-headline font-bold text-primary" : "text-4xl font-black text-primary"}>
+    <div className="space-y-6 md:space-y-8 animate-in fade-in duration-500 pb-10">
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+        <div className="space-y-1">
+          <h2 className={cn(
+            "font-headline font-bold text-primary tracking-tighter leading-tight",
+            isDetailed ? "text-2xl md:text-3xl" : "text-3xl md:text-4xl"
+          )}>
             Purchase Requisitions
           </h2>
-          <p className="text-muted-foreground">Submit and track multi-item internal purchase requests.</p>
+          <p className="text-sm text-muted-foreground font-medium">Submit and track multi-item internal purchase requests.</p>
         </div>
         
         <RoleGuard permission="create_requisitions">
@@ -194,15 +198,15 @@ function RequisitionsContent() {
             else setIsDialogOpen(true);
           }}>
             <DialogTrigger asChild>
-              <Button className="bg-primary shadow-sm" onClick={() => setEditingPr(null)}>
+              <Button className="w-full md:w-auto bg-primary shadow-sm font-bold uppercase text-xs h-10" onClick={() => setEditingPr(null)}>
                 <Plus className="w-4 h-4 mr-2" />
                 New Requisition
               </Button>
             </DialogTrigger>
-            <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
+            <DialogContent className="max-w-3xl w-[95vw] max-h-[90vh] overflow-y-auto">
               <DialogHeader>
-                <DialogTitle className="text-2xl font-black">{editingPr ? 'Review Requisition' : 'Draft New Requisition'}</DialogTitle>
-                <DialogDescription>
+                <DialogTitle className="text-xl md:text-2xl font-black">{editingPr ? 'Review Requisition' : 'Draft New Requisition'}</DialogTitle>
+                <DialogDescription className="text-xs">
                   List all required items for this procurement. Total cost is subject to quarterly budget limits.
                 </DialogDescription>
               </DialogHeader>
@@ -237,8 +241,8 @@ function RequisitionsContent() {
                     {isBudgetPaused && (
                       <Alert variant="destructive" className="bg-destructive/10 border-destructive/20">
                         <AlertTriangle className="h-4 w-4" />
-                        <AlertTitle className="text-xs font-bold uppercase">Budget Cap Reached</AlertTitle>
-                        <AlertDescription className="text-xs">
+                        <AlertTitle className="text-[10px] font-bold uppercase">Budget Cap Reached</AlertTitle>
+                        <AlertDescription className="text-[10px]">
                           The selected budget line has exhausted its quarterly allocation. Submissions are temporarily paused.
                         </AlertDescription>
                       </Alert>
@@ -247,8 +251,8 @@ function RequisitionsContent() {
 
                   <div className="space-y-4">
                     <div className="flex items-center justify-between">
-                      <h3 className="text-xs font-bold uppercase tracking-widest text-muted-foreground">Line Items</h3>
-                      <Button type="button" variant="outline" size="sm" onClick={() => append({ description: '', quantity: 1, estimatedUnitPrice: 0 })} className="h-8 text-[11px] font-bold uppercase">
+                      <h3 className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">Line Items</h3>
+                      <Button type="button" variant="outline" size="sm" onClick={() => append({ description: '', quantity: 1, estimatedUnitPrice: 0 })} className="h-8 text-[10px] font-bold uppercase">
                         <PlusCircle className="w-3.5 h-3.5 mr-1.5" />
                         Add Item
                       </Button>
@@ -256,47 +260,50 @@ function RequisitionsContent() {
                     
                     <div className="space-y-3">
                       {fields.map((field, index) => (
-                        <div key={field.id} className="grid grid-cols-12 gap-3 items-start bg-muted/10 p-3 rounded-md border border-border/40 group">
-                          <div className="col-span-6">
+                        <div key={field.id} className="grid grid-cols-1 md:grid-cols-12 gap-3 items-start bg-muted/10 p-3 rounded-md border border-border/40 group">
+                          <div className="md:col-span-6">
                             <FormField
                               control={form.control}
                               name={`items.${index}.description`}
                               render={({ field }) => (
                                 <FormItem>
-                                  <FormControl><Input placeholder="Item Description" {...field} className="h-9 text-sm" /></FormControl>
+                                  <FormLabel className="md:hidden text-[10px] font-bold uppercase text-muted-foreground">Description</FormLabel>
+                                  <FormControl><Input placeholder="Item Description" {...field} className="h-9 text-xs" /></FormControl>
                                   <FormMessage className="text-[10px]" />
                                 </FormItem>
                               )}
                             />
                           </div>
-                          <div className="col-span-2">
+                          <div className="md:col-span-2">
                             <FormField
                               control={form.control}
                               name={`items.${index}.quantity`}
                               render={({ field }) => (
                                 <FormItem>
-                                  <FormControl><Input type="number" {...field} className="h-9 text-sm" placeholder="Qty" /></FormControl>
+                                  <FormLabel className="md:hidden text-[10px] font-bold uppercase text-muted-foreground">Qty</FormLabel>
+                                  <FormControl><Input type="number" {...field} className="h-9 text-xs" placeholder="Qty" /></FormControl>
                                   <FormMessage className="text-[10px]" />
                                 </FormItem>
                               )}
                             />
                           </div>
-                          <div className="col-span-3">
+                          <div className="md:col-span-3">
                             <FormField
                               control={form.control}
                               name={`items.${index}.estimatedUnitPrice`}
                               render={({ field }) => (
                                 <FormItem>
-                                  <FormControl><Input type="number" step="0.01" {...field} className="h-9 text-sm" placeholder="Unit Price" /></FormControl>
+                                  <FormLabel className="md:hidden text-[10px] font-bold uppercase text-muted-foreground">Est. Unit Price</FormLabel>
+                                  <FormControl><Input type="number" step="0.01" {...field} className="h-9 text-xs" placeholder="Unit Price" /></FormControl>
                                   <FormMessage className="text-[10px]" />
                                 </FormItem>
                               )}
                             />
                           </div>
-                          <div className="col-span-1 pt-1.5">
+                          <div className="md:col-span-1 pt-1.5 flex justify-end">
                             {fields.length > 1 && (
-                              <Button type="button" variant="ghost" size="icon" onClick={() => remove(index)} className="h-6 w-6 text-destructive opacity-0 group-hover:opacity-100 transition-opacity">
-                                <Trash className="w-3.5 h-3.5" />
+                              <Button type="button" variant="ghost" size="icon" onClick={() => remove(index)} className="h-8 w-8 text-destructive md:opacity-0 group-hover:opacity-100 transition-opacity">
+                                <Trash className="w-4 h-4" />
                               </Button>
                             )}
                           </div>
@@ -308,11 +315,11 @@ function RequisitionsContent() {
                   <div className="flex flex-col gap-4 border-t border-border/50 pt-6">
                     <div className="flex justify-between items-center px-2">
                       <span className="text-[10px] uppercase font-bold text-muted-foreground">Cumulative Estimate</span>
-                      <span className="text-xl font-black text-primary">Ksh {currentTotal.toLocaleString()}</span>
+                      <span className="text-xl font-black text-primary tracking-tighter">Ksh {currentTotal.toLocaleString()}</span>
                     </div>
-                    <DialogFooter className="gap-2 sm:gap-0">
-                      <Button type="button" variant="outline" onClick={handleCloseDialog}>Cancel</Button>
-                      <Button type="submit" disabled={isBudgetPaused && !editingPr} className="bg-primary">
+                    <DialogFooter className="gap-2 flex-col sm:flex-row">
+                      <Button type="button" variant="outline" onClick={handleCloseDialog} className="w-full sm:w-auto text-xs font-bold uppercase">Cancel</Button>
+                      <Button type="submit" disabled={isBudgetPaused && !editingPr} className="w-full sm:w-auto bg-primary text-xs font-bold uppercase">
                         {editingPr ? 'Save Revisions' : 'Launch for Approval'}
                       </Button>
                     </DialogFooter>
@@ -324,128 +331,142 @@ function RequisitionsContent() {
         </RoleGuard>
       </div>
 
-      <div className="flex items-center gap-4 bg-card p-4 rounded-xl border border-border shadow-sm">
-        <div className="relative flex-1">
+      <div className="flex flex-col sm:flex-row items-center gap-4 bg-card p-4 rounded-xl border border-border shadow-sm">
+        <div className="relative w-full flex-1">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
           <Input 
             placeholder="Search by item name or REF#" 
-            className="pl-9 bg-muted/30 border-none shadow-none focus-visible:ring-1" 
+            className="w-full pl-9 bg-muted/30 border-none shadow-none focus-visible:ring-1 h-10 text-xs" 
             value={search}
             onChange={(e) => setSearch(e.target.value)}
           />
         </div>
-        <Button variant="outline" size="icon" className="shrink-0">
-          <Filter className="w-4 h-4" />
-        </Button>
+        <div className="flex w-full sm:w-auto gap-2">
+          <Button variant="outline" size="icon" className="shrink-0 h-10 w-10">
+            <Filter className="w-4 h-4" />
+          </Button>
+        </div>
       </div>
 
-      <Card className="border-border shadow-none overflow-hidden">
-        <Table>
-          <TableHeader>
-            <TableRow className="bg-muted/30 border-none">
-              {isDetailed && <TableHead className="font-bold uppercase text-[10px]">Reference</TableHead>}
-              <TableHead className="font-bold uppercase text-[10px]">Description Summary</TableHead>
-              {isDetailed && <TableHead className="font-bold uppercase text-[10px]">Originator</TableHead>}
-              <TableHead className="font-bold uppercase text-[10px]">Budget Line</TableHead>
-              <TableHead className="font-bold uppercase text-[10px]">Progress</TableHead>
-              <TableHead className="text-right font-bold uppercase text-[10px]">Net Total</TableHead>
-              <TableHead className="w-[50px]"></TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {filteredPrs.length > 0 ? (
-              filteredPrs.map((pr) => {
-                const budget = budgets.find(b => b.name === pr.budgetLine);
-                const isPaused = budget ? getBudgetStats(budget).isPaused : false;
-                const total = calculatePRTotal(pr);
-                const firstItem = pr.items?.[0]?.description || 'Untitled Request';
-                
-                return (
-                  <TableRow key={pr.id} className="group hover:bg-muted/5">
-                    {isDetailed && <TableCell className="font-black text-primary text-xs">{pr.refNumber}</TableCell>}
-                    <TableCell>
-                      <div className="flex flex-col">
-                        <span className={isDetailed ? "text-sm font-medium" : "text-base font-bold"}>{firstItem}</span>
-                        {(pr.items?.length || 0) > 1 && (
-                          <span className="text-[10px] text-muted-foreground italic">+ {pr.items.length - 1} more line items</span>
-                        )}
-                      </div>
-                    </TableCell>
-                    {isDetailed && <TableCell className="text-xs">{pr.requesterName}</TableCell>}
-                    <TableCell>
-                      <div className="flex flex-col">
-                        <span className={isDetailed ? "text-xs font-semibold" : "text-sm font-bold"}>{pr.budgetLine}</span>
-                        {isPaused && <Badge variant="destructive" className="text-[8px] h-3.5 px-1 py-0 w-fit">PAUSED</Badge>}
-                      </div>
-                    </TableCell>
-                    <TableCell>
-                      <Badge variant={
-                        pr.status === 'Approved' ? 'secondary' : 
-                        pr.status === 'Rejected' ? 'destructive' : 'outline'
-                      } className="text-[9px] uppercase tracking-tighter">
-                        {pr.status}
-                      </Badge>
-                    </TableCell>
-                    <TableCell className={isDetailed ? "text-right font-black text-xs" : "text-right font-black text-lg text-primary"}>
-                      Ksh {total.toLocaleString()}
-                    </TableCell>
-                    <TableCell>
-                      <DropdownMenu>
-                        <DropdownMenuTrigger asChild>
-                          <Button variant="ghost" size="icon" className="h-8 w-8 opacity-0 group-hover:opacity-100 transition-opacity">
-                            <MoreVertical className="w-4 h-4" />
-                          </Button>
-                        </DropdownMenuTrigger>
-                        <DropdownMenuContent align="end">
-                          <RoleGuard permission="approve_requisitions">
-                            {pr.status === 'Pending Manager' && (
-                              <>
-                                <DropdownMenuItem onClick={() => updatePRStatus(pr.id, 'Approved')} className="text-green-600">
-                                  <CheckCircle className="w-4 h-4 mr-2" />
-                                  Authorize
-                                </DropdownMenuItem>
-                                <DropdownMenuItem onClick={() => updatePRStatus(pr.id, 'Rejected')} className="text-red-600">
-                                  <XCircle className="w-4 h-4 mr-2" />
-                                  Reject
-                                </DropdownMenuItem>
-                                <DropdownMenuSeparator />
-                              </>
-                            )}
-                          </RoleGuard>
-
-                          <RoleGuard allowedRoles={['Admin', 'Staff']}>
-                            {(pr.status === 'Draft' || currentUser.role === 'Admin' || pr.requesterName === currentUser.name) && (
-                               <DropdownMenuItem onClick={() => handleEdit(pr)}>
-                                <Pencil className="w-4 h-4 mr-2" />
-                                {pr.status === 'Pending Manager' ? 'Review Request' : 'Edit Request'}
-                              </DropdownMenuItem>
-                            )}
-                          </RoleGuard>
-
-                          <RoleGuard allowedRoles={['Admin']}>
-                            <DropdownMenuItem onClick={() => handleDelete(pr.id)} className="text-destructive focus:text-destructive">
-                              <Trash2 className="w-4 h-4 mr-2" />
-                              Delete
-                            </DropdownMenuItem>
-                          </RoleGuard>
-                        </DropdownMenuContent>
-                      </DropdownMenu>
-                    </TableCell>
-                  </TableRow>
-                );
-              })
-            ) : (
-              <TableRow>
-                <TableCell colSpan={7} className="h-32 text-center text-muted-foreground">
-                  <div className="flex flex-col items-center justify-center space-y-2 opacity-50">
-                    <Search className="w-8 h-8" />
-                    <p className="text-sm">No requisitions match your search filters.</p>
-                  </div>
-                </TableCell>
+      <Card className="border-border shadow-none overflow-hidden bg-card">
+        <div className="overflow-x-auto w-full">
+          <Table>
+            <TableHeader>
+              <TableRow className="bg-muted/30 border-none">
+                {isDetailed && <TableHead className="font-bold uppercase text-[10px] whitespace-nowrap">Reference</TableHead>}
+                <TableHead className="font-bold uppercase text-[10px] min-w-[200px]">Description Summary</TableHead>
+                {isDetailed && <TableHead className="font-bold uppercase text-[10px] whitespace-nowrap">Originator</TableHead>}
+                <TableHead className="font-bold uppercase text-[10px] whitespace-nowrap">Budget Line</TableHead>
+                <TableHead className="font-bold uppercase text-[10px] whitespace-nowrap">Progress</TableHead>
+                <TableHead className="text-right font-bold uppercase text-[10px] whitespace-nowrap">Net Total</TableHead>
+                <TableHead className="w-[50px]"></TableHead>
               </TableRow>
-            )}
-          </TableBody>
-        </Table>
+            </TableHeader>
+            <TableBody>
+              {filteredPrs.length > 0 ? (
+                filteredPrs.map((pr) => {
+                  const budget = budgets.find(b => b.name === pr.budgetLine);
+                  const isPaused = budget ? getBudgetStats(budget).isPaused : false;
+                  const total = calculatePRTotal(pr);
+                  const firstItem = pr.items?.[0]?.description || 'Untitled Request';
+                  
+                  return (
+                    <TableRow key={pr.id} className="group hover:bg-muted/5">
+                      {isDetailed && <TableCell className="font-black text-primary text-xs whitespace-nowrap">{pr.refNumber}</TableCell>}
+                      <TableCell>
+                        <div className="flex flex-col min-w-0">
+                          <span className={cn(
+                            "truncate",
+                            isDetailed ? "text-xs font-bold" : "text-sm font-bold text-primary"
+                          )}>
+                            {firstItem}
+                          </span>
+                          {(pr.items?.length || 0) > 1 && (
+                            <span className="text-[10px] text-muted-foreground italic truncate">+ {pr.items.length - 1} more line items</span>
+                          )}
+                        </div>
+                      </TableCell>
+                      {isDetailed && <TableCell className="text-xs whitespace-nowrap">{pr.requesterName}</TableCell>}
+                      <TableCell>
+                        <div className="flex flex-col min-w-0">
+                          <span className="text-xs font-semibold truncate">{pr.budgetLine}</span>
+                          {isPaused && <Badge variant="destructive" className="text-[8px] h-3.5 px-1 py-0 w-fit">PAUSED</Badge>}
+                        </div>
+                      </TableCell>
+                      <TableCell>
+                        <Badge variant={
+                          pr.status === 'Approved' ? 'secondary' : 
+                          pr.status === 'Rejected' ? 'destructive' : 'outline'
+                        } className="text-[9px] uppercase tracking-tighter whitespace-nowrap">
+                          {pr.status}
+                        </Badge>
+                      </TableCell>
+                      <TableCell className={cn(
+                        "text-right font-black tracking-tighter whitespace-nowrap",
+                        isDetailed ? "text-xs" : "text-base text-primary"
+                      )}>
+                        Ksh {total.toLocaleString()}
+                      </TableCell>
+                      <TableCell>
+                        <DropdownMenu>
+                          <DropdownMenuTrigger asChild>
+                            <Button variant="ghost" size="icon" className="h-8 w-8 md:opacity-0 group-hover:opacity-100 transition-opacity">
+                              <MoreVertical className="w-4 h-4" />
+                            </Button>
+                          </DropdownMenuTrigger>
+                          <DropdownMenuContent align="end">
+                            <RoleGuard permission="approve_requisitions">
+                              {pr.status === 'Pending Manager' && (
+                                <>
+                                  <DropdownMenuItem onClick={() => updatePRStatus(pr.id, 'Approved')} className="text-green-600 text-xs font-bold">
+                                    <CheckCircle className="w-4 h-4 mr-2" />
+                                    Authorize
+                                  </DropdownMenuItem>
+                                  <DropdownMenuItem onClick={() => updatePRStatus(pr.id, 'Rejected')} className="text-red-600 text-xs font-bold">
+                                    <XCircle className="w-4 h-4 mr-2" />
+                                    Reject
+                                  </DropdownMenuItem>
+                                  <DropdownMenuSeparator />
+                                </>
+                              )}
+                            </RoleGuard>
+
+                            <RoleGuard allowedRoles={['Admin', 'Staff']}>
+                              {(pr.status === 'Draft' || currentUser.role === 'Admin' || pr.requesterName === currentUser.name) && (
+                                 <DropdownMenuItem onClick={() => handleEdit(pr)} className="text-xs">
+                                  <Pencil className="w-4 h-4 mr-2" />
+                                  {pr.status === 'Pending Manager' ? 'Review Request' : 'Edit Request'}
+                                </DropdownMenuItem>
+                              )}
+                            </RoleGuard>
+
+                            <RoleGuard allowedRoles={['Admin']}>
+                              <DropdownMenuItem onClick={() => handleDelete(pr.id)} className="text-destructive focus:text-destructive text-xs">
+                                <Trash2 className="w-4 h-4 mr-2" />
+                                Delete
+                              </DropdownMenuItem>
+                            </RoleGuard>
+                          </DropdownMenuContent>
+                        </DropdownMenu>
+                      </TableCell>
+                    </TableRow>
+                  );
+                })
+              ) : (
+                <TableRow>
+                  <TableCell colSpan={isDetailed ? 7 : 5} className="h-48 text-center text-muted-foreground">
+                    <div className="flex flex-col items-center justify-center space-y-3 opacity-50">
+                      <div className="p-4 bg-muted rounded-full">
+                        <Search className="w-8 h-8" />
+                      </div>
+                      <p className="text-sm font-medium">No requisitions match your search filters.</p>
+                    </div>
+                  </TableCell>
+                </TableRow>
+              )}
+            </TableBody>
+          </Table>
+        </div>
       </Card>
     </div>
   );
@@ -456,7 +477,7 @@ export default function RequisitionsPage() {
     <Suspense fallback={
       <div className="flex flex-col items-center justify-center h-64 space-y-4">
         <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary" />
-        <p className="text-sm text-muted-foreground">Loading requisitions...</p>
+        <p className="text-sm text-muted-foreground font-bold uppercase tracking-widest animate-pulse">Loading Requisitions</p>
       </div>
     }>
       <RequisitionsContent />
