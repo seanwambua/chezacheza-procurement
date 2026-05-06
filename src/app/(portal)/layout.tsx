@@ -54,6 +54,7 @@ export default function PortalLayout({
           <SheetContent side="left" className="p-0 w-[280px] sm:w-[320px] border-r-primary/10">
             <SheetHeader className="sr-only">
               <SheetTitle>Navigation Menu</SheetTitle>
+              <SheetDescription>Access portal features and navigation links.</SheetDescription>
             </SheetHeader>
             <SidebarNav 
               forceExpanded 
@@ -82,6 +83,10 @@ export default function PortalLayout({
       {/* Global Data Protection Consent Sheet */}
       <Sheet open={!hasConsentedToDataProtection} onOpenChange={(open) => !open && setConsent(true)}>
         <SheetContent side="bottom" className="h-auto max-h-[90vh] p-0 border-t-accent shadow-2xl overflow-y-auto">
+          <SheetHeader className="sr-only">
+            <SheetTitle>Privacy & Data Consent</SheetTitle>
+            <SheetDescription>Review and accept our data protection policy to proceed.</SheetDescription>
+          </SheetHeader>
           <div className="max-w-4xl mx-auto w-full p-6 sm:p-10 space-y-8">
             <div className="flex flex-col md:flex-row items-start md:items-center gap-6">
               <div className="p-4 bg-accent/10 rounded-2xl text-accent shrink-0 shadow-inner">
