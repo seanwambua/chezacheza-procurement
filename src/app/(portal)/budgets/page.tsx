@@ -118,7 +118,7 @@ export default function BudgetsPage() {
       toast({
         variant: "destructive",
         title: "Budget Purged",
-        description: `The budget line '${budgetToDelete.name}' and all associated commitments have been removed.`,
+        description: `The budget '${budgetToDelete.name}' and all associated commitments have been removed.`,
       });
       setBudgetToDelete(null);
     }
@@ -199,7 +199,7 @@ export default function BudgetsPage() {
         <Table>
           <TableHeader>
             <TableRow className="bg-muted/30">
-              <TableHead className="font-bold uppercase text-[10px]">Budget Line</TableHead>
+              <TableHead className="font-bold uppercase text-[10px]">Budget</TableHead>
               <TableHead className="font-bold uppercase text-[10px]">Utilization</TableHead>
               <TableHead className="text-right font-bold uppercase text-[10px]">Remaining (Q)</TableHead>
               <TableHead className="w-[50px]"></TableHead>
@@ -252,7 +252,7 @@ export default function BudgetsPage() {
           <AlertDialogHeader>
             <AlertDialogTitle className="text-destructive flex items-center gap-2">
               <AlertCircle className="w-5 h-5" />
-              Purge Budget Line?
+              Purge Budget?
             </AlertDialogTitle>
             <AlertDialogDescription className="text-xs">
               This will permanently delete the budget **{budgetToDelete?.name}**. 

@@ -558,7 +558,7 @@ export default function DashboardPage() {
               <div className="p-3 bg-destructive/10 border border-destructive/20 rounded-lg space-y-1">
                 <p className="font-black uppercase text-[10px]">Cascading Impact:</p>
                 <ul className="list-disc pl-4 text-[9px] font-bold">
-                  <li>All departmental budget lines for {yearToDelete}</li>
+                  <li>All departmental budgets for {yearToDelete}</li>
                   <li>All purchase requisitions and approval logs</li>
                   <li>All Local Purchase Orders (LPOs) and GRNs</li>
                 </ul>

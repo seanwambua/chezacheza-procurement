@@ -1,4 +1,3 @@
-
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { 
@@ -63,7 +62,7 @@ export default function HowToPage() {
               <CardTitle className="text-lg">Requisitions</CardTitle>
             </CardHeader>
             <CardContent className="text-sm text-muted-foreground leading-relaxed">
-              Create multi-item purchase requests. Each request is linked to a specific budget line and requires justification.
+              Create multi-item purchase requests. Each request is linked to a specific budget and requires justification.
             </CardContent>
           </Card>
           <Card className="border-border shadow-none">
@@ -90,7 +89,7 @@ export default function HowToPage() {
               <CardTitle className="text-lg">Budget Control</CardTitle>
             </CardHeader>
             <CardContent className="text-sm text-muted-foreground leading-relaxed">
-              Rolling quarterly allocations. The system automatically pauses spending if a budget line is exhausted.
+              Rolling quarterly allocations. The system automatically pauses spending if a budget is exhausted.
             </CardContent>
           </Card>
         </div>
@@ -101,7 +100,7 @@ export default function HowToPage() {
             <AccordionItem value="step-1">
               <AccordionTrigger className="font-bold text-base">1. Internal Requisition (Drafting)</AccordionTrigger>
               <AccordionContent className="text-muted-foreground space-y-4 pt-2">
-                <p>Staff members identify a need and draft a Purchase Requisition (PR). You must specify the items, estimated quantities, and the target Budget Line.</p>
+                <p>Staff members identify a need and draft a Purchase Requisition (PR). You must specify the items, estimated quantities, and the target Budget.</p>
                 <div className="p-4 bg-muted/30 rounded-lg border flex items-start gap-3">
                   <Info className="w-5 h-5 text-accent mt-0.5" />
                   <p className="text-xs"><strong>Tip:</strong> Always check if your target budget has remaining funds for the current quarter before submitting.</p>

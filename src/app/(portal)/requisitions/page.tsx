@@ -230,7 +230,7 @@ function RequisitionsContent() {
                       name="budgetLine"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel className="text-[10px] uppercase font-bold text-muted-foreground">Target Budget Line (FY {selectedYear})</FormLabel>
+                          <FormLabel className="text-[10px] uppercase font-bold text-muted-foreground">Target Budget (FY {selectedYear})</FormLabel>
                           <Select onValueChange={field.onChange} value={field.value}>
                             <FormControl>
                               <SelectTrigger className="bg-background">
@@ -255,7 +255,7 @@ function RequisitionsContent() {
                         <AlertTriangle className="h-4 w-4" />
                         <AlertTitle className="text-[10px] font-bold uppercase">Budget Cap Reached</AlertTitle>
                         <AlertDescription className="text-[10px]">
-                          This budget line has exhausted its allocation for this quarter.
+                          This budget has exhausted its allocation for this quarter.
                         </AlertDescription>
                       </Alert>
                     )}
@@ -363,7 +363,7 @@ function RequisitionsContent() {
                 {isDetailed && <TableHead className="font-bold uppercase text-[10px] whitespace-nowrap">Reference</TableHead>}
                 <TableHead className="font-bold uppercase text-[10px] min-w-[200px]">Description Summary</TableHead>
                 {isDetailed && <TableHead className="font-bold uppercase text-[10px] whitespace-nowrap">Originator</TableHead>}
-                <TableHead className="font-bold uppercase text-[10px] whitespace-nowrap">Budget Line</TableHead>
+                <TableHead className="font-bold uppercase text-[10px] whitespace-nowrap">Budget</TableHead>
                 <TableHead className="font-bold uppercase text-[10px] whitespace-nowrap">Progress</TableHead>
                 <TableHead className="text-right font-bold uppercase text-[10px] whitespace-nowrap">Net Total</TableHead>
                 <TableHead className="w-[50px]"></TableHead>

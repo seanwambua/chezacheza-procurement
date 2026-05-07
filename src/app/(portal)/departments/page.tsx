@@ -150,7 +150,7 @@ export default function DepartmentsPage() {
                   </span>
                   {isDetailed && (
                     <span className="flex items-center gap-1.5 text-[10px] sm:text-xs text-muted-foreground font-medium">
-                      <Wallet className="w-3 h-3" /> {dept.budgetCount} Active FY {selectedYear} Lines
+                      <Wallet className="w-3 h-3" /> {dept.budgetCount} Active FY {selectedYear} Budgets
                     </span>
                   )}
                 </div>
@@ -204,7 +204,7 @@ export default function DepartmentsPage() {
               {isDetailed && dept.hasActiveBudgets && (
                 <div className="space-y-4 pt-2">
                   <h4 className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground flex items-center gap-2">
-                    Current Budget Lines
+                    Current Budgets
                   </h4>
                   <div className="space-y-1.5">
                     {dept.budgets.slice(0, 3).map((b) => (
@@ -292,7 +292,7 @@ export default function DepartmentsPage() {
                 <TableHeader>
                   <TableRow className="bg-muted/30 hover:bg-muted/30">
                     <TableHead className="text-[10px] font-black uppercase">Fiscal Year</TableHead>
-                    <TableHead className="text-[10px] font-black uppercase">Budget Line</TableHead>
+                    <TableHead className="text-[10px] font-black uppercase">Budget</TableHead>
                     <TableHead className="text-[10px] font-black uppercase text-right">Total Allocation</TableHead>
                     <TableHead className="text-[10px] font-black uppercase text-right">Actual Spend</TableHead>
                     <TableHead className="text-[10px] font-black uppercase text-right">Utilization</TableHead>

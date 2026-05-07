@@ -282,7 +282,7 @@ export default function ApprovalsPage() {
                       {isDetailed && <TableHead className="min-w-[120px] font-bold uppercase text-[10px]">Reference</TableHead>}
                       <TableHead className="min-w-[200px] font-bold uppercase text-[10px]">Summary</TableHead>
                       <TableHead className="min-w-[100px] font-bold uppercase text-[10px]">Status</TableHead>
-                      {isDetailed && <TableHead className="min-w-[150px] font-bold uppercase text-[10px]">Budget Line</TableHead>}
+                      {isDetailed && <TableHead className="min-w-[150px] font-bold uppercase text-[10px]">Budget</TableHead>}
                       {isDetailed && <TableHead className="text-right min-w-[120px] font-bold uppercase text-[10px]">Final Total</TableHead>}
                       <TableHead className="text-right min-w-[100px] font-bold uppercase text-[10px]">Date</TableHead>
                     </TableRow>
@@ -360,7 +360,7 @@ export default function ApprovalsPage() {
                   <p className="text-sm font-bold truncate text-primary">{selectedPr.requesterName}</p>
                 </div>
                 <div>
-                  <p className="text-[10px] uppercase font-bold text-muted-foreground">Budget Line</p>
+                  <p className="text-[10px] uppercase font-bold text-muted-foreground">Budget</p>
                   <p className="text-sm font-bold text-accent truncate">{selectedPr.budgetLine}</p>
                 </div>
               </div>
