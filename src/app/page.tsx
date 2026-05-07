@@ -166,7 +166,7 @@ export default function Home() {
         <div className="max-w-7xl mx-auto flex flex-col md:flex-row items-center justify-between gap-6 sm:gap-8">
           <div className="text-center md:text-left">
             <p className="text-sm font-bold text-primary uppercase tracking-tighter">CPP Portal</p>
-            <p className="text-xs text-muted-foreground mt-1">© 2024 Chezacheza Procurement.</p>
+            <p className="text-xs text-muted-foreground mt-1">© 2025 Chezacheza Procurement.</p>
           </div>
           <div className="flex flex-wrap justify-center gap-6 sm:gap-8">
             <Link href="/how-to" className="text-[10px] sm:text-xs font-bold uppercase text-muted-foreground hover:text-accent transition-colors">How it works</Link>
