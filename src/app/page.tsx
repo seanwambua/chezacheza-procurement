@@ -28,8 +28,8 @@ export default function Home() {
               <span className="hidden xs:inline">How it works</span>
             </Link>
             <Link href="/dashboard">
-              <Button variant="ghost" size="sm" className="font-bold uppercase text-[10px]">
-                Sign In
+              <Button variant="ghost" className="font-bold uppercase text-xs h-9">
+                Launch Portal
               </Button>
             </Link>
           </div>
