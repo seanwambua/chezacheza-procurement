@@ -28,7 +28,8 @@ import {
   Lock,
   Eye,
   CheckCircle2,
-  ShieldCheck
+  ShieldCheck,
+  UserPlus
 } from 'lucide-react';
 import { 
   Table, 
@@ -232,13 +233,39 @@ function OrdersHubContent() {
     return isCurrentYear && matchesSearch;
   });
 
+  const approvedPrs = (prs || []).filter(pr => pr.fiscalYear === selectedYear && pr.status === 'Approved');
+
   const filteredLpos = (lpos || []).filter(lpo => 
     lpo.fiscalYear === selectedYear &&
     (lpo.lpoNumber.toLowerCase().includes(search.toLowerCase()) ||
     lpo.vendorName.toLowerCase().includes(search.toLowerCase()))
   );
 
-  const approvedPrs = (prs || []).filter(pr => pr.fiscalYear === selectedYear && pr.status === 'Approved');
+  // Combine Active LPOs and Approved PRs for the "Cycle" view
+  const fulfillmentQueue = [
+    ...approvedPrs.map(pr => ({
+      type: 'PR' as const,
+      id: pr.id,
+      refNumber: pr.refNumber,
+      summary: pr.items[0]?.description || 'Multi-item request',
+      status: 'Awaiting Assignment',
+      vendor: 'Unassigned',
+      value: calculatePRTotal(pr),
+      date: pr.createdAt
+    })),
+    ...filteredLpos.map(lpo => ({
+      type: 'LPO' as const,
+      id: lpo.id,
+      refNumber: lpo.lpoNumber,
+      summary: lpo.items[0]?.description || 'Multi-item agreement',
+      status: lpo.status,
+      vendor: lpo.vendorName,
+      value: lpo.totalValue,
+      date: lpo.dispatchedAt || lpo.createdAt,
+      fullLpo: lpo
+    }))
+  ].sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+
   const totalLpoValue = filteredLpos.reduce((acc, lpo) => acc + lpo.totalValue, 0);
 
   // Handlers
@@ -310,8 +337,6 @@ function OrdersHubContent() {
   };
 
   const handleReceiveGoods = (lpo: LPO) => {
-    const hasDispute = lpo.items.some(i => false); // In a real app, we'd have a detailed form for this
-    
     addGRN({
       id: `GRN-${Math.floor(Math.random() * 10000)}`,
       lpoId: lpo.id,
@@ -340,7 +365,7 @@ function OrdersHubContent() {
           <h2 className="text-3xl md:text-4xl font-headline font-bold text-primary tracking-tighter leading-tight truncate">
             Orders Hub
           </h2>
-          <p className="text-muted-foreground text-sm font-medium">Internal requests & official vendor agreements for FY {selectedYear}.</p>
+          <p className="text-muted-foreground text-sm font-medium">Internal requests & fulfillment cycles for FY {selectedYear}.</p>
         </div>
         
         <div className="flex items-center gap-2">
@@ -370,13 +395,13 @@ function OrdersHubContent() {
         <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-4 mb-6">
           <TabsList className="grid w-full sm:w-[320px] grid-cols-2 bg-muted/50 p-1">
             <TabsTrigger value="requisitions" className="text-[10px] font-black uppercase tracking-widest">Internal Requests</TabsTrigger>
-            <TabsTrigger value="lpos" className="text-[10px] font-black uppercase tracking-widest">Vendor Agreements</TabsTrigger>
+            <TabsTrigger value="lpos" className="text-[10px] font-black uppercase tracking-widest">Fulfillment Cycle</TabsTrigger>
           </TabsList>
 
           <div className="relative w-full sm:w-64">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
             <Input 
-              placeholder={`Search ${activeTab === 'requisitions' ? 'requests' : 'agreements'}...`} 
+              placeholder={`Search ${activeTab === 'requisitions' ? 'requests' : 'cycle'}...`} 
               className="pl-9 h-10 text-xs bg-card border-none shadow-sm"
               value={search}
               onChange={(e) => setSearch(e.target.value)}
@@ -416,7 +441,7 @@ function OrdersHubContent() {
                               pr.status === 'LPO Generated' && "border-accent text-accent"
                             )}
                           >
-                            {pr.status === 'LPO Generated' ? 'Agreement Active' : pr.status}
+                            {pr.status === 'LPO Generated' ? 'In Cycle' : pr.status}
                           </Badge>
                         </TableCell>
                         <TableCell className="text-right font-black tracking-tighter text-xs">Ksh {calculatePRTotal(pr).toLocaleString()}</TableCell>
@@ -460,47 +485,86 @@ function OrdersHubContent() {
               <Table>
                 <TableHeader>
                   <TableRow className="bg-muted/30 border-none">
-                    {isDetailed && <TableHead className="min-w-[120px] font-bold uppercase text-[10px]">LPO #</TableHead>}
-                    <TableHead className="min-w-[150px] font-bold uppercase text-[10px]">Assigned Vendor</TableHead>
-                    <TableHead className="font-bold uppercase text-[10px]">Fulfillment Cycle</TableHead>
-                    <TableHead className="font-bold uppercase text-[10px]">Agreement Phase</TableHead>
-                    <TableHead className="text-right font-bold uppercase text-[10px]">Value</TableHead>
+                    {isDetailed && <TableHead className="min-w-[120px] font-bold uppercase text-[10px]">Reference</TableHead>}
+                    <TableHead className="min-w-[150px] font-bold uppercase text-[10px]">Assigned Partner</TableHead>
+                    <TableHead className="font-bold uppercase text-[10px]">Fulfillment Status</TableHead>
+                    <TableHead className="font-bold uppercase text-[10px]">Agreement Cycle</TableHead>
+                    <TableHead className="text-right font-bold uppercase text-[10px]">Total Value</TableHead>
                     <TableHead className="w-[50px]"></TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {filteredLpos.length > 0 ? (
-                    filteredLpos.map((lpo) => (
-                      <TableRow key={lpo.id} className="group hover:bg-muted/5">
-                        {isDetailed && <TableCell className="font-black text-primary text-xs">{lpo.lpoNumber}</TableCell>}
-                        <TableCell><span className="font-bold text-xs text-primary">{lpo.vendorName}</span></TableCell>
+                  {fulfillmentQueue.length > 0 ? (
+                    fulfillmentQueue.map((item) => (
+                      <TableRow key={item.id} className={cn(
+                        "group hover:bg-muted/5 transition-colors",
+                        item.type === 'PR' ? "bg-accent/[0.02]" : ""
+                      )}>
+                        {isDetailed && <TableCell className="font-black text-primary text-xs">{item.refNumber}</TableCell>}
                         <TableCell>
-                          <CycleTimer startTime={lpo.dispatchedAt || lpo.createdAt} endTime={lpo.fulfilledAt} />
+                          <div className="flex flex-col">
+                            <span className={cn(
+                              "font-bold text-xs truncate max-w-[180px]",
+                              item.type === 'PR' ? "text-muted-foreground italic" : "text-primary"
+                            )}>{item.vendor}</span>
+                            {item.type === 'PR' && (
+                              <span className="text-[8px] font-black text-accent uppercase tracking-widest mt-0.5">Ready for Assignment</span>
+                            )}
+                          </div>
                         </TableCell>
                         <TableCell>
-                          <Badge variant={lpo.status === 'Fulfilled' ? 'secondary' : 'outline'} className="text-[9px] uppercase px-1.5 h-4">
-                            {lpo.status === 'Dispatched' ? 'In Fulfillment' : lpo.status === 'Fulfilled' ? 'Archived' : lpo.status}
+                          <Badge 
+                            variant={item.status === 'Awaiting Assignment' ? 'secondary' : item.status === 'Fulfilled' ? 'secondary' : 'outline'} 
+                            className={cn(
+                              "text-[9px] uppercase px-1.5 h-4",
+                              item.status === 'Awaiting Assignment' && "bg-accent text-white border-transparent"
+                            )}
+                          >
+                            {item.status === 'Dispatched' ? 'In Fulfillment' : item.status}
                           </Badge>
                         </TableCell>
-                        <TableCell className="text-right font-black tracking-tighter text-xs">Ksh {lpo.totalValue.toLocaleString()}</TableCell>
+                        <TableCell>
+                          {item.type === 'LPO' && item.fullLpo ? (
+                            <CycleTimer startTime={item.fullLpo.dispatchedAt || item.fullLpo.createdAt} endTime={item.fullLpo.fulfilledAt} />
+                          ) : (
+                            <span className="text-[10px] text-muted-foreground font-bold italic">Awaiting Cycle Start</span>
+                          )}
+                        </TableCell>
+                        <TableCell className="text-right font-black tracking-tighter text-xs">Ksh {item.value.toLocaleString()}</TableCell>
                         <TableCell>
                           <DropdownMenu>
                             <DropdownMenuTrigger asChild>
                               <Button variant="ghost" size="icon" className="h-8 w-8 md:opacity-0 group-hover:opacity-100 transition-opacity"><MoreVertical className="w-4 h-4" /></Button>
                             </DropdownMenuTrigger>
                             <DropdownMenuContent align="end">
-                              <DropdownMenuItem onClick={() => setViewingLpo(lpo)} className="text-xs font-bold"><Eye className="w-4 h-4 mr-2" /> View Details</DropdownMenuItem>
-                              {lpo.status === 'Dispatched' && (
-                                <DropdownMenuItem className="text-accent text-xs font-bold" onClick={() => setReceivingLpo(lpo)}><PackageCheck className="w-4 h-4 mr-2" /> Verify Delivery</DropdownMenuItem>
+                              {item.type === 'PR' ? (
+                                <RoleGuard allowedRoles={['Admin', 'Finance']}>
+                                  <DropdownMenuItem 
+                                    className="text-accent font-bold text-xs" 
+                                    onClick={() => {
+                                      lpoForm.setValue('prId', item.id);
+                                      setIsLPODialogOpen(true);
+                                    }}
+                                  >
+                                    <UserPlus className="w-4 h-4 mr-2" /> Assign Partner
+                                  </DropdownMenuItem>
+                                </RoleGuard>
+                              ) : (
+                                <>
+                                  <DropdownMenuItem onClick={() => setViewingLpo(item.fullLpo!)} className="text-xs font-bold"><Eye className="w-4 h-4 mr-2" /> View Details</DropdownMenuItem>
+                                  {item.status === 'Dispatched' && (
+                                    <DropdownMenuItem className="text-accent text-xs font-bold" onClick={() => setReceivingLpo(item.fullLpo!)}><PackageCheck className="w-4 h-4 mr-2" /> Verify Delivery</DropdownMenuItem>
+                                  )}
+                                  <DropdownMenuItem className="text-xs font-bold"><Printer className="w-4 h-4 mr-2" /> Export Agreement</DropdownMenuItem>
+                                </>
                               )}
-                              <DropdownMenuItem className="text-xs font-bold"><Printer className="w-4 h-4 mr-2" /> Export Agreement</DropdownMenuItem>
                             </DropdownMenuContent>
                           </DropdownMenu>
                         </TableCell>
                       </TableRow>
                     ))
                   ) : (
-                    <TableRow><TableCell colSpan={6} className="h-48 text-center text-muted-foreground italic">No active agreements found.</TableCell></TableRow>
+                    <TableRow><TableCell colSpan={6} className="h-48 text-center text-muted-foreground italic">No active fulfillment cycles.</TableCell></TableRow>
                   )}
                 </TableBody>
               </Table>
@@ -691,7 +755,7 @@ function OrdersHubContent() {
 
       {/* Delivery Verification Dialog */}
       <Dialog open={!!receivingLpo} onOpenChange={(open) => !open && setReceivingLpo(null)}>
-        <DialogContent className="max-w-xl w-[95vw] max-h-[90vh] overflow-y-auto">
+        <DialogContent className="max-xl w-[95vw] max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle className="text-xl font-black tracking-tight flex items-center gap-2">
               <PackageCheck className="w-6 h-6 text-accent" />
