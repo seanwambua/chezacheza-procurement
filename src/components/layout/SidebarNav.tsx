@@ -47,7 +47,7 @@ const navGroups = [
     id: 'procurement',
     label: 'Procurement Cycle',
     items: [
-      { name: 'Requisitions', href: '/lpos', icon: FileText, roles: ['Admin', 'Manager', 'Staff', 'Finance'] as UserRole[] },
+      { name: 'Orders', href: '/lpos', icon: FileText, roles: ['Admin', 'Manager', 'Staff', 'Finance'] as UserRole[] },
       { name: 'Approvals', href: '/approvals', icon: CheckSquare, roles: ['Admin', 'Manager', 'Finance'] as UserRole[] },
       { name: 'Fulfillment', href: '/fulfillment', icon: Zap, roles: ['Admin', 'Manager', 'Finance', 'Staff'] as UserRole[] },
       { name: 'Deliveries (GRN)', href: '/deliveries', icon: Truck, roles: ['Admin', 'Manager', 'Finance'] as UserRole[] },
