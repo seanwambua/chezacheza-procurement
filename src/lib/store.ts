@@ -168,16 +168,25 @@ export const useStore = create<ProcurementState>()(
       })),
 
       addLPO: (lpoData) => set((state) => ({
-        lpos: [...(state.lpos || []), { ...lpoData, fiscalYear: state.selectedYear }]
+        lpos: [...(state.lpos || []), { ...lpoData, fiscalYear: state.selectedYear, status: 'Dispatched', dispatchedAt: new Date().toISOString() }]
       })),
 
       updateLPO: (id, updates) => set((state) => ({
-        lpos: (state.lpos || []).map(lpo => lpo.id === id ? { ...lpo, ...updates } : lpo)
+        lpos: (state.lpos || []).map(lpo => {
+           // Restrict editing if dispatched/fulfilled
+           if (lpo.id === id && (lpo.status === 'Dispatched' || lpo.status === 'Fulfilled' || lpo.status === 'Closed')) {
+              return lpo;
+           }
+           return lpo.id === id ? { ...lpo, ...updates } : lpo;
+        })
       })),
 
       deleteLPO: (id) => set((state) => {
         const lpo = (state.lpos || []).find(l => l.id === id);
         if (!lpo) return state;
+
+        // Disallow deletion if fulfilled
+        if (lpo.status === 'Fulfilled' || lpo.status === 'Closed') return state;
 
         const updatedPrs = (state.prs || []).map(pr => 
           pr.id === lpo.prId ? { ...pr, status: 'Approved' as PRStatus } : pr
@@ -218,8 +227,14 @@ export const useStore = create<ProcurementState>()(
           fiscalYear: state.selectedYear,
           disputeStatus: grnData.disputeFlag ? 'Open' : undefined
         };
+        const fulfilledDate = new Date().toISOString();
+        
         const updatedLpos = (state.lpos || []).map(lpo => 
-          lpo.id === grn.lpoId ? { ...lpo, status: grn.disputeFlag ? 'Partially Fulfilled' : 'Fulfilled' as any } : lpo
+          lpo.id === grn.lpoId ? { 
+            ...lpo, 
+            status: grn.disputeFlag ? 'Partially Fulfilled' : 'Fulfilled' as any,
+            fulfilledAt: fulfilledDate
+          } : lpo
         );
 
         const lpo = (state.lpos || []).find(l => l.id === grn.lpoId);

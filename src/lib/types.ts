@@ -48,8 +48,10 @@ export interface LPO {
   deliveryDate: string;
   paymentTerms: string;
   additionalTerms?: string;
-  status: 'Draft' | 'Dispatched' | 'Fulfilled' | 'Partially Fulfilled' | 'Matched' | 'Closed';
+  status: 'Draft' | 'Dispatched' | 'Fulfilled' | 'Partially Fulfilled' | 'Matched' | 'Closed' | 'Voided';
   createdAt: string;
+  dispatchedAt?: string;
+  fulfilledAt?: string;
 }
 
 export interface GRN {
