@@ -23,7 +23,9 @@ import {
   Clock,
   History,
   Lock,
-  ArrowRight
+  ArrowRight,
+  ChevronDown,
+  Info
 } from 'lucide-react';
 import { 
   Table, 
@@ -82,6 +84,7 @@ import { calculatePRTotal, PurchaseRequisition, getBudgetStats, LPO, PRStatus } 
 import { cn } from '@/lib/utils';
 import { RoleGuard } from '@/components/auth/RoleGuard';
 import { CycleTimer } from '@/components/procurement/CycleTimer';
+import { Separator } from '@/components/ui/separator';
 
 // Schemas
 const requisitionSchema = z.object({
@@ -250,6 +253,9 @@ function OrdersHubContent() {
     setDispatchingPr(null);
     dispatchForm.reset();
   };
+
+  const watchedItems = prForm.watch('items');
+  const runningTotal = watchedItems.reduce((acc, item) => acc + (Number(item.quantity) * Number(item.estimatedUnitPrice)), 0);
 
   return (
     <div className="space-y-6 md:space-y-8 animate-in fade-in duration-500 pb-10 max-w-full overflow-hidden">
@@ -427,19 +433,19 @@ function OrdersHubContent() {
 
       {/* Internal Request Dialog */}
       <Dialog open={isPRDialogOpen} onOpenChange={setIsPRDialogOpen}>
-        <DialogContent className="max-w-3xl w-[95vw] max-h-[90vh] overflow-y-auto">
+        <DialogContent className="max-w-4xl w-[95vw] max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle className="text-xl font-black tracking-tight">{editingPr ? 'Update Internal Request' : 'Draft New Requisition'}</DialogTitle>
             <DialogDescription className="text-xs font-medium uppercase tracking-widest text-muted-foreground">Internal allocation request for organizational needs.</DialogDescription>
           </DialogHeader>
           <Form {...prForm}>
-            <form onSubmit={prForm.handleSubmit(onPRSubmit)} className="space-y-6">
+            <form onSubmit={prForm.handleSubmit(onPRSubmit)} className="space-y-8 py-4">
               <FormField control={prForm.control} name="budget" render={({ field }) => (
-                <FormItem>
+                <FormItem className="max-w-md">
                   <label className="text-[10px] uppercase font-black text-muted-foreground tracking-widest">Target Budget Pool</label>
                   <Select onValueChange={field.onChange} value={field.value}>
                     <FormControl>
-                      <SelectTrigger className="h-10 text-xs shadow-sm bg-muted/20 border-none">
+                      <SelectTrigger className="h-11 text-xs shadow-sm bg-muted/20 border-none">
                         <SelectValue placeholder="Select target allocation" />
                       </SelectTrigger>
                     </FormControl>
@@ -455,62 +461,87 @@ function OrdersHubContent() {
               )} />
 
               <div className="space-y-4">
-                <div className="flex items-center justify-between">
-                  <h3 className="text-[10px] font-black uppercase text-muted-foreground tracking-widest">Line Item Definition</h3>
+                <div className="flex items-center justify-between px-1">
+                  <div className="flex items-center gap-2">
+                    <h3 className="text-[11px] font-black uppercase text-primary tracking-widest">Requisition Items</h3>
+                    <Badge variant="outline" className="text-[10px] font-bold px-1.5 h-4.5">{prFields.length}</Badge>
+                  </div>
                   <Button 
                     type="button" 
                     variant="outline" 
                     size="sm" 
                     onClick={() => appendPr({ description: '', quantity: 1, estimatedUnitPrice: 0 })} 
-                    className="h-8 text-[10px] font-bold uppercase shadow-sm"
+                    className="h-8 text-[10px] font-black uppercase shadow-sm border-accent text-accent hover:bg-accent hover:text-white"
                   >
-                    <PlusCircle className="w-3.5 h-3.5 mr-1.5" /> Add Item
+                    <PlusCircle className="w-3.5 h-3.5 mr-1.5" /> Add Row
                   </Button>
                 </div>
                 
                 <div className="space-y-3">
-                  {prFields.map((field, index) => (
-                    <div key={field.id} className="grid grid-cols-1 md:grid-cols-12 gap-3 bg-muted/10 p-4 rounded-xl border border-border/40 group relative">
-                      <div className="md:col-span-6">
-                        <FormField control={prForm.control} name={`items.${index}.description`} render={({ field }) => (
-                          <FormItem><FormControl><Input placeholder="Item description" {...field} className="h-9 text-xs border-none bg-card shadow-sm" /></FormControl></FormItem>
-                        )} />
+                  <div className="hidden md:grid grid-cols-12 gap-4 px-4 text-[9px] font-black uppercase text-muted-foreground tracking-widest">
+                    <div className="col-span-6">Item Description</div>
+                    <div className="col-span-2 text-center">Quantity</div>
+                    <div className="col-span-3 text-right">Est. Unit Price (Ksh)</div>
+                    <div className="col-span-1"></div>
+                  </div>
+                  
+                  <div className="space-y-2">
+                    {prFields.map((field, index) => (
+                      <div key={field.id} className="grid grid-cols-1 md:grid-cols-12 gap-3 bg-muted/20 p-3 rounded-xl border border-border/40 group items-center transition-all hover:bg-muted/30">
+                        <div className="md:col-span-6">
+                          <FormField control={prForm.control} name={`items.${index}.description`} render={({ field }) => (
+                            <FormItem><FormControl><Input placeholder="What are we procuring?" {...field} className="h-10 text-xs border-none bg-card shadow-sm font-medium" /></FormControl></FormItem>
+                          )} />
+                        </div>
+                        <div className="md:col-span-2">
+                          <FormField control={prForm.control} name={`items.${index}.quantity`} render={({ field }) => (
+                            <FormItem><FormControl><Input type="number" placeholder="Qty" {...field} className="h-10 text-xs border-none bg-card shadow-sm text-center font-bold" /></FormControl></FormItem>
+                          )} />
+                        </div>
+                        <div className="md:col-span-3">
+                          <FormField control={prForm.control} name={`items.${index}.estimatedUnitPrice`} render={({ field }) => (
+                            <FormItem><FormControl><Input type="number" placeholder="Price" {...field} className="h-10 text-xs border-none bg-card shadow-sm text-right font-black" /></FormControl></FormItem>
+                          )} />
+                        </div>
+                        <div className="md:col-span-1 flex justify-center">
+                          <Button 
+                            type="button" 
+                            variant="ghost" 
+                            size="icon" 
+                            disabled={prFields.length <= 1}
+                            onClick={() => removePr(index)} 
+                            className="h-8 w-8 text-destructive hover:bg-destructive/10"
+                          >
+                            <Trash className="w-4 h-4" />
+                          </Button>
+                        </div>
                       </div>
-                      <div className="md:col-span-2">
-                        <FormField control={prForm.control} name={`items.${index}.quantity`} render={({ field }) => (
-                          <FormItem><FormControl><Input type="number" placeholder="Qty" {...field} className="h-9 text-xs border-none bg-card shadow-sm" /></FormControl></FormItem>
-                        )} />
-                      </div>
-                      <div className="md:col-span-3">
-                        <FormField control={prForm.control} name={`items.${index}.estimatedUnitPrice`} render={({ field }) => (
-                          <FormItem><FormControl><Input type="number" placeholder="Unit Price (Ksh)" {...field} className="h-9 text-xs border-none bg-card shadow-sm" /></FormControl></FormItem>
-                        )} />
-                      </div>
-                      <div className="md:col-span-1 pt-0.5">
-                        <Button 
-                          type="button" 
-                          variant="ghost" 
-                          size="icon" 
-                          onClick={() => removePr(index)} 
-                          className="h-8 w-8 text-destructive hover:bg-destructive/10"
-                        >
-                          <Trash className="w-4 h-4" />
-                        </Button>
-                      </div>
-                    </div>
-                  ))}
+                    ))}
+                  </div>
                 </div>
               </div>
               
-              <div className="flex justify-between items-center px-2 pt-2">
-                <span className="text-[10px] font-black uppercase text-muted-foreground tracking-widest">Estimated Commitment</span>
-                <span className="text-lg font-black tracking-tighter text-primary">
-                  Ksh {prForm.watch('items').reduce((acc, item) => acc + (Number(item.quantity) * Number(item.estimatedUnitPrice)), 0).toLocaleString()}
-                </span>
+              <div className="flex flex-col sm:flex-row justify-between items-center bg-primary/5 p-6 rounded-2xl border border-primary/10 gap-4">
+                <div className="flex items-center gap-3">
+                  <div className="p-2.5 bg-primary text-white rounded-xl">
+                    <Wallet className="w-5 h-5" />
+                  </div>
+                  <div>
+                    <p className="text-[10px] font-black uppercase text-muted-foreground tracking-widest">Financial Impact</p>
+                    <p className="text-xs font-medium text-primary">This commitment will be charged to the selected budget pool.</p>
+                  </div>
+                </div>
+                <div className="text-right">
+                  <span className="text-[10px] font-black uppercase text-muted-foreground tracking-widest block mb-1">Estimated Commitment</span>
+                  <span className="text-3xl font-black tracking-tighter text-primary">
+                    Ksh {runningTotal.toLocaleString()}
+                  </span>
+                </div>
               </div>
 
-              <DialogFooter className="border-t pt-6">
-                <Button type="submit" className="bg-primary font-black uppercase text-xs h-11 shadow-xl">
+              <DialogFooter className="border-t pt-6 gap-3">
+                <Button type="button" variant="ghost" onClick={() => setIsPRDialogOpen(false)} className="font-black uppercase text-xs h-12 px-6">Discard Draft</Button>
+                <Button type="submit" className="bg-primary font-black uppercase text-xs h-12 px-10 shadow-xl hover:shadow-primary/20 transition-all">
                   {editingPr ? 'Save Modifications' : 'Finalize & Submit Request'}
                 </Button>
               </DialogFooter>
@@ -521,66 +552,95 @@ function OrdersHubContent() {
 
       {/* Dispatch Agreement Dialog */}
       <Dialog open={!!dispatchingPr} onOpenChange={(open) => !open && setDispatchingPr(null)}>
-        <DialogContent className="max-w-xl w-[95vw]">
+        <DialogContent className="max-w-2xl w-[95vw] max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle className="text-xl font-black tracking-tight flex items-center gap-2">
               <ShieldCheck className="w-6 h-6 text-accent" />
               Strategic Dispatch
             </DialogTitle>
-            <DialogDescription className="text-xs font-medium">Assign a verified partner to an authorized internal request.</DialogDescription>
+            <DialogDescription className="text-xs font-medium">Assign a verified partner to fulfill an authorized internal request.</DialogDescription>
           </DialogHeader>
           <Form {...dispatchForm}>
-            <form onSubmit={dispatchForm.handleSubmit(onDispatchSubmit)} className="space-y-6 pt-4">
-              <div className="p-4 bg-muted/30 rounded-xl space-y-1">
-                <p className="text-[10px] uppercase font-black text-muted-foreground tracking-widest">Source Request</p>
-                <p className="text-sm font-bold text-primary">{dispatchingPr?.refNumber}</p>
-                <p className="text-lg font-black text-accent tracking-tighter">Ksh {dispatchingPr ? calculatePRTotal(dispatchingPr).toLocaleString() : 0}</p>
+            <form onSubmit={dispatchForm.handleSubmit(onDispatchSubmit)} className="space-y-8 pt-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div className="p-5 bg-muted/30 rounded-2xl border border-border/50 flex flex-col justify-between">
+                  <div>
+                    <p className="text-[10px] uppercase font-black text-muted-foreground tracking-widest mb-1">Source Request</p>
+                    <p className="text-sm font-bold text-primary">{dispatchingPr?.refNumber}</p>
+                    <p className="text-[10px] text-muted-foreground font-medium mt-1">{dispatchingPr?.budgetLine}</p>
+                  </div>
+                  <div className="mt-4 pt-4 border-t border-border/30">
+                    <p className="text-[10px] uppercase font-black text-muted-foreground tracking-widest mb-0.5">Approved Value</p>
+                    <p className="text-xl font-black text-accent tracking-tighter">Ksh {dispatchingPr ? calculatePRTotal(dispatchingPr).toLocaleString() : 0}</p>
+                  </div>
+                </div>
+
+                <div className="space-y-4">
+                  <FormField control={dispatchForm.control} name="vendorId" render={({ field }) => (
+                    <FormItem>
+                      <label className="text-[10px] uppercase font-black text-muted-foreground tracking-widest">Assigned Partner</label>
+                      <Select onValueChange={field.onChange} value={field.value}>
+                        <FormControl>
+                          <SelectTrigger className="h-11 text-xs shadow-sm bg-card border-border">
+                            <SelectValue placeholder="Select vendor from registry" />
+                          </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                          {vendors.map(v => (
+                            <SelectItem key={v.id} value={v.id} className="text-xs font-bold">{v.name} ({v.category})</SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </FormItem>
+                  )} />
+
+                  <div className="grid grid-cols-2 gap-3">
+                    <FormField control={dispatchForm.control} name="deliveryDate" render={({ field }) => (
+                      <FormItem>
+                        <label className="text-[10px] uppercase font-black text-muted-foreground tracking-widest">Deadline</label>
+                        <FormControl><Input type="date" {...field} className="h-10 text-xs bg-card border-border" /></FormControl>
+                      </FormItem>
+                    )} />
+                    <FormField control={dispatchForm.control} name="paymentTerms" render={({ field }) => (
+                      <FormItem>
+                        <label className="text-[10px] uppercase font-black text-muted-foreground tracking-widest">Terms</label>
+                        <Select onValueChange={field.onChange} value={field.value}>
+                          <FormControl>
+                            <SelectTrigger className="h-10 text-xs bg-card border-border"><SelectValue /></SelectTrigger>
+                          </FormControl>
+                          <SelectContent>
+                            <SelectItem value="Immediate" className="text-xs">Immediate Cash</SelectItem>
+                            <SelectItem value="30 Days Net" className="text-xs">30 Days Net</SelectItem>
+                            <SelectItem value="60 Days Net" className="text-xs">60 Days Net</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </FormItem>
+                    )} />
+                  </div>
+                </div>
               </div>
 
-              <FormField control={dispatchForm.control} name="vendorId" render={({ field }) => (
-                <FormItem>
-                  <label className="text-[10px] uppercase font-black text-muted-foreground tracking-widest">Assigned Partner</label>
-                  <Select onValueChange={field.onChange} value={field.value}>
-                    <FormControl>
-                      <SelectTrigger className="h-10 text-xs shadow-sm bg-card border-border">
-                        <SelectValue placeholder="Select vendor from registry" />
-                      </SelectTrigger>
-                    </FormControl>
-                    <SelectContent>
-                      {vendors.map(v => (
-                        <SelectItem key={v.id} value={v.id} className="text-xs">{v.name} ({v.category})</SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </FormItem>
-              )} />
-
-              <div className="grid grid-cols-2 gap-4">
-                <FormField control={dispatchForm.control} name="deliveryDate" render={({ field }) => (
-                  <FormItem>
-                    <label className="text-[10px] uppercase font-black text-muted-foreground tracking-widest">Delivery Deadline</label>
-                    <FormControl><Input type="date" {...field} className="h-10 text-xs bg-card" /></FormControl>
-                  </FormItem>
-                )} />
-                <FormField control={dispatchForm.control} name="paymentTerms" render={({ field }) => (
-                  <FormItem>
-                    <label className="text-[10px] uppercase font-black text-muted-foreground tracking-widest">Terms</label>
-                    <Select onValueChange={field.onChange} value={field.value}>
-                      <FormControl>
-                        <SelectTrigger className="h-10 text-xs bg-card"><SelectValue /></SelectTrigger>
-                      </FormControl>
-                      <SelectContent>
-                        <SelectItem value="Immediate" className="text-xs">Immediate Cash</SelectItem>
-                        <SelectItem value="30 Days Net" className="text-xs">30 Days Net</SelectItem>
-                        <SelectItem value="60 Days Net" className="text-xs">60 Days Net</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </FormItem>
-                )} />
+              <div className="space-y-3">
+                <div className="flex items-center gap-2 px-1">
+                  <Info className="w-3.5 h-3.5 text-muted-foreground" />
+                  <p className="text-[10px] uppercase font-black text-muted-foreground tracking-widest">Source Item Audit</p>
+                </div>
+                <div className="border border-border/50 rounded-2xl overflow-hidden bg-card divide-y max-h-[30vh] overflow-y-auto">
+                  {dispatchingPr?.items.map((item, idx) => (
+                    <div key={idx} className="p-4 flex justify-between items-center text-xs group hover:bg-muted/10 transition-colors">
+                      <div className="flex flex-col gap-0.5">
+                        <span className="font-bold text-primary">{item.description}</span>
+                        <span className="text-[9px] font-black uppercase text-muted-foreground">Qty: {item.quantity} × Ksh {item.estimatedUnitPrice.toLocaleString()}</span>
+                      </div>
+                      <span className="font-black tracking-tighter text-primary">Ksh {(item.quantity * item.estimatedUnitPrice).toLocaleString()}</span>
+                    </div>
+                  ))}
+                </div>
               </div>
 
-              <DialogFooter className="pt-6 border-t">
-                <Button type="submit" className="bg-primary font-black uppercase text-xs h-11 shadow-xl">
+              <DialogFooter className="pt-6 border-t flex-col sm:flex-row gap-3">
+                <Button variant="ghost" onClick={() => setDispatchingPr(null)} className="font-black uppercase text-xs h-12">Cancel</Button>
+                <Button type="submit" className="bg-primary font-black uppercase text-xs h-12 px-10 shadow-xl flex-1 sm:flex-none">
                   Finalize & Dispatch Agreement
                 </Button>
               </DialogFooter>

@@ -18,9 +18,11 @@ export default function Home() {
       <nav className="border-b bg-card/50 backdrop-blur-md sticky top-0 z-50">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 h-16 flex items-center justify-between">
           <div className="flex items-center gap-2">
-            <h1 className="text-xl font-headline font-bold text-primary tracking-tighter">
-              CPP <span className="text-accent">Portal</span>
-            </h1>
+            <Link href="/" className="hover:opacity-80 transition-opacity">
+              <h1 className="text-xl font-headline font-bold text-primary tracking-tighter">
+                CPP <span className="text-accent">Portal</span>
+              </h1>
+            </Link>
           </div>
           <div className="flex items-center gap-4">
             <Link href="/how-to" className="flex items-center gap-1.5 text-[10px] sm:text-xs font-bold uppercase text-muted-foreground hover:text-accent transition-colors">
@@ -53,12 +55,12 @@ export default function Home() {
             </p>
             <div className="flex flex-col sm:flex-row items-center justify-center gap-3 sm:gap-4 pt-4 px-4">
               <Link href="/dashboard" className="w-full sm:w-auto">
-                <Button size="lg" className="h-12 sm:h-14 w-full px-8 text-base font-bold bg-primary shadow-xl hover:shadow-accent/20 transition-all group">
+                <Button size="lg" className="h-12 sm:h-14 w-full sm:w-auto px-8 text-base font-bold bg-primary shadow-xl hover:shadow-accent/20 transition-all group">
                   Enter Portal <ArrowRight className="ml-2 w-5 h-5 group-hover:translate-x-1 transition-transform" />
                 </Button>
               </Link>
               <Link href="/how-to" className="w-full sm:w-auto">
-                <Button variant="outline" size="lg" className="h-12 sm:h-14 w-full px-8 text-base font-bold border-2">
+                <Button variant="outline" size="lg" className="h-12 sm:h-14 w-full sm:w-auto px-8 text-base font-bold border-2">
                   View Guide
                 </Button>
               </Link>
@@ -70,8 +72,8 @@ export default function Home() {
         <section className="py-12 sm:py-20 bg-muted/30 border-y px-4 sm:px-6">
           <div className="max-w-7xl mx-auto">
             <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-8 sm:gap-12">
-              <div className="space-y-3 sm:space-y-4">
-                <div className="p-3 bg-accent/10 rounded-xl w-fit text-accent">
+              <div className="space-y-4">
+                <div className="p-3 bg-accent/10 rounded-xl w-fit text-accent mb-1">
                   <BarChart3 className="w-6 h-6" />
                 </div>
                 <h3 className="text-xl font-bold text-primary">Budget Governance</h3>
@@ -81,8 +83,8 @@ export default function Home() {
                 </p>
               </div>
 
-              <div className="space-y-3 sm:space-y-4">
-                <div className="p-3 bg-accent/10 rounded-xl w-fit text-accent">
+              <div className="space-y-4">
+                <div className="p-3 bg-accent/10 rounded-xl w-fit text-accent mb-1">
                   <ShieldCheck className="w-6 h-6" />
                 </div>
                 <h3 className="text-xl font-bold text-primary">Unified Approvals</h3>
@@ -92,8 +94,8 @@ export default function Home() {
                 </p>
               </div>
 
-              <div className="space-y-3 sm:space-y-4">
-                <div className="p-3 bg-accent/10 rounded-xl w-fit text-accent">
+              <div className="space-y-4">
+                <div className="p-3 bg-accent/10 rounded-xl w-fit text-accent mb-1">
                   <Zap className="w-6 h-6" />
                 </div>
                 <h3 className="text-xl font-bold text-primary">Vendor Intel</h3>
@@ -120,12 +122,12 @@ export default function Home() {
                 </p>
                 <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 pt-2">
                   <Link href="/dashboard" className="w-full sm:w-auto">
-                    <Button variant="secondary" size="lg" className="w-full font-bold">
+                    <Button variant="secondary" size="lg" className="w-full sm:w-auto font-bold">
                       Go to Dashboard
                     </Button>
                   </Link>
                   <Link href="/how-to" className="w-full sm:w-auto">
-                    <Button variant="outline" size="lg" className="w-full font-bold bg-transparent border-white/20 text-white hover:bg-white/10">
+                    <Button variant="outline" size="lg" className="w-full sm:w-auto font-bold bg-transparent border-white/20 text-white hover:bg-white/10">
                       Read Guide
                     </Button>
                   </Link>
