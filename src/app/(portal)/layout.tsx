@@ -1,4 +1,3 @@
-
 "use client";
 
 import { SidebarNav } from '@/components/layout/SidebarNav';
@@ -7,6 +6,7 @@ import { cn } from '@/lib/utils';
 import { useEffect, useState } from 'react';
 import { Menu, ShieldCheck, X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import Link from 'next/link';
 import {
   Sheet,
   SheetContent,
@@ -42,9 +42,11 @@ export default function PortalLayout({
     <div className="flex min-h-screen bg-background text-foreground overflow-x-hidden">
       {/* Mobile Header */}
       <header className="md:hidden fixed top-0 left-0 right-0 h-16 bg-card border-b z-40 flex items-center justify-between px-6">
-        <h1 className="text-xl font-headline font-bold text-primary tracking-tighter">
-          CPP <span className="text-accent">Portal</span>
-        </h1>
+        <Link href="/" className="hover:opacity-80 transition-opacity">
+          <h1 className="text-xl font-headline font-bold text-primary tracking-tighter">
+            CPP <span className="text-accent">Portal</span>
+          </h1>
+        </Link>
         <Sheet open={isMobileMenuOpen} onOpenChange={setIsMobileMenuOpen}>
           <SheetTrigger asChild>
             <Button variant="ghost" size="icon" className="hover:bg-accent/10">

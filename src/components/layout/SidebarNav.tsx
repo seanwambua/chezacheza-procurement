@@ -136,16 +136,16 @@ export function SidebarNav({ forceExpanded = false, onAction }: SidebarNavProps)
           collapsed && "flex-col gap-2 px-2 pt-6 pb-4 border-none"
         )}>
           {!collapsed ? (
-            <div>
+            <Link href="/" className="hover:opacity-80 transition-opacity block group">
               <h1 className="text-xl font-headline font-bold text-primary tracking-tighter leading-none">
                 CPP <span className="text-accent">Portal</span>
               </h1>
               <p className="text-[10px] text-muted-foreground uppercase font-black tracking-widest mt-1.5 opacity-60">Chezacheza</p>
-            </div>
+            </Link>
           ) : (
-            <div className="text-center">
+            <Link href="/" className="text-center hover:opacity-80 transition-opacity block">
               <h1 className="text-xl font-headline font-bold text-primary tracking-tighter">CPP</h1>
-            </div>
+            </Link>
           )}
         </div>
         
