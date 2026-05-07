@@ -18,11 +18,13 @@ import {
   ArrowLeft,
   ShieldCheck,
   Building2,
-  Send
+  Send,
+  MessageSquareMore
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Separator } from '@/components/ui/separator';
+import { Textarea } from '@/components/ui/textarea';
 import { 
   Dialog,
   DialogContent,
@@ -76,12 +78,18 @@ export default function VendorsPage() {
   
   const vendors = store.vendors || [];
   const addVendor = store.addVendor;
+  const addFeedback = store.addFeedback;
 
   const [selectedVendor, setSelectedVendor] = useState<Vendor | null>(null);
   const [search, setSearch] = useState('');
   const [mounted, setMounted] = useState(false);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [step, setStep] = useState(1);
+
+  // Feedback State
+  const [isFeedbackDialogOpen, setIsFeedbackDialogOpen] = useState(false);
+  const [feedbackRating, setFeedbackRating] = useState(5);
+  const [feedbackComment, setFeedbackComment] = useState('');
 
   const form = useForm<VendorFormValues>({
     resolver: zodResolver(vendorSchema),
@@ -133,6 +141,27 @@ export default function VendorsPage() {
     });
     setIsDialogOpen(false);
     resetWizard();
+  };
+
+  const handleFeedbackSubmit = () => {
+    if (!selectedVendor || !feedbackComment) return;
+
+    addFeedback({
+      vendorId: selectedVendor.id,
+      vendorName: selectedVendor.name,
+      authorName: currentUser?.name || 'Unknown User',
+      rating: feedbackRating,
+      comment: feedbackComment
+    });
+
+    toast({
+      title: "Feedback Recorded",
+      description: `Your testimonial for ${selectedVendor.name} has been published.`
+    });
+
+    setIsFeedbackDialogOpen(false);
+    setFeedbackComment('');
+    setFeedbackRating(5);
   };
 
   const resetWizard = () => {
@@ -409,12 +438,20 @@ export default function VendorsPage() {
                       </div>
                     </div>
                   </div>
-                  <div className="grid grid-cols-2 gap-3 shrink-0">
+                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 shrink-0">
                     <Button variant="outline" size="sm" className="h-9 text-[10px] font-bold uppercase tracking-tight shadow-sm">
                       <Mail className="w-3.5 h-3.5 mr-1.5 text-accent" /> Email
                     </Button>
                     <Button variant="outline" size="sm" className="h-9 text-[10px] font-bold uppercase tracking-tight shadow-sm">
                       <Phone className="w-3.5 h-3.5 mr-1.5 text-accent" /> Call
+                    </Button>
+                    <Button 
+                      variant="outline" 
+                      size="sm" 
+                      className="h-9 text-[10px] font-bold uppercase tracking-tight shadow-sm"
+                      onClick={() => setIsFeedbackDialogOpen(true)}
+                    >
+                      <Star className="w-3.5 h-3.5 mr-1.5 text-accent" /> Feedback
                     </Button>
                   </div>
                 </div>
@@ -467,6 +504,59 @@ export default function VendorsPage() {
           )}
         </div>
       </div>
+
+      {/* Feedback Submission Dialog */}
+      <Dialog open={isFeedbackDialogOpen} onOpenChange={setIsFeedbackDialogOpen}>
+        <DialogContent className="max-w-md w-[95vw]">
+          <DialogHeader>
+            <DialogTitle className="text-xl font-black tracking-tight">Post Peer Feedback</DialogTitle>
+            <DialogDescription className="text-xs">Share qualitative experience about {selectedVendor?.name}.</DialogDescription>
+          </DialogHeader>
+
+          <div className="space-y-5 py-4">
+            <div className="space-y-2">
+              <label className="text-[10px] uppercase font-black text-muted-foreground">Quality Rating (1-5)</label>
+              <div className="flex gap-2">
+                {[1, 2, 3, 4, 5].map(r => (
+                  <button 
+                    key={r}
+                    type="button"
+                    className={cn(
+                      "w-10 h-10 rounded-lg flex items-center justify-center transition-all border",
+                      feedbackRating === r ? "bg-accent border-accent text-white scale-110 shadow-md" : "bg-muted border-transparent hover:bg-muted/80"
+                    )}
+                    onClick={() => setFeedbackRating(r)}
+                  >
+                    <Star className={cn("w-4 h-4", feedbackRating >= r ? "fill-current" : "")} />
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            <div className="space-y-2">
+              <label className="text-[10px] uppercase font-black text-muted-foreground">Testimonial / Comment</label>
+              <Textarea 
+                placeholder="Share your experience..." 
+                className="min-h-[100px] text-xs font-medium"
+                value={feedbackComment}
+                onChange={(e) => setFeedbackComment(e.target.value)}
+              />
+            </div>
+          </div>
+
+          <DialogFooter className="gap-2 sm:gap-0 pt-6 border-t flex-col sm:flex-row">
+            <Button variant="outline" onClick={() => setIsFeedbackDialogOpen(false)} className="w-full sm:w-auto font-black uppercase text-[10px] h-10">Discard</Button>
+            <Button 
+              className="w-full sm:w-auto bg-accent text-white font-black uppercase text-[10px] h-10 shadow-lg"
+              onClick={handleFeedbackSubmit}
+              disabled={!feedbackComment}
+            >
+              <Send className="w-3 h-3 mr-2" />
+              Publish Feedback
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
