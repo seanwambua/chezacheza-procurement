@@ -4,23 +4,18 @@ import { useEffect, useState } from 'react';
 import { StatCard } from '@/components/dashboard/StatCard';
 import { 
   ShoppingCart, 
-  FileCheck, 
   Clock, 
   AlertCircle,
   TrendingUp,
-  Users,
   CalendarDays,
-  ArrowRight,
   Plus,
-  ArrowLeft,
   ShieldCheck,
   CheckCircle2,
   Target,
-  Building2,
-  PieChart as PieChartIcon,
   FileText,
   Trash2,
-  Pencil
+  Pencil,
+  Zap
 } from 'lucide-react';
 import { 
   BarChart, 
@@ -29,10 +24,7 @@ import {
   YAxis, 
   CartesianGrid, 
   Tooltip, 
-  ResponsiveContainer,
-  PieChart,
-  Pie,
-  Cell
+  ResponsiveContainer
 } from 'recharts';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -61,8 +53,7 @@ import {
   FormItem,
   FormLabel,
   FormMessage,
-  FormDescription,
-} from "@/components/ui/form";
+} from "@/form";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -72,10 +63,10 @@ import {
   AlertDialogFooter,
   AlertDialogHeader,
   AlertDialogTitle,
-} from "@/components/ui/alert-dialog";
-import { Input } from '@/components/ui/input';
-import { Button } from '@/components/ui/button';
-import { Checkbox } from '@/components/ui/checkbox';
+} from "@/alert-dialog";
+import { Input } from '@/input';
+import { Button } from '@/button';
+import { Checkbox } from '@/checkbox';
 import { calculatePRTotal, FiscalYear } from '@/lib/types';
 import Link from 'next/link';
 import { cn } from '@/lib/utils';
@@ -84,7 +75,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
 import { useToast } from '@/hooks/use-toast';
 import { RoleGuard } from '@/components/auth/RoleGuard';
-import { Separator } from '@/components/ui/separator';
+import { differenceInHours } from 'date-fns';
 
 const fiscalYearSchema = z.object({
   year: z.string().min(4, "Year is required"),
@@ -108,7 +99,6 @@ export default function DashboardPage() {
   const { 
     prs, 
     budgets, 
-    vendors, 
     lpos, 
     grns, 
     addBudget, 
@@ -161,17 +151,6 @@ export default function DashboardPage() {
         q3Weight: editingYear.q3Weight,
         q4Weight: editingYear.q4Weight,
       });
-    } else {
-      form.reset({
-        year: String(new Date().getFullYear() + 1),
-        globalTarget: 10000000,
-        strategy: 'Balanced',
-        departments: ['Operations', 'IT'],
-        q1Weight: 25,
-        q2Weight: 25,
-        q3Weight: 25,
-        q4Weight: 25,
-      });
     }
   }, [editingYear, form]);
 
@@ -185,22 +164,25 @@ export default function DashboardPage() {
   
   const filteredLpos = lpos.filter(lpo => lpo.fiscalYear === selectedYear);
   const activeLposCount = filteredLpos.filter(lpo => lpo.status !== 'Closed').length;
-  const awaitingDelivery = filteredLpos.filter(lpo => lpo.status === 'Dispatched').length;
   
   const filteredGrns = grns.filter(grn => grn.fiscalYear === selectedYear);
-  const activeDisputes = filteredGrns.filter(grn => grn.disputeFlag).length;
+
+  // Calculate Average Delivery Cycle
+  const deliveryCycles = filteredGrns.map(grn => {
+    const lpo = lpos.find(l => l.id === grn.lpoId);
+    if (!lpo) return null;
+    return differenceInHours(new Date(grn.receivedDate), new Date(lpo.createdAt));
+  }).filter(h => h !== null) as number[];
+
+  const avgCycleHours = deliveryCycles.length > 0 
+    ? Math.round(deliveryCycles.reduce((a, b) => a + b, 0) / deliveryCycles.length) 
+    : 0;
 
   const budgetData = filteredBudgets.map(bl => ({
     name: bl.name,
     spent: bl.spent || 0,
     budget: [bl.q1Allocation || 0, bl.q2Allocation || 0, bl.q3Allocation || 0, bl.q4Allocation || 0].reduce((a, b) => a + b, 0)
   }));
-
-  const vendorPerformance = [
-    { name: 'Top Performing', value: vendors.filter(v => v.rating >= 4.5).length, color: 'hsl(var(--accent))' },
-    { name: 'Average', value: vendors.filter(v => v.rating >= 3 && v.rating < 4.5).length, color: 'hsl(var(--primary))' },
-    { name: 'Needs Review', value: vendors.filter(v => v.rating < 3).length, color: 'hsl(var(--chart-3))' },
-  ];
 
   const recentPrs = filteredPrs.slice(0, isDetailed ? 5 : 3);
 
@@ -312,14 +294,12 @@ export default function DashboardPage() {
                         <button 
                           className="p-1 hover:bg-accent/20 rounded-md text-accent transition-colors"
                           onClick={(e) => { e.preventDefault(); e.stopPropagation(); openEditWizard(fy); }}
-                          title="Edit Strategy"
                         >
                           <Pencil className="w-3 h-3" />
                         </button>
                         <button 
                           className="p-1 hover:bg-destructive/20 rounded-md text-destructive transition-colors"
                           onClick={(e) => { e.preventDefault(); e.stopPropagation(); setYearToDelete(fy.year); }}
-                          title="Delete Period"
                         >
                           <Trash2 className="w-3 h-3" />
                         </button>
@@ -370,7 +350,7 @@ export default function DashboardPage() {
                   </div>
 
                   <Form {...form}>
-                    <form onSubmit={form.handleSubmit(onWizardSubmit)} className="space-y-8" onKeyDown={(e) => { if (e.key === 'Enter') e.preventDefault(); }}>
+                    <form onSubmit={form.handleSubmit(onWizardSubmit)} className="space-y-8">
                       {wizardStep === 1 && (
                         <div className="space-y-6 animate-in slide-in-from-right-4 duration-300">
                           <FormField control={form.control} name="year" render={({ field }) => (
@@ -403,7 +383,6 @@ export default function DashboardPage() {
                                   <SelectItem value="Conservative" className="text-sm">Conservative (Cost-Control)</SelectItem>
                                 </SelectContent>
                               </Select>
-                              <FormMessage />
                             </FormItem>
                           )} />
                         </div>
@@ -494,11 +473,10 @@ export default function DashboardPage() {
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6">
-        <div className={cn("md:col-span-2", isDetailed ? "lg:col-span-2" : "lg:col-span-4")}>
-          <StatCard title={`Total Spend (Actual - ${selectedYear})`} value={`Ksh ${totalSpendVal.toLocaleString()}`} trend={{ value: 12, isUp: true }} icon={TrendingUp} />
-        </div>
-        <div className="md:col-span-1"><StatCard title="Pending Approvals" value={pendingApprovals} icon={Clock} /></div>
-        <div className="md:col-span-1"><StatCard title="Active LPOs" value={activeLposCount} icon={ShoppingCart} /></div>
+        <StatCard title={`Total Spend (FY ${selectedYear})`} value={`Ksh ${totalSpendVal.toLocaleString()}`} trend={{ value: 12, isUp: true }} icon={TrendingUp} />
+        <StatCard title="Avg. Delivery Cycle" value={avgCycleHours > 0 ? `${avgCycleHours}h` : 'N/A'} icon={Zap} description="LPO to Fulfillment" />
+        <StatCard title="Pending Approvals" value={pendingApprovals} icon={Clock} />
+        <StatCard title="Active LPOs" value={activeLposCount} icon={ShoppingCart} />
       </div>
 
       <div className={cn("grid grid-cols-1 gap-6", isDetailed ? "lg:grid-cols-3" : "")}>
@@ -554,7 +532,7 @@ export default function DashboardPage() {
               Purge Fiscal Period FY {yearToDelete}?
             </AlertDialogTitle>
             <div className="text-sm text-muted-foreground space-y-3">
-              <p>This will **permanently delete** the entire fiscal period and all its associated data. This action cannot be undone.</p>
+              <p>This will permanently delete the entire fiscal period and all its associated data. This action cannot be undone.</p>
               <div className="p-3 bg-destructive/10 border border-destructive/20 rounded-lg space-y-1">
                 <p className="font-black uppercase text-[10px]">Cascading Impact:</p>
                 <ul className="list-disc pl-4 text-[9px] font-bold">

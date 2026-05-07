@@ -15,9 +15,7 @@ import {
   Truck, 
   Calendar,
   PackageCheck,
-  Pencil,
   Trash2,
-  FileText,
   AlertCircle
 } from 'lucide-react';
 import { 
@@ -34,6 +32,7 @@ import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { StatCard } from '@/components/dashboard/StatCard';
+import { CycleTimer } from '@/components/procurement/CycleTimer';
 import {
   Dialog,
   DialogContent,
@@ -50,7 +49,6 @@ import {
   FormItem,
   FormLabel,
   FormMessage,
-  FormDescription,
 } from "@/components/ui/form";
 import {
   AlertDialog,
@@ -76,7 +74,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { useToast } from '@/hooks/use-toast';
-import { LPO, calculatePRTotal, GRN } from '@/lib/types';
+import { LPO, calculatePRTotal } from '@/lib/types';
 import { cn } from '@/lib/utils';
 
 const lpoSchema = z.object({
@@ -278,7 +276,6 @@ export default function LPOsPage() {
                           ))}
                         </SelectContent>
                       </Select>
-                      <FormMessage />
                     </FormItem>
                   )}
                 />
@@ -295,7 +292,6 @@ export default function LPOsPage() {
                           {vendors.map(v => <SelectItem key={v.id} value={v.id} className="text-xs">{v.name}</SelectItem>)}
                         </SelectContent>
                       </Select>
-                      <FormMessage />
                     </FormItem>
                   )}
                 />
@@ -314,7 +310,6 @@ export default function LPOsPage() {
                           <SelectItem value="60 Days Net" className="text-xs">60 Days</SelectItem>
                         </SelectContent>
                       </Select>
-                      <FormMessage />
                     </FormItem>
                   )} />
                 </div>
@@ -323,7 +318,6 @@ export default function LPOsPage() {
                   <FormItem>
                     <FormLabel className="text-[10px] uppercase font-bold text-muted-foreground">Terms & Instructions</FormLabel>
                     <FormControl><Textarea placeholder="..." className="min-h-[100px] text-xs" {...field} /></FormControl>
-                    <FormMessage />
                   </FormItem>
                 )} />
 
@@ -352,6 +346,7 @@ export default function LPOsPage() {
               <TableRow className="bg-muted/30 border-none">
                 {isDetailed && <TableHead className="w-[120px] font-bold uppercase text-[10px]">Reference</TableHead>}
                 <TableHead className="min-w-[150px] font-bold uppercase text-[10px]">Vendor</TableHead>
+                <TableHead className="font-bold uppercase text-[10px]">Cycle Status</TableHead>
                 <TableHead className="font-bold uppercase text-[10px]">Status</TableHead>
                 <TableHead className="text-right font-bold uppercase text-[10px]">Commitment</TableHead>
                 <TableHead className="w-[50px]"></TableHead>
@@ -366,6 +361,13 @@ export default function LPOsPage() {
                       <span className="font-bold text-xs text-primary">{lpo.vendorName}</span>
                     </TableCell>
                     <TableCell>
+                      {lpo.status === 'Dispatched' ? (
+                        <CycleTimer startTime={lpo.createdAt} />
+                      ) : (
+                        <span className="text-[10px] text-muted-foreground font-bold uppercase italic">Cycle End</span>
+                      )}
+                    </TableCell>
+                    <TableCell>
                       <Badge variant={lpo.status === 'Fulfilled' ? 'secondary' : 'outline'} className="text-[9px] uppercase px-1.5 py-0 h-4">
                         {lpo.status}
                       </Badge>
@@ -376,7 +378,7 @@ export default function LPOsPage() {
                     <TableCell>
                       <DropdownMenu>
                         <DropdownMenuTrigger asChild>
-                          <Button variant="ghost" size="icon" className="h-8 w-8 opacity-0 group-hover:opacity-100 transition-opacity"><MoreVertical className="w-4 h-4" /></Button>
+                          <Button variant="ghost" size="icon" className="h-8 w-8 md:opacity-0 group-hover:opacity-100 transition-opacity"><MoreVertical className="w-4 h-4" /></Button>
                         </DropdownMenuTrigger>
                         <DropdownMenuContent align="end">
                           <DropdownMenuItem className="text-xs font-bold"><Printer className="w-4 h-4 mr-2" /> Print</DropdownMenuItem>
@@ -391,7 +393,7 @@ export default function LPOsPage() {
                 ))
               ) : (
                 <TableRow>
-                  <TableCell colSpan={isDetailed ? 5 : 4} className="h-48 text-center text-muted-foreground">
+                  <TableCell colSpan={isDetailed ? 6 : 5} className="h-48 text-center text-muted-foreground">
                     <p className="text-sm font-medium">No LPOs for FY {selectedYear}.</p>
                   </TableCell>
                 </TableRow>
@@ -408,7 +410,7 @@ export default function LPOsPage() {
               <AlertCircle className="w-5 h-5" />
               Void Commitment {lpoToVoid?.lpoNumber}?
             </AlertDialogTitle>
-            <AlertDialogDescription className="text-xs">
+            <AlertDialogDescription>
               This will permanently cancel the order. Any associated Goods Received Notes (GRNs) will also be purged. 
               The budget commitment will be adjusted, and the source requisition will revert to 'Approved' status.
             </AlertDialogDescription>

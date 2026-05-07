@@ -4,16 +4,17 @@ import { useState, useEffect } from 'react';
 import { useStore } from '@/lib/store';
 import { useUserStore } from '@/lib/user-store';
 import { StatCard } from '@/components/dashboard/StatCard';
-import { Truck, Search, AlertTriangle, CheckCircle2, FileText, Calendar } from 'lucide-react';
+import { Truck, Search, AlertTriangle, CheckCircle2 } from 'lucide-react';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { CycleTimer } from '@/components/procurement/CycleTimer';
 import { cn } from '@/lib/utils';
 
 export default function DeliveriesPage() {
-  const { grns, selectedYear } = useStore();
+  const { grns, lpos, selectedYear } = useStore();
   const { currentUser, viewPreference } = useUserStore();
   const [mounted, setMounted] = useState(false);
   const [search, setSearch] = useState('');
@@ -74,6 +75,7 @@ export default function DeliveriesPage() {
                 <TableRow className="bg-muted/30 border-none">
                   {isDetailed && <TableHead className="w-[100px] font-bold uppercase text-[10px]">GRN ID</TableHead>}
                   <TableHead className="min-w-[150px] font-bold uppercase text-[10px]">LPO Reference</TableHead>
+                  <TableHead className="font-bold uppercase text-[10px]">Cycle Time</TableHead>
                   <TableHead className="min-w-[120px] font-bold uppercase text-[10px]">Received By</TableHead>
                   <TableHead className="font-bold uppercase text-[10px]">Status</TableHead>
                   <TableHead className="text-right font-bold uppercase text-[10px]">Actions</TableHead>
@@ -81,26 +83,37 @@ export default function DeliveriesPage() {
               </TableHeader>
               <TableBody>
                 {filteredGrns.length > 0 ? (
-                  filteredGrns.map((grn) => (
-                    <TableRow key={grn.id} className="group hover:bg-muted/5">
-                      {isDetailed && <TableCell className="font-black text-primary text-[10px]">{grn.id}</TableCell>}
-                      <TableCell>
-                        <span className="font-bold text-xs text-primary">{grn.lpoNumber}</span>
-                      </TableCell>
-                      <TableCell className="text-xs font-medium">{grn.receivedBy}</TableCell>
-                      <TableCell>
-                        <Badge variant={grn.disputeFlag ? 'destructive' : 'secondary'} className="text-[9px] uppercase px-1.5 h-4">
-                          {grn.disputeFlag ? 'DISPUTED' : 'VERIFIED'}
-                        </Badge>
-                      </TableCell>
-                      <TableCell className="text-right">
-                        <Button variant="ghost" size="sm" className="h-8 text-[10px] font-bold uppercase">View PDF</Button>
-                      </TableCell>
-                    </TableRow>
-                  ))
+                  filteredGrns.map((grn) => {
+                    const linkedLpo = lpos.find(l => l.id === grn.lpoId);
+                    return (
+                      <TableRow key={grn.id} className="group hover:bg-muted/5">
+                        {isDetailed && <TableCell className="font-black text-primary text-[10px]">{grn.id}</TableCell>}
+                        <TableCell>
+                          <span className="font-bold text-xs text-primary">{grn.lpoNumber}</span>
+                        </TableCell>
+                        <TableCell>
+                          {linkedLpo && (
+                            <CycleTimer 
+                              startTime={linkedLpo.createdAt} 
+                              endTime={grn.receivedDate} 
+                            />
+                          )}
+                        </TableCell>
+                        <TableCell className="text-xs font-medium">{grn.receivedBy}</TableCell>
+                        <TableCell>
+                          <Badge variant={grn.disputeFlag ? 'destructive' : 'secondary'} className="text-[9px] uppercase px-1.5 h-4">
+                            {grn.disputeFlag ? 'DISPUTED' : 'VERIFIED'}
+                          </Badge>
+                        </TableCell>
+                        <TableCell className="text-right">
+                          <Button variant="ghost" size="sm" className="h-8 text-[10px] font-bold uppercase">View PDF</Button>
+                        </TableCell>
+                      </TableRow>
+                    );
+                  })
                 ) : (
                   <TableRow>
-                    <TableCell colSpan={isDetailed ? 5 : 4} className="h-48 text-center text-muted-foreground">
+                    <TableCell colSpan={isDetailed ? 6 : 5} className="h-48 text-center text-muted-foreground">
                       <p className="text-sm font-medium">No receipts for FY {selectedYear}.</p>
                     </TableCell>
                   </TableRow>
