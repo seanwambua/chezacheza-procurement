@@ -421,7 +421,7 @@ export default function FulfillmentPage() {
               </div>
 
               <DialogFooter className="border-t pt-6">
-                <Button type="submit" className="bg-primary font-black uppercase text-xs h-11 w-full shadow-xl">
+                <Button type="submit" className="bg-primary font-black uppercase text-xs h-11 shadow-xl">
                   Start Fulfillment Cycle
                 </Button>
               </DialogFooter>
@@ -488,16 +488,16 @@ export default function FulfillmentPage() {
               </div>
 
               <DialogFooter className="gap-2 pt-6 border-t flex-col sm:flex-row">
-                <Button variant="outline" onClick={() => setReceivingLpo(null)} className="font-black uppercase text-xs h-11 w-full sm:w-auto">Cancel Verification</Button>
+                <Button variant="outline" onClick={() => setReceivingLpo(null)} className="font-black uppercase text-xs h-11">Cancel Verification</Button>
                 <Button 
                   variant="outline" 
-                  className="font-black uppercase text-xs h-11 w-full sm:w-auto border-accent text-accent hover:bg-accent/5" 
+                  className="font-black uppercase text-xs h-11 border-accent text-accent hover:bg-accent/5" 
                   onClick={() => setIsFeedbackDialogOpen(true)}
                 >
                   <MessageSquareMore className="w-3.5 h-3.5 mr-2" />
                   Rate Experience
                 </Button>
-                <Button className="bg-accent font-black uppercase text-xs h-11 w-full sm:w-auto shadow-xl" onClick={() => handleReceiveGoods(receivingLpo)}>
+                <Button className="bg-accent font-black uppercase text-xs h-11 shadow-xl" onClick={() => handleReceiveGoods(receivingLpo)}>
                   Stop Timer & Confirm Receipt
                 </Button>
               </DialogFooter>
@@ -546,9 +546,9 @@ export default function FulfillmentPage() {
           </div>
 
           <DialogFooter className="gap-2 sm:gap-0 pt-6 border-t flex-col sm:flex-row">
-            <Button variant="outline" onClick={() => setIsFeedbackDialogOpen(false)} className="w-full sm:w-auto font-black uppercase text-[10px] h-10">Discard</Button>
+            <Button variant="outline" onClick={() => setIsFeedbackDialogOpen(false)} className="font-black uppercase text-[10px] h-10">Discard</Button>
             <Button 
-              className="w-full sm:w-auto bg-accent text-white font-black uppercase text-[10px] h-10 shadow-lg"
+              className="bg-accent text-white font-black uppercase text-[10px] h-10 shadow-lg"
               onClick={handleFeedbackSubmit}
               disabled={!feedbackComment}
             >

@@ -1,4 +1,3 @@
-
 "use client";
 
 import { useState, useEffect } from 'react';
@@ -156,7 +155,7 @@ export default function UsersPage() {
           if (!open) setEditingUser(null);
         }}>
           <DialogTrigger asChild>
-            <Button className="w-full md:w-auto bg-primary font-bold uppercase text-xs h-10 shadow-sm" onClick={() => setEditingUser(null)}>
+            <Button className="bg-primary font-bold uppercase text-xs h-10 shadow-sm" onClick={() => setEditingUser(null)}>
               <UserPlus className="w-4 h-4 mr-2" />
               Add User
             </Button>
@@ -285,9 +284,9 @@ export default function UsersPage() {
                   )}
                 />
 
-                <DialogFooter className="gap-2 sm:gap-0 pt-6 flex-col sm:flex-row border-t">
-                  <Button type="button" variant="outline" onClick={() => setIsDialogOpen(false)} className="w-full sm:w-auto font-bold uppercase text-xs h-10">Cancel</Button>
-                  <Button type="submit" className="w-full sm:w-auto bg-primary shadow-md font-bold uppercase text-xs h-10">
+                <DialogFooter className="gap-2 sm:gap-0 pt-6 border-t">
+                  <Button type="button" variant="outline" onClick={() => setIsDialogOpen(false)} className="font-bold uppercase text-xs h-10">Cancel</Button>
+                  <Button type="submit" className="bg-primary shadow-md font-bold uppercase text-xs h-10">
                     {editingUser ? 'Save Changes' : 'Create Account'}
                   </Button>
                 </DialogFooter>

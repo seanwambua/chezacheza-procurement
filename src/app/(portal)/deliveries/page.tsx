@@ -280,10 +280,10 @@ export default function DeliveriesPage() {
               </div>
 
               <DialogFooter className="pt-6 border-t gap-2">
-                <Button variant="outline" className="font-black uppercase text-xs h-10 w-full sm:w-auto" onClick={() => setSelectedGrn(null)}>
+                <Button variant="outline" className="font-black uppercase text-xs h-10" onClick={() => setSelectedGrn(null)}>
                   Close Audit
                 </Button>
-                <Button className="bg-primary font-black uppercase text-xs h-10 w-full sm:w-auto shadow-lg gap-2">
+                <Button className="bg-primary font-black uppercase text-xs h-10 shadow-lg gap-2">
                   <FileText className="w-3.5 h-3.5" />
                   Print PDF Certificate
                 </Button>

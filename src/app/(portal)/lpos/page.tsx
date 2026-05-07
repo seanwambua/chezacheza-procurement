@@ -16,7 +16,14 @@ import {
   PlusCircle, 
   Trash, 
   Pencil,
-  Wallet
+  Wallet,
+  ShieldCheck,
+  Zap,
+  CheckCircle2,
+  Clock,
+  History,
+  Lock,
+  ArrowRight
 } from 'lucide-react';
 import { 
   Table, 
@@ -69,10 +76,12 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useToast } from '@/hooks/use-toast';
-import { calculatePRTotal, PurchaseRequisition, getBudgetStats } from '@/lib/types';
+import { calculatePRTotal, PurchaseRequisition, getBudgetStats, LPO, PRStatus } from '@/lib/types';
 import { cn } from '@/lib/utils';
 import { RoleGuard } from '@/components/auth/RoleGuard';
+import { CycleTimer } from '@/components/procurement/CycleTimer';
 
 // Schemas
 const requisitionSchema = z.object({
@@ -85,11 +94,18 @@ const requisitionSchema = z.object({
   })).min(1, "At least one item is required"),
 });
 
-type RequisitionFormValues = z.infer<typeof requisitionSchema>;
+const dispatchSchema = z.object({
+  vendorId: z.string().min(1, "Vendor selection required"),
+  deliveryDate: z.string().min(1, "Delivery deadline required"),
+  paymentTerms: z.string().min(1, "Terms required"),
+});
 
-function RequisitionsHubContent() {
+type RequisitionFormValues = z.infer<typeof requisitionSchema>;
+type DispatchFormValues = z.infer<typeof dispatchSchema>;
+
+function OrdersHubContent() {
   const { 
-    prs, budgets, addPR, updatePR, deletePR, selectedYear 
+    prs, budgets, vendors, lpos, addPR, updatePR, deletePR, addLPO, selectedYear 
   } = useStore();
   
   const { currentUser, viewPreference } = useUserStore();
@@ -97,10 +113,15 @@ function RequisitionsHubContent() {
   
   const [mounted, setMounted] = useState(false);
   const [search, setSearch] = useState('');
+  const [activeTab, setActiveTab] = useState('requisitions');
   
+  // Requisition State
   const [isPRDialogOpen, setIsPRDialogOpen] = useState(false);
   const [editingPr, setEditingPr] = useState<PurchaseRequisition | null>(null);
   const [prToDelete, setPrToDelete] = useState<PurchaseRequisition | null>(null);
+
+  // Dispatch State
+  const [dispatchingPr, setDispatchingPr] = useState<PurchaseRequisition | null>(null);
 
   const isDetailed = viewPreference === 'detailed';
 
@@ -109,6 +130,15 @@ function RequisitionsHubContent() {
     defaultValues: {
       budget: '',
       items: [{ description: '', quantity: 1, estimatedUnitPrice: 0 }],
+    },
+  });
+
+  const dispatchForm = useForm<DispatchFormValues>({
+    resolver: zodResolver(dispatchSchema),
+    defaultValues: {
+      vendorId: '',
+      deliveryDate: '',
+      paymentTerms: '30 Days Net',
     },
   });
 
@@ -137,6 +167,7 @@ function RequisitionsHubContent() {
 
   if (!mounted || !currentUser) return null;
 
+  // Filter Logic
   const filteredPrs = (prs || []).filter(pr => {
     const isCurrentYear = pr.fiscalYear === selectedYear;
     const matchesSearch = pr.items?.some(i => i.description.toLowerCase().includes(search.toLowerCase())) || 
@@ -145,7 +176,14 @@ function RequisitionsHubContent() {
     return isCurrentYear && matchesSearch;
   });
 
-  const totalValue = filteredPrs.reduce((acc, pr) => acc + calculatePRTotal(pr), 0);
+  const filteredLpos = (lpos || []).filter(lpo => 
+    lpo.fiscalYear === selectedYear &&
+    (lpo.lpoNumber.toLowerCase().includes(search.toLowerCase()) ||
+     lpo.vendorName.toLowerCase().includes(search.toLowerCase()))
+  );
+
+  const statsPrs = filteredPrs.filter(pr => pr.status !== 'Rejected');
+  const totalValue = statsPrs.reduce((acc, pr) => acc + calculatePRTotal(pr), 0);
 
   const onPRSubmit = (values: RequisitionFormValues) => {
     const budget = (budgets || []).find(b => b.name === values.budget && b.fiscalYear === selectedYear);
@@ -185,14 +223,42 @@ function RequisitionsHubContent() {
     setEditingPr(null);
   };
 
+  const onDispatchSubmit = (values: DispatchFormValues) => {
+    if (!dispatchingPr) return;
+    const vendor = vendors.find(v => v.id === values.vendorId);
+    if (!vendor) return;
+
+    addLPO({
+      id: `LPO-${Math.floor(Math.random() * 10000)}`,
+      lpoNumber: `LPO/${selectedYear}/${String((lpos || []).length + 1).padStart(3, '0')}`,
+      prId: dispatchingPr.id,
+      vendorId: values.vendorId,
+      vendorName: vendor.name,
+      items: dispatchingPr.items.map(i => ({ 
+        description: i.description, 
+        quantity: i.quantity, 
+        unitPrice: i.estimatedUnitPrice, 
+        total: i.quantity * i.estimatedUnitPrice 
+      })),
+      totalValue: calculatePRTotal(dispatchingPr),
+      deliveryDate: values.deliveryDate,
+      paymentTerms: values.paymentTerms,
+      createdAt: new Date().toISOString(),
+    });
+
+    toast({ title: "Vendor Agreement Dispatched", description: "Official LPO has been generated and locked." });
+    setDispatchingPr(null);
+    dispatchForm.reset();
+  };
+
   return (
     <div className="space-y-6 md:space-y-8 animate-in fade-in duration-500 pb-10 max-w-full overflow-hidden">
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div className="min-w-0 flex-1">
           <h2 className="text-3xl md:text-4xl font-headline font-bold text-primary tracking-tighter leading-tight truncate">
-            Purchase Requisitions
+            Orders & Requests
           </h2>
-          <p className="text-muted-foreground text-sm font-medium">Internal organizational requests for FY {selectedYear}.</p>
+          <p className="text-muted-foreground text-sm font-medium">Consolidated procurement cycle management for FY {selectedYear}.</p>
         </div>
         
         <RoleGuard permission="create_requisitions">
@@ -203,90 +269,161 @@ function RequisitionsHubContent() {
       </div>
 
       <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 md:gap-6">
-        <StatCard title="Active Requests" value={filteredPrs.length} icon={FileText} description="Pending or authorized requests" />
-        <StatCard title="My Drafting Value" value={`Ksh ${totalValue.toLocaleString()}`} icon={Wallet} description="Total estimated commitment" />
-        <StatCard title="Budget Health" value="Active" icon={AlertCircle} description="Quarterly limits available" />
+        <StatCard title="Total Committed" value={`Ksh ${totalValue.toLocaleString()}`} icon={Wallet} description="Authorized or pending pool" />
+        <StatCard title="Active Agreements" value={filteredLpos.length} icon={ShieldCheck} description="Vendor-dispatched orders" />
+        <StatCard title="Cycle Status" value="Active" icon={Clock} description="Fulfillment tracking engaged" />
       </div>
 
-      <Card className="border-border shadow-none overflow-hidden bg-card">
-        <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between p-4 border-b gap-4">
-          <h3 className="text-sm font-black uppercase tracking-widest text-primary">Request Ledger</h3>
-          <div className="relative w-full sm:w-64">
+      <Tabs defaultValue="requisitions" value={activeTab} onValueChange={setActiveTab} className="w-full">
+        <div className="flex flex-col lg:flex-row items-stretch lg:items-center justify-between gap-4 mb-6">
+          <TabsList className="grid w-full lg:w-[400px] grid-cols-2 bg-muted/50 p-1">
+            <TabsTrigger value="requisitions" className="flex items-center justify-center gap-2 py-2 text-[10px] font-black uppercase tracking-widest">
+              <FileText className="w-3.5 h-3.5" />
+              Requisitions
+            </TabsTrigger>
+            <TabsTrigger value="lpos" className="flex items-center justify-center gap-2 py-2 text-[10px] font-black uppercase tracking-widest">
+              <Zap className="w-3.5 h-3.5" />
+              Purchase Orders
+            </TabsTrigger>
+          </TabsList>
+
+          <div className="relative w-full lg:w-64">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
             <Input 
-              placeholder="Search requests..." 
-              className="pl-9 h-10 text-xs bg-muted/30 border-none shadow-none"
+              placeholder="Search commitments..." 
+              className="pl-9 h-10 text-xs bg-card border-none shadow-sm"
               value={search}
               onChange={(e) => setSearch(e.target.value)}
             />
           </div>
         </div>
-        <div className="overflow-x-auto w-full">
-          <Table>
-            <TableHeader>
-              <TableRow className="bg-muted/30 border-none">
-                {isDetailed && <TableHead className="min-w-[120px] font-bold uppercase text-[10px]">Reference</TableHead>}
-                <TableHead className="min-w-[200px] font-bold uppercase text-[10px]">Description</TableHead>
-                <TableHead className="font-bold uppercase text-[10px]">Status</TableHead>
-                <TableHead className="text-right font-bold uppercase text-[10px]">Est. Value</TableHead>
-                <TableHead className="w-[50px]"></TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {filteredPrs.length > 0 ? (
-                filteredPrs.map((pr) => (
-                  <TableRow key={pr.id} className="group hover:bg-muted/5">
-                    {isDetailed && <TableCell className="font-black text-primary text-xs">{pr.refNumber}</TableCell>}
-                    <TableCell>
-                      <div className="flex flex-col">
-                        <span className="font-bold text-xs truncate max-w-[200px] text-primary">{pr.items?.[0]?.description || 'Multi-item Request'}</span>
-                        {pr.items.length > 1 && <span className="text-[9px] text-muted-foreground font-bold uppercase tracking-tighter">+{pr.items.length - 1} more items</span>}
-                      </div>
-                    </TableCell>
-                    <TableCell>
-                      <Badge 
-                        variant={pr.status === 'Approved' ? 'secondary' : pr.status === 'LPO Generated' ? 'outline' : 'outline'} 
-                        className={cn(
-                          "text-[9px] uppercase px-1.5 h-4",
-                          pr.status === 'LPO Generated' && "border-accent text-accent"
-                        )}
-                      >
-                        {pr.status === 'LPO Generated' ? 'In Cycle' : pr.status}
-                      </Badge>
-                    </TableCell>
-                    <TableCell className="text-right font-black tracking-tighter text-xs">Ksh {calculatePRTotal(pr).toLocaleString()}</TableCell>
-                    <TableCell>
-                      <DropdownMenu>
-                        <DropdownMenuTrigger asChild>
-                          <Button variant="ghost" size="icon" className="h-8 w-8 md:opacity-0 group-hover:opacity-100 transition-opacity"><MoreVertical className="w-4 h-4" /></Button>
-                        </DropdownMenuTrigger>
-                        <DropdownMenuContent align="end">
-                          <DropdownMenuItem 
-                            disabled={pr.status === 'LPO Generated' || pr.status === 'Approved'} 
-                            onClick={() => { setEditingPr(pr); setIsPRDialogOpen(true); }} 
-                            className="text-xs font-bold"
-                          >
-                            <Pencil className="w-4 h-4 mr-2" /> Edit
-                          </DropdownMenuItem>
-                          <DropdownMenuItem 
-                            disabled={pr.status === 'LPO Generated'} 
-                            onClick={() => setPrToDelete(pr)} 
-                            className="text-xs font-bold text-destructive"
-                          >
-                            <Trash2 className="w-4 h-4 mr-2" /> Purge
-                          </DropdownMenuItem>
-                        </DropdownMenuContent>
-                      </DropdownMenu>
-                    </TableCell>
+
+        <TabsContent value="requisitions" className="mt-0 focus-visible:ring-0">
+          <Card className="border-border shadow-none overflow-hidden bg-card">
+            <div className="overflow-x-auto w-full">
+              <Table>
+                <TableHeader>
+                  <TableRow className="bg-muted/30 border-none">
+                    {isDetailed && <TableHead className="min-w-[120px] font-bold uppercase text-[10px]">Reference</TableHead>}
+                    <TableHead className="min-w-[200px] font-bold uppercase text-[10px]">Description</TableHead>
+                    <TableHead className="font-bold uppercase text-[10px]">Status</TableHead>
+                    {isDetailed && <TableHead className="font-bold uppercase text-[10px]">Budget Pool</TableHead>}
+                    <TableHead className="text-right font-bold uppercase text-[10px]">Est. Value</TableHead>
+                    <TableHead className="text-right font-bold uppercase text-[10px]">Action</TableHead>
                   </TableRow>
-                ))
-              ) : (
-                <TableRow><TableCell colSpan={5} className="h-48 text-center text-muted-foreground italic">No requests found matching criteria.</TableCell></TableRow>
-              )}
-            </TableBody>
-          </Table>
-        </div>
-      </Card>
+                </TableHeader>
+                <TableBody>
+                  {filteredPrs.length > 0 ? (
+                    filteredPrs.map((pr) => (
+                      <TableRow key={pr.id} className="group hover:bg-muted/5">
+                        {isDetailed && <TableCell className="font-black text-primary text-xs">{pr.refNumber}</TableCell>}
+                        <TableCell>
+                          <div className="flex flex-col">
+                            <span className="font-bold text-xs truncate max-w-[200px] text-primary">{pr.items?.[0]?.description || 'Multi-item Request'}</span>
+                            {pr.items.length > 1 && <span className="text-[9px] text-muted-foreground font-bold uppercase tracking-tighter">+{pr.items.length - 1} more items</span>}
+                          </div>
+                        </TableCell>
+                        <TableCell>
+                          <Badge 
+                            variant={pr.status === 'Approved' ? 'secondary' : pr.status === 'LPO Generated' ? 'outline' : 'outline'} 
+                            className={cn(
+                              "text-[9px] uppercase px-1.5 h-4",
+                              pr.status === 'LPO Generated' && "border-accent text-accent"
+                            )}
+                          >
+                            {pr.status === 'LPO Generated' ? 'Dispatched' : pr.status}
+                          </Badge>
+                        </TableCell>
+                        {isDetailed && <TableCell className="text-[10px] font-bold uppercase text-muted-foreground">{pr.budgetLine}</TableCell>}
+                        <TableCell className="text-right font-black tracking-tighter text-xs">Ksh {calculatePRTotal(pr).toLocaleString()}</TableCell>
+                        <TableCell className="text-right">
+                          {pr.status === 'Approved' ? (
+                            <RoleGuard allowedRoles={['Admin', 'Finance']}>
+                              <Button 
+                                size="sm" 
+                                className="h-7 text-[9px] font-black uppercase bg-accent text-white shadow-sm"
+                                onClick={() => setDispatchingPr(pr)}
+                              >
+                                <Zap className="w-3 h-3 mr-1" /> Dispatch
+                              </Button>
+                            </RoleGuard>
+                          ) : (
+                            <DropdownMenu>
+                              <DropdownMenuTrigger asChild>
+                                <Button variant="ghost" size="icon" className="h-8 w-8 md:opacity-0 group-hover:opacity-100 transition-opacity"><MoreVertical className="w-4 h-4" /></Button>
+                              </DropdownMenuTrigger>
+                              <DropdownMenuContent align="end">
+                                <DropdownMenuItem 
+                                  disabled={pr.status === 'LPO Generated' || pr.status === 'Approved'} 
+                                  onClick={() => { setEditingPr(pr); setIsPRDialogOpen(true); }} 
+                                  className="text-xs font-bold"
+                                >
+                                  <Pencil className="w-4 h-4 mr-2" /> Edit
+                                </DropdownMenuItem>
+                                <DropdownMenuItem 
+                                  disabled={pr.status === 'LPO Generated'} 
+                                  onClick={() => setPrToDelete(pr)} 
+                                  className="text-xs font-bold text-destructive"
+                                >
+                                  <Trash2 className="w-4 h-4 mr-2" /> Purge
+                                </DropdownMenuItem>
+                              </DropdownMenuContent>
+                            </DropdownMenu>
+                          )}
+                        </TableCell>
+                      </TableRow>
+                    ))
+                  ) : (
+                    <TableRow><TableCell colSpan={6} className="h-48 text-center text-muted-foreground italic">No requisitions found.</TableCell></TableRow>
+                  )}
+                </TableBody>
+              </Table>
+            </div>
+          </Card>
+        </TabsContent>
+
+        <TabsContent value="lpos" className="mt-0 focus-visible:ring-0">
+          <Card className="border-border shadow-none overflow-hidden bg-card">
+            <div className="overflow-x-auto w-full">
+              <Table>
+                <TableHeader>
+                  <TableRow className="bg-muted/30 border-none">
+                    <TableHead className="min-w-[120px] font-bold uppercase text-[10px]">LPO Agreement</TableHead>
+                    <TableHead className="min-w-[150px] font-bold uppercase text-[10px]">Assigned Vendor</TableHead>
+                    <TableHead className="font-bold uppercase text-[10px]">Cycle Status</TableHead>
+                    <TableHead className="text-right font-bold uppercase text-[10px]">Agreement Value</TableHead>
+                    <TableHead className="text-right font-bold uppercase text-[10px]">Action</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {filteredLpos.length > 0 ? (
+                    filteredLpos.map((lpo) => (
+                      <TableRow key={lpo.id} className="group hover:bg-muted/5">
+                        <TableCell className="font-black text-primary text-xs">{lpo.lpoNumber}</TableCell>
+                        <TableCell className="font-bold text-xs text-primary">{lpo.vendorName}</TableCell>
+                        <TableCell>
+                          <div className="flex items-center gap-2">
+                            <Badge variant="secondary" className="text-[9px] uppercase px-1.5 h-4">{lpo.status}</Badge>
+                            {lpo.status === 'Dispatched' && <CycleTimer startTime={lpo.dispatchedAt || lpo.createdAt} />}
+                          </div>
+                        </TableCell>
+                        <TableCell className="text-right font-black tracking-tighter text-xs">Ksh {lpo.totalValue.toLocaleString()}</TableCell>
+                        <TableCell className="text-right">
+                          <Button variant="outline" size="sm" className="h-8 text-[10px] font-bold uppercase shadow-sm">
+                             Audit
+                          </Button>
+                        </TableCell>
+                      </TableRow>
+                    ))
+                  ) : (
+                    <TableRow><TableCell colSpan={5} className="h-48 text-center text-muted-foreground italic">No active LPOs found.</TableCell></TableRow>
+                  )}
+                </TableBody>
+              </Table>
+            </div>
+          </Card>
+        </TabsContent>
+      </Tabs>
 
       {/* Internal Request Dialog */}
       <Dialog open={isPRDialogOpen} onOpenChange={setIsPRDialogOpen}>
@@ -373,8 +510,78 @@ function RequisitionsHubContent() {
               </div>
 
               <DialogFooter className="border-t pt-6">
-                <Button type="submit" className="bg-primary font-black uppercase text-xs h-11 w-full sm:w-auto shadow-xl">
+                <Button type="submit" className="bg-primary font-black uppercase text-xs h-11 shadow-xl">
                   {editingPr ? 'Save Modifications' : 'Finalize & Submit Request'}
+                </Button>
+              </DialogFooter>
+            </form>
+          </Form>
+        </DialogContent>
+      </Dialog>
+
+      {/* Dispatch Agreement Dialog */}
+      <Dialog open={!!dispatchingPr} onOpenChange={(open) => !open && setDispatchingPr(null)}>
+        <DialogContent className="max-w-xl w-[95vw]">
+          <DialogHeader>
+            <DialogTitle className="text-xl font-black tracking-tight flex items-center gap-2">
+              <ShieldCheck className="w-6 h-6 text-accent" />
+              Strategic Dispatch
+            </DialogTitle>
+            <DialogDescription className="text-xs font-medium">Assign a verified partner to an authorized internal request.</DialogDescription>
+          </DialogHeader>
+          <Form {...dispatchForm}>
+            <form onSubmit={dispatchForm.handleSubmit(onDispatchSubmit)} className="space-y-6 pt-4">
+              <div className="p-4 bg-muted/30 rounded-xl space-y-1">
+                <p className="text-[10px] uppercase font-black text-muted-foreground tracking-widest">Source Request</p>
+                <p className="text-sm font-bold text-primary">{dispatchingPr?.refNumber}</p>
+                <p className="text-lg font-black text-accent tracking-tighter">Ksh {dispatchingPr ? calculatePRTotal(dispatchingPr).toLocaleString() : 0}</p>
+              </div>
+
+              <FormField control={dispatchForm.control} name="vendorId" render={({ field }) => (
+                <FormItem>
+                  <label className="text-[10px] uppercase font-black text-muted-foreground tracking-widest">Assigned Partner</label>
+                  <Select onValueChange={field.onChange} value={field.value}>
+                    <FormControl>
+                      <SelectTrigger className="h-10 text-xs shadow-sm bg-card border-border">
+                        <SelectValue placeholder="Select vendor from registry" />
+                      </SelectTrigger>
+                    </FormControl>
+                    <SelectContent>
+                      {vendors.map(v => (
+                        <SelectItem key={v.id} value={v.id} className="text-xs">{v.name} ({v.category})</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </FormItem>
+              )} />
+
+              <div className="grid grid-cols-2 gap-4">
+                <FormField control={dispatchForm.control} name="deliveryDate" render={({ field }) => (
+                  <FormItem>
+                    <label className="text-[10px] uppercase font-black text-muted-foreground tracking-widest">Delivery Deadline</label>
+                    <FormControl><Input type="date" {...field} className="h-10 text-xs bg-card" /></FormControl>
+                  </FormItem>
+                )} />
+                <FormField control={dispatchForm.control} name="paymentTerms" render={({ field }) => (
+                  <FormItem>
+                    <label className="text-[10px] uppercase font-black text-muted-foreground tracking-widest">Terms</label>
+                    <Select onValueChange={field.onChange} value={field.value}>
+                      <FormControl>
+                        <SelectTrigger className="h-10 text-xs bg-card"><SelectValue /></SelectTrigger>
+                      </FormControl>
+                      <SelectContent>
+                        <SelectItem value="Immediate" className="text-xs">Immediate Cash</SelectItem>
+                        <SelectItem value="30 Days Net" className="text-xs">30 Days Net</SelectItem>
+                        <SelectItem value="60 Days Net" className="text-xs">60 Days Net</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </FormItem>
+                )} />
+              </div>
+
+              <DialogFooter className="pt-6 border-t">
+                <Button type="submit" className="bg-primary font-black uppercase text-xs h-11 shadow-xl">
+                  Finalize & Dispatch Agreement
                 </Button>
               </DialogFooter>
             </form>
@@ -407,8 +614,8 @@ function RequisitionsHubContent() {
 
 export default function LPOsPage() {
   return (
-    <Suspense fallback={<div className="p-10 text-center font-black animate-pulse text-muted-foreground uppercase tracking-widest text-xs">Initializing Hub...</div>}>
-      <RequisitionsHubContent />
+    <Suspense fallback={<div className="p-10 text-center font-black animate-pulse text-muted-foreground uppercase tracking-widest text-xs">Initializing Orders Hub...</div>}>
+      <OrdersHubContent />
     </Suspense>
   );
 }

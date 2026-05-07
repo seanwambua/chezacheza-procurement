@@ -363,19 +363,19 @@ export default function VendorsPage() {
 
                     <DialogFooter className="gap-2 sm:gap-0 pt-6 flex-col sm:flex-row border-t">
                       {step > 1 && (
-                        <Button type="button" variant="outline" onClick={prevStep} className="w-full sm:w-auto font-bold uppercase text-xs h-10">
+                        <Button type="button" variant="outline" onClick={prevStep} className="font-bold uppercase text-xs h-10">
                           <ArrowLeft className="w-3.5 h-3.5 mr-2" />
                           Previous
                         </Button>
                       )}
                       <div className="flex-1" />
                       {step < 3 ? (
-                        <Button type="button" onClick={nextStep} className="w-full sm:w-auto bg-primary font-bold uppercase text-xs h-10 shadow-md">
+                        <Button type="button" onClick={nextStep} className="bg-primary font-bold uppercase text-xs h-10 shadow-md">
                           Continue
                           <ArrowRight className="w-3.5 h-3.5 ml-2" />
                         </Button>
                       ) : (
-                        <Button type="submit" className="w-full sm:w-auto bg-primary hover:bg-primary/90 text-white font-bold uppercase text-xs h-10 shadow-md">
+                        <Button type="submit" className="bg-primary hover:bg-primary/90 text-white font-bold uppercase text-xs h-10 shadow-md">
                           Authorize Onboarding
                         </Button>
                       )}
@@ -479,10 +479,10 @@ export default function VendorsPage() {
                           </div>
 
                           <div className="grid grid-cols-2 gap-2 mt-6 max-w-[280px]">
-                            <Button variant="outline" size="sm" className="h-9 text-[10px] font-bold uppercase tracking-tight shadow-sm w-full">
+                            <Button variant="outline" size="sm" className="h-9 text-[10px] font-bold uppercase tracking-tight shadow-sm">
                               <Mail className="w-3.5 h-3.5 mr-1.5 text-accent" /> Email
                             </Button>
-                            <Button variant="outline" size="sm" className="h-9 text-[10px] font-bold uppercase tracking-tight shadow-sm w-full">
+                            <Button variant="outline" size="sm" className="h-9 text-[10px] font-bold uppercase tracking-tight shadow-sm">
                               <Phone className="w-3.5 h-3.5 mr-1.5 text-accent" /> Call
                             </Button>
                           </div>
@@ -672,8 +672,8 @@ export default function VendorsPage() {
               </div>
 
               <DialogFooter className="pt-6 border-t gap-2 sm:gap-0">
-                <Button variant="outline" onClick={() => setAssigningPr(null)} className="font-black uppercase text-[10px] h-10 w-full sm:w-auto">Cancel</Button>
-                <Button type="submit" className="bg-primary text-white font-black uppercase text-[10px] h-10 w-full sm:w-auto shadow-md">Dispatch Agreement</Button>
+                <Button variant="outline" onClick={() => setAssigningPr(null)} className="font-black uppercase text-[10px] h-10">Cancel</Button>
+                <Button type="submit" className="bg-primary text-white font-black uppercase text-[10px] h-10 shadow-md">Dispatch Agreement</Button>
               </DialogFooter>
             </form>
           </Form>

@@ -506,7 +506,7 @@ export default function DashboardPage() {
             <CardHeader><CardTitle className="text-base font-headline">Recent Activity</CardTitle></CardHeader>
             <CardContent className="space-y-4">
               {recentPrs.length > 0 ? recentPrs.map(req => (
-                <Link key={req.id} href={`/requisitions?id=${req.id}`} className="flex items-center justify-between p-3 rounded-xl hover:bg-muted/50 border border-border/50 group">
+                <Link key={req.id} href={`/lpos?tab=requisitions&id=${req.id}`} className="flex items-center justify-between p-3 rounded-xl hover:bg-muted/50 border border-border/50 group">
                   <div className="min-w-0 flex-1">
                     <p className="font-bold text-xs truncate">{req.items?.[0]?.description || 'Untitled'}</p>
                     <p className="text-[9px] text-muted-foreground uppercase font-bold">{req.refNumber}</p>

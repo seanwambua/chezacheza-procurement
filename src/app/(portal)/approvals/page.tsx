@@ -390,14 +390,14 @@ export default function ApprovalsPage() {
               <DialogFooter className="gap-2 flex-col sm:flex-row border-t pt-6">
                 <Button 
                   variant="ghost" 
-                  className="text-destructive hover:bg-destructive/10 w-full sm:w-auto font-bold uppercase text-xs"
+                  className="text-destructive hover:bg-destructive/10 font-bold uppercase text-xs"
                   onClick={() => handleReject(selectedPr.id)}
                 >
                   <XCircle className="w-4 h-4 mr-2" />
                   Reject Request
                 </Button>
                 <Button 
-                  className="bg-primary hover:bg-primary/90 w-full sm:w-auto font-bold uppercase text-xs shadow-md"
+                  className="bg-primary hover:bg-primary/90 font-bold uppercase text-xs shadow-md"
                   onClick={() => handleApprove(selectedPr)}
                 >
                   <CheckCircle2 className="w-4 h-4 mr-2" />
