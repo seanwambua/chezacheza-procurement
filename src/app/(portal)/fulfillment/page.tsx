@@ -20,7 +20,10 @@ import {
   History,
   CheckCircle2,
   Clock,
-  Lock
+  Lock,
+  MessageSquareMore,
+  Star,
+  Send
 } from 'lucide-react';
 import { 
   Table, 
@@ -65,7 +68,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Separator } from '@/components/ui/separator';
-import { Checkbox } from '@/components/ui/checkbox';
+import { Textarea } from '@/components/ui/textarea';
 import { useToast } from '@/hooks/use-toast';
 import { LPO, calculatePRTotal, PurchaseRequisition, GRN } from '@/lib/types';
 import { cn } from '@/lib/utils';
@@ -82,7 +85,7 @@ type LPOFormValues = z.infer<typeof lpoSchema>;
 
 export default function FulfillmentPage() {
   const { 
-    lpos, prs, vendors, addLPO, addGRN, selectedYear 
+    lpos, prs, vendors, addLPO, addGRN, addFeedback, selectedYear 
   } = useStore();
   const { currentUser, viewPreference } = useUserStore();
   const { toast } = useToast();
@@ -93,6 +96,11 @@ export default function FulfillmentPage() {
   const [isLPODialogOpen, setIsLPODialogOpen] = useState(false);
   const [receivingLpo, setReceivingLpo] = useState<LPO | null>(null);
   const [viewingLpo, setViewingLpo] = useState<LPO | null>(null);
+
+  // Feedback State
+  const [isFeedbackDialogOpen, setIsFeedbackDialogOpen] = useState(false);
+  const [feedbackRating, setFeedbackRating] = useState(5);
+  const [feedbackComment, setFeedbackComment] = useState('');
 
   const isDetailed = viewPreference === 'detailed';
 
@@ -175,6 +183,27 @@ export default function FulfillmentPage() {
 
     setReceivingLpo(null);
     toast({ title: "Receipt Verified", description: "Cycle stopped. Record moved to Delivery Ledger." });
+  };
+
+  const handleFeedbackSubmit = () => {
+    if (!receivingLpo || !feedbackComment) return;
+
+    addFeedback({
+      vendorId: receivingLpo.vendorId,
+      vendorName: receivingLpo.vendorName,
+      authorName: currentUser?.name || 'Unknown User',
+      rating: feedbackRating,
+      comment: feedbackComment
+    });
+
+    toast({
+      title: "Feedback Recorded",
+      description: `Your qualitative feedback for ${receivingLpo.vendorName} has been recorded.`
+    });
+
+    setIsFeedbackDialogOpen(false);
+    setFeedbackComment('');
+    setFeedbackRating(5);
   };
 
   return (
@@ -460,12 +489,73 @@ export default function FulfillmentPage() {
 
               <DialogFooter className="gap-2 pt-6 border-t flex-col sm:flex-row">
                 <Button variant="outline" onClick={() => setReceivingLpo(null)} className="font-black uppercase text-xs h-11 w-full sm:w-auto">Cancel Verification</Button>
+                <Button 
+                  variant="outline" 
+                  className="font-black uppercase text-xs h-11 w-full sm:w-auto border-accent text-accent hover:bg-accent/5" 
+                  onClick={() => setIsFeedbackDialogOpen(true)}
+                >
+                  <MessageSquareMore className="w-3.5 h-3.5 mr-2" />
+                  Rate Experience
+                </Button>
                 <Button className="bg-accent font-black uppercase text-xs h-11 w-full sm:w-auto shadow-xl" onClick={() => handleReceiveGoods(receivingLpo)}>
                   Stop Timer & Confirm Receipt
                 </Button>
               </DialogFooter>
             </div>
           )}
+        </DialogContent>
+      </Dialog>
+
+      {/* Feedback Submission Dialog */}
+      <Dialog open={isFeedbackDialogOpen} onOpenChange={setIsFeedbackDialogOpen}>
+        <DialogContent className="max-w-md w-[95vw]">
+          <DialogHeader>
+            <DialogTitle className="text-xl font-black tracking-tight">Post Qualitative Feedback</DialogTitle>
+            <DialogDescription className="text-xs">Share qualitative experience about {receivingLpo?.vendorName}.</DialogDescription>
+          </DialogHeader>
+
+          <div className="space-y-5 py-4">
+            <div className="space-y-2">
+              <label className="text-[10px] uppercase font-black text-muted-foreground">Quality Rating (1-5)</label>
+              <div className="flex gap-2">
+                {[1, 2, 3, 4, 5].map(r => (
+                  <button 
+                    key={r}
+                    type="button"
+                    className={cn(
+                      "w-10 h-10 rounded-lg flex items-center justify-center transition-all border",
+                      feedbackRating === r ? "bg-accent border-accent text-white scale-110 shadow-md" : "bg-muted border-transparent hover:bg-muted/80"
+                    )}
+                    onClick={() => setFeedbackRating(r)}
+                  >
+                    <Star className={cn("w-4 h-4", feedbackRating >= r ? "fill-current" : "")} />
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            <div className="space-y-2">
+              <label className="text-[10px] uppercase font-black text-muted-foreground">Testimonial / Comment</label>
+              <Textarea 
+                placeholder="Share your experience..." 
+                className="min-h-[100px] text-xs font-medium"
+                value={feedbackComment}
+                onChange={(e) => setFeedbackComment(e.target.value)}
+              />
+            </div>
+          </div>
+
+          <DialogFooter className="gap-2 sm:gap-0 pt-6 border-t flex-col sm:flex-row">
+            <Button variant="outline" onClick={() => setIsFeedbackDialogOpen(false)} className="w-full sm:w-auto font-black uppercase text-[10px] h-10">Discard</Button>
+            <Button 
+              className="w-full sm:w-auto bg-accent text-white font-black uppercase text-[10px] h-10 shadow-lg"
+              onClick={handleFeedbackSubmit}
+              disabled={!feedbackComment}
+            >
+              <Send className="w-3 h-3 mr-2" />
+              Publish Feedback
+            </Button>
+          </DialogFooter>
         </DialogContent>
       </Dialog>
 
