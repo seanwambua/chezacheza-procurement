@@ -20,11 +20,11 @@ interface ProcurementState {
   deletePR: (id: string) => void;
   updatePRStatus: (id: string, status: PurchaseRequisition['status']) => void;
   addVendor: (vendor: Vendor) => void;
-  addLPO: (lpo: Omit<LPO, 'fiscalYear'>) => void;
+  addLPO: (lpo: Omit<LPO, 'fiscalYear' | 'status' | 'dispatchedAt'>) => void;
   updateLPO: (id: string, updates: Partial<LPO>) => void;
   deleteLPO: (id: string) => void;
   updateLPOStatus: (id: string, status: LPO['status']) => void;
-  addGRN: (grn: Omit<GRN, 'fiscalYear'>) => void;
+  addGRN: (grn: Omit<GRN, 'fiscalYear' | 'disputeStatus' | 'resolvedAt'>) => void;
   addBudget: (budget: Omit<Budget, 'id' | 'spent' | 'committed'>) => void;
   updateBudget: (id: string, updates: Partial<Budget>) => void;
   deleteBudget: (id: string) => void;
@@ -167,13 +167,26 @@ export const useStore = create<ProcurementState>()(
         vendors: [...(state.vendors || []), vendor]
       })),
 
-      addLPO: (lpoData) => set((state) => ({
-        lpos: [...(state.lpos || []), { ...lpoData, fiscalYear: state.selectedYear, status: 'Dispatched', dispatchedAt: new Date().toISOString() }]
-      })),
+      addLPO: (lpoData) => set((state) => {
+        const newLPO: LPO = { 
+          ...lpoData, 
+          fiscalYear: state.selectedYear, 
+          status: 'Dispatched', 
+          dispatchedAt: new Date().toISOString() 
+        };
+        
+        const updatedPrs = (state.prs || []).map(pr => 
+          pr.id === newLPO.prId ? { ...pr, status: 'LPO Generated' as PRStatus } : pr
+        );
+
+        return {
+          lpos: [...(state.lpos || []), newLPO],
+          prs: updatedPrs
+        };
+      }),
 
       updateLPO: (id, updates) => set((state) => ({
         lpos: (state.lpos || []).map(lpo => {
-           // Restrict editing if dispatched/fulfilled
            if (lpo.id === id && (lpo.status === 'Dispatched' || lpo.status === 'Fulfilled' || lpo.status === 'Closed')) {
               return lpo;
            }
@@ -185,14 +198,11 @@ export const useStore = create<ProcurementState>()(
         const lpo = (state.lpos || []).find(l => l.id === id);
         if (!lpo) return state;
 
-        // Disallow deletion if fulfilled
         if (lpo.status === 'Fulfilled' || lpo.status === 'Closed') return state;
 
         const updatedPrs = (state.prs || []).map(pr => 
           pr.id === lpo.prId ? { ...pr, status: 'Approved' as PRStatus } : pr
         );
-
-        const updatedGrns = (state.grns || []).filter(g => g.lpoId !== id);
 
         const linkedGrn = (state.grns || []).find(g => g.lpoId === id);
         const updatedBudgets = (state.budgets || []).map(b => {
@@ -212,7 +222,7 @@ export const useStore = create<ProcurementState>()(
         return {
           lpos: (state.lpos || []).filter(l => l.id !== id),
           prs: updatedPrs,
-          grns: updatedGrns,
+          grns: (state.grns || []).filter(g => g.lpoId !== id),
           budgets: updatedBudgets
         };
       }),
