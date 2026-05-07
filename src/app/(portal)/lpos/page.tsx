@@ -7,29 +7,15 @@ import { useForm, useFieldArray } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
 import { 
-  ShoppingCart, 
   Plus, 
   Search, 
   MoreVertical, 
-  Printer, 
-  Truck, 
-  Calendar,
-  PackageCheck,
-  Trash2,
-  AlertCircle,
-  FileText,
-  PlusCircle,
-  Trash,
-  CheckCircle,
-  XCircle,
-  AlertTriangle,
-  History,
+  Trash2, 
+  AlertCircle, 
+  FileText, 
+  PlusCircle, 
+  Trash, 
   Pencil,
-  Lock,
-  Eye,
-  CheckCircle2,
-  ShieldCheck,
-  UserPlus
 } from 'lucide-react';
 import { 
   Table, 
@@ -44,8 +30,6 @@ import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent } from '@/components/ui/card';
 import { StatCard } from '@/components/dashboard/StatCard';
-import { CycleTimer } from '@/components/procurement/CycleTimer';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import {
   Dialog,
   DialogContent,
@@ -60,7 +44,6 @@ import {
   FormField,
   FormItem,
   FormLabel,
-  FormDescription,
 } from "@/components/ui/form";
 import {
   AlertDialog,
@@ -85,13 +68,10 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { Separator } from '@/components/ui/separator';
-import { Checkbox } from '@/components/ui/checkbox';
 import { useToast } from '@/hooks/use-toast';
-import { LPO, calculatePRTotal, PurchaseRequisition, getBudgetStats, PRStatus, GRN } from '@/lib/types';
+import { calculatePRTotal, PurchaseRequisition, getBudgetStats } from '@/lib/types';
 import { cn } from '@/lib/utils';
 import { RoleGuard } from '@/components/auth/RoleGuard';
-import { useSearchParams } from 'next/navigation';
 
 // Schemas
 const requisitionSchema = z.object({
@@ -104,46 +84,25 @@ const requisitionSchema = z.object({
   })).min(1, "At least one item is required"),
 });
 
-const lpoSchema = z.object({
-  prId: z.string().min(1, "Requisition is required"),
-  vendorId: z.string().min(1, "Vendor is required"),
-  deliveryDate: z.string().min(1, "Delivery date is required"),
-  paymentTerms: z.string().min(1, "Payment terms are required"),
-  additionalTerms: z.string().optional(),
-});
-
 type RequisitionFormValues = z.infer<typeof requisitionSchema>;
-type LPOFormValues = z.infer<typeof lpoSchema>;
 
-function OrdersHubContent() {
+function RequisitionsHubContent() {
   const { 
-    lpos, prs, vendors, budgets, 
-    addLPO, updateLPO, deleteLPO, 
-    addPR, updatePR, deletePR, updatePRStatus, 
-    addGRN, selectedYear 
+    prs, budgets, addPR, updatePR, deletePR, selectedYear 
   } = useStore();
   
   const { currentUser, viewPreference } = useUserStore();
   const { toast } = useToast();
-  const searchParams = useSearchParams();
   
   const [mounted, setMounted] = useState(false);
-  const [activeTab, setActiveTab] = useState(searchParams.get('tab') || 'requisitions');
   const [search, setSearch] = useState('');
   
-  // States
   const [isPRDialogOpen, setIsPRDialogOpen] = useState(false);
   const [editingPr, setEditingPr] = useState<PurchaseRequisition | null>(null);
   const [prToDelete, setPrToDelete] = useState<PurchaseRequisition | null>(null);
 
-  const [isLPODialogOpen, setIsLPODialogOpen] = useState(false);
-  const [editingLpo, setEditingLpo] = useState<LPO | null>(null);
-  const [receivingLpo, setReceivingLpo] = useState<LPO | null>(null);
-  const [viewingLpo, setViewingLpo] = useState<LPO | null>(null);
-
   const isDetailed = viewPreference === 'detailed';
 
-  // Forms
   const prForm = useForm<RequisitionFormValues>({
     resolver: zodResolver(requisitionSchema),
     defaultValues: {
@@ -157,37 +116,10 @@ function OrdersHubContent() {
     name: "items",
   });
 
-  const lpoForm = useForm<LPOFormValues>({
-    resolver: zodResolver(lpoSchema),
-    defaultValues: {
-      prId: '',
-      vendorId: '',
-      deliveryDate: '',
-      paymentTerms: '30 Days Net',
-      additionalTerms: '',
-    },
-  });
-
   useEffect(() => {
     setMounted(true);
   }, []);
 
-  // Handle deep links
-  useEffect(() => {
-    if (mounted) {
-      const prId = searchParams.get('id');
-      if (prId) {
-        const foundPr = (prs || []).find(p => p.id === prId);
-        if (foundPr) {
-          setEditingPr(foundPr);
-          setIsPRDialogOpen(true);
-          setActiveTab('requisitions');
-        }
-      }
-    }
-  }, [mounted, searchParams, prs]);
-
-  // Form Sync
   useEffect(() => {
     if (editingPr) {
       prForm.reset({
@@ -202,29 +134,8 @@ function OrdersHubContent() {
     }
   }, [editingPr, prForm]);
 
-  useEffect(() => {
-    if (editingLpo) {
-      lpoForm.reset({
-        prId: editingLpo.prId,
-        vendorId: editingLpo.vendorId,
-        deliveryDate: editingLpo.deliveryDate,
-        paymentTerms: editingLpo.paymentTerms,
-        additionalTerms: editingLpo.additionalTerms || '',
-      });
-    } else {
-      lpoForm.reset({
-        prId: '',
-        vendorId: '',
-        deliveryDate: '',
-        paymentTerms: '30 Days Net',
-        additionalTerms: '',
-      });
-    }
-  }, [editingLpo, lpoForm]);
-
   if (!mounted || !currentUser) return null;
 
-  // Filter Logic
   const filteredPrs = (prs || []).filter(pr => {
     const isCurrentYear = pr.fiscalYear === selectedYear;
     const matchesSearch = pr.items?.some(i => i.description.toLowerCase().includes(search.toLowerCase())) || 
@@ -233,42 +144,8 @@ function OrdersHubContent() {
     return isCurrentYear && matchesSearch;
   });
 
-  const approvedPrs = (prs || []).filter(pr => pr.fiscalYear === selectedYear && pr.status === 'Approved');
+  const totalValue = filteredPrs.reduce((acc, pr) => acc + calculatePRTotal(pr), 0);
 
-  const filteredLpos = (lpos || []).filter(lpo => 
-    lpo.fiscalYear === selectedYear &&
-    (lpo.lpoNumber.toLowerCase().includes(search.toLowerCase()) ||
-    lpo.vendorName.toLowerCase().includes(search.toLowerCase()))
-  );
-
-  // Combine Active LPOs and Approved PRs for the "Cycle" view
-  const fulfillmentQueue = [
-    ...approvedPrs.map(pr => ({
-      type: 'PR' as const,
-      id: pr.id,
-      refNumber: pr.refNumber,
-      summary: pr.items[0]?.description || 'Multi-item request',
-      status: 'Awaiting Assignment',
-      vendor: 'Unassigned',
-      value: calculatePRTotal(pr),
-      date: pr.createdAt
-    })),
-    ...filteredLpos.map(lpo => ({
-      type: 'LPO' as const,
-      id: lpo.id,
-      refNumber: lpo.lpoNumber,
-      summary: lpo.items[0]?.description || 'Multi-item agreement',
-      status: lpo.status,
-      vendor: lpo.vendorName,
-      value: lpo.totalValue,
-      date: lpo.dispatchedAt || lpo.createdAt,
-      fullLpo: lpo
-    }))
-  ].sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
-
-  const totalLpoValue = filteredLpos.reduce((acc, lpo) => acc + lpo.totalValue, 0);
-
-  // Handlers
   const onPRSubmit = (values: RequisitionFormValues) => {
     const budget = (budgets || []).find(b => b.name === values.budget && b.fiscalYear === selectedYear);
     const isPaused = budget ? getBudgetStats(budget).isPaused : false;
@@ -307,271 +184,108 @@ function OrdersHubContent() {
     setEditingPr(null);
   };
 
-  const onLPOSubmit = (values: LPOFormValues) => {
-    const selectedPr = (prs || []).find(p => p.id === values.prId);
-    const selectedVendor = (vendors || []).find(v => v.id === values.vendorId);
-    
-    if (!selectedPr || !selectedVendor) return;
-
-    addLPO({
-      id: `LPO-${Math.floor(Math.random() * 10000)}`,
-      lpoNumber: `LPO/${selectedYear}/${String((lpos || []).length + 1).padStart(3, '0')}`,
-      prId: values.prId,
-      vendorId: values.vendorId,
-      vendorName: selectedVendor.name,
-      items: selectedPr.items.map(i => ({ 
-        description: i.description, 
-        quantity: i.quantity, 
-        unitPrice: i.estimatedUnitPrice, 
-        total: i.quantity * i.estimatedUnitPrice 
-      })),
-      totalValue: calculatePRTotal(selectedPr),
-      deliveryDate: values.deliveryDate,
-      paymentTerms: values.paymentTerms,
-      additionalTerms: values.additionalTerms,
-      createdAt: new Date().toISOString(),
-    });
-
-    toast({ title: "Agreement Dispatched", description: "Fulfillment cycle initiated." });
-    setIsLPODialogOpen(false);
-  };
-
-  const handleReceiveGoods = (lpo: LPO) => {
-    addGRN({
-      id: `GRN-${Math.floor(Math.random() * 10000)}`,
-      lpoId: lpo.id,
-      lpoNumber: lpo.lpoNumber,
-      receivedDate: new Date().toISOString().split('T')[0],
-      receivedBy: currentUser.name,
-      items: lpo.items.map(i => ({ 
-        description: i.description, 
-        orderedQty: i.quantity, 
-        receivedQty: i.quantity, 
-        qualityRating: 5, 
-        specificationMatch: true, 
-        condition: 'Good' as const 
-      })),
-      disputeFlag: false
-    });
-
-    setReceivingLpo(null);
-    toast({ title: "Receipt Verified", description: "LPO archived and budget reconciled." });
-  };
-
   return (
     <div className="space-y-6 md:space-y-8 animate-in fade-in duration-500 pb-10 max-w-full overflow-hidden">
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div className="min-w-0 flex-1">
           <h2 className="text-3xl md:text-4xl font-headline font-bold text-primary tracking-tighter leading-tight truncate">
-            Orders Hub
+            Purchase Requisitions
           </h2>
-          <p className="text-muted-foreground text-sm font-medium">Internal requests & fulfillment cycles for FY {selectedYear}.</p>
+          <p className="text-muted-foreground text-sm font-medium">Internal organizational requests for FY {selectedYear}.</p>
         </div>
         
-        <div className="flex items-center gap-2">
-          {activeTab === 'requisitions' ? (
-            <RoleGuard permission="create_requisitions">
-              <Button onClick={() => { setEditingPr(null); setIsPRDialogOpen(true); }} className="bg-primary font-bold uppercase text-xs h-10 shadow-sm">
-                <Plus className="w-4 h-4 mr-2" /> New Request
-              </Button>
-            </RoleGuard>
-          ) : (
-            <RoleGuard allowedRoles={['Admin', 'Finance']}>
-              <Button onClick={() => { setIsLPODialogOpen(true); }} className="bg-primary font-bold uppercase text-xs h-10 shadow-sm">
-                <Plus className="w-4 h-4 mr-2" /> Dispatch Agreement
-              </Button>
-            </RoleGuard>
-          )}
-        </div>
+        <RoleGuard permission="create_requisitions">
+          <Button onClick={() => { setEditingPr(null); setIsPRDialogOpen(true); }} className="bg-primary font-bold uppercase text-xs h-10 shadow-sm">
+            <Plus className="w-4 h-4 mr-2" /> New Request
+          </Button>
+        </RoleGuard>
       </div>
 
       <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 md:gap-6">
-        <StatCard title="Active Cycle Orders" value={filteredLpos.filter(l => l.status === 'Dispatched').length} icon={Truck} description="Live fulfillment tracking" />
-        <StatCard title="Authorized Queue" value={approvedPrs.length} icon={CheckCircle2} description="Awaiting vendor assignment" />
-        <StatCard title="Annual Commitment" value={`Ksh ${totalLpoValue.toLocaleString()}`} icon={ShoppingCart} description={`Total FY ${selectedYear} value`} />
+        <StatCard title="Active Requests" value={filteredPrs.length} icon={FileText} description="Pending or authorized requests" />
+        <StatCard title="My Drafting Value" value={`Ksh ${totalValue.toLocaleString()}`} icon={Wallet} description="Total estimated commitment" />
+        <StatCard title="Budget Health" value="Active" icon={AlertCircle} description="Quarterly limits available" />
       </div>
 
-      <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-        <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-4 mb-6">
-          <TabsList className="grid w-full sm:w-[320px] grid-cols-2 bg-muted/50 p-1">
-            <TabsTrigger value="requisitions" className="text-[10px] font-black uppercase tracking-widest">Internal Requests</TabsTrigger>
-            <TabsTrigger value="lpos" className="text-[10px] font-black uppercase tracking-widest">Fulfillment Cycle</TabsTrigger>
-          </TabsList>
-
+      <Card className="border-border shadow-none overflow-hidden bg-card">
+        <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between p-4 border-b gap-4">
+          <h3 className="text-sm font-black uppercase tracking-widest text-primary">Request Ledger</h3>
           <div className="relative w-full sm:w-64">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
             <Input 
-              placeholder={`Search ${activeTab === 'requisitions' ? 'requests' : 'cycle'}...`} 
-              className="pl-9 h-10 text-xs bg-card border-none shadow-sm"
+              placeholder="Search requests..." 
+              className="pl-9 h-10 text-xs bg-muted/30 border-none shadow-none"
               value={search}
               onChange={(e) => setSearch(e.target.value)}
             />
           </div>
         </div>
-
-        <TabsContent value="requisitions" className="mt-0 focus-visible:ring-0">
-          <Card className="border-border shadow-none overflow-hidden bg-card">
-            <div className="overflow-x-auto w-full">
-              <Table>
-                <TableHeader>
-                  <TableRow className="bg-muted/30 border-none">
-                    {isDetailed && <TableHead className="min-w-[120px] font-bold uppercase text-[10px]">Reference</TableHead>}
-                    <TableHead className="min-w-[200px] font-bold uppercase text-[10px]">Description</TableHead>
-                    <TableHead className="font-bold uppercase text-[10px]">Status</TableHead>
-                    <TableHead className="text-right font-bold uppercase text-[10px]">Est. Value</TableHead>
-                    <TableHead className="w-[50px]"></TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {filteredPrs.length > 0 ? (
-                    filteredPrs.map((pr) => (
-                      <TableRow key={pr.id} className="group hover:bg-muted/5">
-                        {isDetailed && <TableCell className="font-black text-primary text-xs">{pr.refNumber}</TableCell>}
-                        <TableCell>
-                          <div className="flex flex-col">
-                            <span className="font-bold text-xs truncate max-w-[200px] text-primary">{pr.items?.[0]?.description || 'Multi-item Request'}</span>
-                            {pr.items.length > 1 && <span className="text-[9px] text-muted-foreground font-bold uppercase tracking-tighter">+{pr.items.length - 1} more items</span>}
-                          </div>
-                        </TableCell>
-                        <TableCell>
-                          <Badge 
-                            variant={pr.status === 'Approved' ? 'secondary' : pr.status === 'LPO Generated' ? 'outline' : 'outline'} 
-                            className={cn(
-                              "text-[9px] uppercase px-1.5 h-4",
-                              pr.status === 'LPO Generated' && "border-accent text-accent"
-                            )}
+        <div className="overflow-x-auto w-full">
+          <Table>
+            <TableHeader>
+              <TableRow className="bg-muted/30 border-none">
+                {isDetailed && <TableHead className="min-w-[120px] font-bold uppercase text-[10px]">Reference</TableHead>}
+                <TableHead className="min-w-[200px] font-bold uppercase text-[10px]">Description</TableHead>
+                <TableHead className="font-bold uppercase text-[10px]">Status</TableHead>
+                <TableHead className="text-right font-bold uppercase text-[10px]">Est. Value</TableHead>
+                <TableHead className="w-[50px]"></TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {filteredPrs.length > 0 ? (
+                filteredPrs.map((pr) => (
+                  <TableRow key={pr.id} className="group hover:bg-muted/5">
+                    {isDetailed && <TableCell className="font-black text-primary text-xs">{pr.refNumber}</TableCell>}
+                    <TableCell>
+                      <div className="flex flex-col">
+                        <span className="font-bold text-xs truncate max-w-[200px] text-primary">{pr.items?.[0]?.description || 'Multi-item Request'}</span>
+                        {pr.items.length > 1 && <span className="text-[9px] text-muted-foreground font-bold uppercase tracking-tighter">+{pr.items.length - 1} more items</span>}
+                      </div>
+                    </TableCell>
+                    <TableCell>
+                      <Badge 
+                        variant={pr.status === 'Approved' ? 'secondary' : pr.status === 'LPO Generated' ? 'outline' : 'outline'} 
+                        className={cn(
+                          "text-[9px] uppercase px-1.5 h-4",
+                          pr.status === 'LPO Generated' && "border-accent text-accent"
+                        )}
+                      >
+                        {pr.status === 'LPO Generated' ? 'In Cycle' : pr.status}
+                      </Badge>
+                    </TableCell>
+                    <TableCell className="text-right font-black tracking-tighter text-xs">Ksh {calculatePRTotal(pr).toLocaleString()}</TableCell>
+                    <TableCell>
+                      <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                          <Button variant="ghost" size="icon" className="h-8 w-8 md:opacity-0 group-hover:opacity-100 transition-opacity"><MoreVertical className="w-4 h-4" /></Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end">
+                          <DropdownMenuItem 
+                            disabled={pr.status === 'LPO Generated' || pr.status === 'Approved'} 
+                            onClick={() => { setEditingPr(pr); setIsPRDialogOpen(true); }} 
+                            className="text-xs font-bold"
                           >
-                            {pr.status === 'LPO Generated' ? 'In Cycle' : pr.status}
-                          </Badge>
-                        </TableCell>
-                        <TableCell className="text-right font-black tracking-tighter text-xs">Ksh {calculatePRTotal(pr).toLocaleString()}</TableCell>
-                        <TableCell>
-                          <DropdownMenu>
-                            <DropdownMenuTrigger asChild>
-                              <Button variant="ghost" size="icon" className="h-8 w-8 md:opacity-0 group-hover:opacity-100 transition-opacity"><MoreVertical className="w-4 h-4" /></Button>
-                            </DropdownMenuTrigger>
-                            <DropdownMenuContent align="end">
-                              <DropdownMenuItem 
-                                disabled={pr.status === 'LPO Generated' || pr.status === 'Approved'} 
-                                onClick={() => { setEditingPr(pr); setIsPRDialogOpen(true); }} 
-                                className="text-xs font-bold"
-                              >
-                                <Pencil className="w-4 h-4 mr-2" /> Edit
-                              </DropdownMenuItem>
-                              <DropdownMenuItem 
-                                disabled={pr.status === 'LPO Generated'} 
-                                onClick={() => setPrToDelete(pr)} 
-                                className="text-xs font-bold text-destructive"
-                              >
-                                <Trash2 className="w-4 h-4 mr-2" /> Purge
-                              </DropdownMenuItem>
-                            </DropdownMenuContent>
-                          </DropdownMenu>
-                        </TableCell>
-                      </TableRow>
-                    ))
-                  ) : (
-                    <TableRow><TableCell colSpan={5} className="h-48 text-center text-muted-foreground italic">No requests matching criteria.</TableCell></TableRow>
-                  )}
-                </TableBody>
-              </Table>
-            </div>
-          </Card>
-        </TabsContent>
-
-        <TabsContent value="lpos" className="mt-0 focus-visible:ring-0">
-          <Card className="border-border shadow-none overflow-hidden bg-card">
-            <div className="overflow-x-auto w-full">
-              <Table>
-                <TableHeader>
-                  <TableRow className="bg-muted/30 border-none">
-                    {isDetailed && <TableHead className="min-w-[120px] font-bold uppercase text-[10px]">Reference</TableHead>}
-                    <TableHead className="min-w-[150px] font-bold uppercase text-[10px]">Assigned Partner</TableHead>
-                    <TableHead className="font-bold uppercase text-[10px]">Fulfillment Status</TableHead>
-                    <TableHead className="font-bold uppercase text-[10px]">Agreement Cycle</TableHead>
-                    <TableHead className="text-right font-bold uppercase text-[10px]">Total Value</TableHead>
-                    <TableHead className="w-[50px]"></TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {fulfillmentQueue.length > 0 ? (
-                    fulfillmentQueue.map((item) => (
-                      <TableRow key={item.id} className={cn(
-                        "group hover:bg-muted/5 transition-colors",
-                        item.type === 'PR' ? "bg-accent/[0.02]" : ""
-                      )}>
-                        {isDetailed && <TableCell className="font-black text-primary text-xs">{item.refNumber}</TableCell>}
-                        <TableCell>
-                          <div className="flex flex-col">
-                            <span className={cn(
-                              "font-bold text-xs truncate max-w-[180px]",
-                              item.type === 'PR' ? "text-muted-foreground italic" : "text-primary"
-                            )}>{item.vendor}</span>
-                            {item.type === 'PR' && (
-                              <span className="text-[8px] font-black text-accent uppercase tracking-widest mt-0.5">Ready for Assignment</span>
-                            )}
-                          </div>
-                        </TableCell>
-                        <TableCell>
-                          <Badge 
-                            variant={item.status === 'Awaiting Assignment' ? 'secondary' : item.status === 'Fulfilled' ? 'secondary' : 'outline'} 
-                            className={cn(
-                              "text-[9px] uppercase px-1.5 h-4",
-                              item.status === 'Awaiting Assignment' && "bg-accent text-white border-transparent"
-                            )}
+                            <Pencil className="w-4 h-4 mr-2" /> Edit
+                          </DropdownMenuItem>
+                          <DropdownMenuItem 
+                            disabled={pr.status === 'LPO Generated'} 
+                            onClick={() => setPrToDelete(pr)} 
+                            className="text-xs font-bold text-destructive"
                           >
-                            {item.status === 'Dispatched' ? 'In Fulfillment' : item.status}
-                          </Badge>
-                        </TableCell>
-                        <TableCell>
-                          {item.type === 'LPO' && item.fullLpo ? (
-                            <CycleTimer startTime={item.fullLpo.dispatchedAt || item.fullLpo.createdAt} endTime={item.fullLpo.fulfilledAt} />
-                          ) : (
-                            <span className="text-[10px] text-muted-foreground font-bold italic">Awaiting Cycle Start</span>
-                          )}
-                        </TableCell>
-                        <TableCell className="text-right font-black tracking-tighter text-xs">Ksh {item.value.toLocaleString()}</TableCell>
-                        <TableCell>
-                          <DropdownMenu>
-                            <DropdownMenuTrigger asChild>
-                              <Button variant="ghost" size="icon" className="h-8 w-8 md:opacity-0 group-hover:opacity-100 transition-opacity"><MoreVertical className="w-4 h-4" /></Button>
-                            </DropdownMenuTrigger>
-                            <DropdownMenuContent align="end">
-                              {item.type === 'PR' ? (
-                                <RoleGuard allowedRoles={['Admin', 'Finance']}>
-                                  <DropdownMenuItem 
-                                    className="text-accent font-bold text-xs" 
-                                    onClick={() => {
-                                      lpoForm.setValue('prId', item.id);
-                                      setIsLPODialogOpen(true);
-                                    }}
-                                  >
-                                    <UserPlus className="w-4 h-4 mr-2" /> Assign Partner
-                                  </DropdownMenuItem>
-                                </RoleGuard>
-                              ) : (
-                                <>
-                                  <DropdownMenuItem onClick={() => setViewingLpo(item.fullLpo!)} className="text-xs font-bold"><Eye className="w-4 h-4 mr-2" /> View Details</DropdownMenuItem>
-                                  {item.status === 'Dispatched' && (
-                                    <DropdownMenuItem className="text-accent text-xs font-bold" onClick={() => setReceivingLpo(item.fullLpo!)}><PackageCheck className="w-4 h-4 mr-2" /> Verify Delivery</DropdownMenuItem>
-                                  )}
-                                  <DropdownMenuItem className="text-xs font-bold"><Printer className="w-4 h-4 mr-2" /> Export Agreement</DropdownMenuItem>
-                                </>
-                              )}
-                            </DropdownMenuContent>
-                          </DropdownMenu>
-                        </TableCell>
-                      </TableRow>
-                    ))
-                  ) : (
-                    <TableRow><TableCell colSpan={6} className="h-48 text-center text-muted-foreground italic">No active fulfillment cycles.</TableCell></TableRow>
-                  )}
-                </TableBody>
-              </Table>
-            </div>
-          </Card>
-        </TabsContent>
-      </Tabs>
+                            <Trash2 className="w-4 h-4 mr-2" /> Purge
+                          </DropdownMenuItem>
+                        </DropdownMenuContent>
+                      </DropdownMenu>
+                    </TableCell>
+                  </TableRow>
+                ))
+              ) : (
+                <TableRow><TableCell colSpan={5} className="h-48 text-center text-muted-foreground italic">No requests found matching criteria.</TableCell></TableRow>
+              )}
+            </TableBody>
+          </Table>
+        </div>
+      </Card>
 
       {/* Internal Request Dialog */}
       <Dialog open={isPRDialogOpen} onOpenChange={setIsPRDialogOpen}>
@@ -584,7 +298,7 @@ function OrdersHubContent() {
             <form onSubmit={prForm.handleSubmit(onPRSubmit)} className="space-y-6">
               <FormField control={prForm.control} name="budget" render={({ field }) => (
                 <FormItem>
-                  <FormLabel className="text-[10px] uppercase font-black text-muted-foreground tracking-widest">Target Budget Pool</FormLabel>
+                  <label className="text-[10px] uppercase font-black text-muted-foreground tracking-widest">Target Budget Pool</label>
                   <Select onValueChange={field.onChange} value={field.value}>
                     <FormControl>
                       <SelectTrigger className="h-10 text-xs shadow-sm bg-muted/20 border-none">
@@ -667,225 +381,6 @@ function OrdersHubContent() {
         </DialogContent>
       </Dialog>
 
-      {/* Official Dispatch Dialog */}
-      <Dialog open={isLPODialogOpen} onOpenChange={setIsLPODialogOpen}>
-        <DialogContent className="max-w-xl w-[95vw]">
-          <DialogHeader>
-            <DialogTitle className="text-xl font-black tracking-tight flex items-center gap-2">
-              <ShieldCheck className="w-6 h-6 text-accent" />
-              Strategic Dispatch
-            </DialogTitle>
-            <DialogDescription className="text-xs font-medium">Assign a verified partner to an authorized internal request.</DialogDescription>
-          </DialogHeader>
-          <Form {...lpoForm}>
-            <form onSubmit={lpoForm.handleSubmit(onLPOSubmit)} className="space-y-6">
-              <FormField control={lpoForm.control} name="prId" render={({ field }) => (
-                <FormItem>
-                  <FormLabel className="text-[10px] uppercase font-black text-muted-foreground tracking-widest">Authorized Reference</FormLabel>
-                  <Select onValueChange={field.onChange} value={field.value}>
-                    <FormControl>
-                      <SelectTrigger className="h-10 text-xs shadow-sm bg-muted/20 border-none">
-                        <SelectValue placeholder="Select authorized requisition" />
-                      </SelectTrigger>
-                    </FormControl>
-                    <SelectContent>
-                      {approvedPrs.map(pr => (
-                        <SelectItem key={pr.id} value={pr.id} className="text-xs font-medium">
-                          {pr.refNumber} - {pr.items[0]?.description}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </FormItem>
-              )} />
-              
-              <FormField control={lpoForm.control} name="vendorId" render={({ field }) => (
-                <FormItem>
-                  <FormLabel className="text-[10px] uppercase font-black text-muted-foreground tracking-widest">Strategic Assigned Vendor</FormLabel>
-                  <Select onValueChange={field.onChange} value={field.value}>
-                    <FormControl>
-                      <SelectTrigger className="h-10 text-xs shadow-sm bg-muted/20 border-none">
-                        <SelectValue placeholder="Select partner" />
-                      </SelectTrigger>
-                    </FormControl>
-                    <SelectContent>
-                      {(vendors || []).map(v => (
-                        <SelectItem key={v.id} value={v.id} className="text-xs font-medium">
-                          {v.name} ({v.category})
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </FormItem>
-              )} />
-
-              <div className="grid grid-cols-2 gap-4">
-                <FormField control={lpoForm.control} name="deliveryDate" render={({ field }) => (
-                  <FormItem>
-                    <FormLabel className="text-[10px] uppercase font-black text-muted-foreground tracking-widest">Delivery Deadline</FormLabel>
-                    <FormControl><Input type="date" {...field} className="h-10 text-xs shadow-sm bg-muted/20 border-none" /></FormControl>
-                  </FormItem>
-                )} />
-                <FormField control={lpoForm.control} name="paymentTerms" render={({ field }) => (
-                  <FormItem>
-                    <FormLabel className="text-[10px] uppercase font-black text-muted-foreground tracking-widest">Payment Settlement</FormLabel>
-                    <Select onValueChange={field.onChange} value={field.value}>
-                      <FormControl>
-                        <SelectTrigger className="h-10 text-xs shadow-sm bg-muted/20 border-none"><SelectValue /></SelectTrigger>
-                      </FormControl>
-                      <SelectContent>
-                        <SelectItem value="Immediate" className="text-xs">Immediate Cash</SelectItem>
-                        <SelectItem value="30 Days Net" className="text-xs">30 Days Net</SelectItem>
-                        <SelectItem value="60 Days Net" className="text-xs">60 Days Net</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </FormItem>
-                )} />
-              </div>
-
-              <DialogFooter className="border-t pt-6">
-                <Button type="submit" className="bg-primary font-black uppercase text-xs h-11 w-full shadow-xl">
-                  Commit Agreement & Dispatch
-                </Button>
-              </DialogFooter>
-            </form>
-          </Form>
-        </DialogContent>
-      </Dialog>
-
-      {/* Delivery Verification Dialog */}
-      <Dialog open={!!receivingLpo} onOpenChange={(open) => !open && setReceivingLpo(null)}>
-        <DialogContent className="max-xl w-[95vw] max-h-[90vh] overflow-y-auto">
-          <DialogHeader>
-            <DialogTitle className="text-xl font-black tracking-tight flex items-center gap-2">
-              <PackageCheck className="w-6 h-6 text-accent" />
-              Delivery Verification (GRN)
-            </DialogTitle>
-            <DialogDescription className="text-xs font-medium uppercase tracking-widest">Audit and verification of received organizational assets.</DialogDescription>
-          </DialogHeader>
-          
-          {receivingLpo && (
-            <div className="space-y-6 pt-4">
-              <div className="p-4 bg-muted/30 rounded-xl border space-y-2">
-                <div className="flex justify-between items-center text-xs">
-                  <span className="font-bold text-muted-foreground uppercase tracking-tighter">Agreement Reference</span>
-                  <span className="font-black text-primary">{receivingLpo.lpoNumber}</span>
-                </div>
-                <div className="flex justify-between items-center text-xs">
-                  <span className="font-bold text-muted-foreground uppercase tracking-tighter">Assigned Partner</span>
-                  <span className="font-black text-accent">{receivingLpo.vendorName}</span>
-                </div>
-              </div>
-
-              <div className="space-y-4">
-                <h4 className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">Item Verification</h4>
-                <div className="space-y-3">
-                  {receivingLpo.items.map((item, idx) => (
-                    <div key={idx} className="p-4 bg-card border rounded-xl shadow-sm space-y-3">
-                      <div className="flex justify-between items-start">
-                        <p className="text-xs font-black text-primary truncate max-w-[250px]">{item.description}</p>
-                        <Badge variant="outline" className="text-[9px] font-bold uppercase">{item.quantity} Ordered</Badge>
-                      </div>
-                      <div className="grid grid-cols-2 gap-4">
-                        <div className="space-y-1.5">
-                          <label className="text-[9px] font-black uppercase text-muted-foreground opacity-70">Qty Received</label>
-                          <Input type="number" defaultValue={item.quantity} className="h-8 text-xs border-muted/50" />
-                        </div>
-                        <div className="space-y-1.5">
-                          <label className="text-[9px] font-black uppercase text-muted-foreground opacity-70">Quality Rating</label>
-                          <Select defaultValue="5">
-                            <SelectTrigger className="h-8 text-[10px] border-muted/50">
-                              <SelectValue />
-                            </SelectTrigger>
-                            <SelectContent>
-                              <SelectItem value="5" className="text-xs">5 - Excellent</SelectItem>
-                              <SelectItem value="4" className="text-xs">4 - Good</SelectItem>
-                              <SelectItem value="3" className="text-xs">3 - Fair</SelectItem>
-                              <SelectItem value="2" className="text-xs">2 - Poor</SelectItem>
-                              <SelectItem value="1" className="text-xs">1 - Critical</SelectItem>
-                            </SelectContent>
-                          </Select>
-                        </div>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </div>
-
-              <Separator />
-
-              <div className="flex flex-col gap-4">
-                <div className="flex items-center space-x-2 p-4 bg-destructive/5 rounded-xl border border-destructive/10">
-                  <Checkbox id="dispute" />
-                  <div className="grid gap-1.5 leading-none">
-                    <label htmlFor="dispute" className="text-xs font-black uppercase text-destructive tracking-widest flex items-center gap-1.5">
-                      <AlertTriangle className="w-3.5 h-3.5" />
-                      Raise Dispute Flag
-                    </label>
-                    <p className="text-[10px] font-medium text-muted-foreground">Flag this delivery for inconsistencies or damages.</p>
-                  </div>
-                </div>
-              </div>
-
-              <DialogFooter className="gap-2 pt-6 border-t flex-col sm:flex-row">
-                <Button variant="outline" onClick={() => setReceivingLpo(null)} className="font-black uppercase text-xs h-11 w-full sm:w-auto">Cancel Verification</Button>
-                <Button className="bg-accent font-black uppercase text-xs h-11 w-full sm:w-auto shadow-xl" onClick={() => handleReceiveGoods(receivingLpo)}>
-                  Confirm & Archive Order
-                </Button>
-              </DialogFooter>
-            </div>
-          )}
-        </DialogContent>
-      </Dialog>
-
-      {/* Read-Only Viewer Dialog */}
-      <Dialog open={!!viewingLpo} onOpenChange={(open) => !open && setViewingLpo(null)}>
-        <DialogContent className="max-w-2xl w-[95vw]">
-          <DialogHeader>
-            <DialogTitle className="flex items-center gap-2 font-black tracking-tight text-xl">
-              Official Agreement {viewingLpo?.lpoNumber} 
-              <Lock className="w-4 h-4 text-muted-foreground opacity-50" />
-            </DialogTitle>
-            <DialogDescription className="text-xs font-bold uppercase tracking-widest text-muted-foreground">Consolidated agreement metadata - View Only</DialogDescription>
-          </DialogHeader>
-          
-          {viewingLpo && (
-            <div className="space-y-6 pt-4">
-              <div className="grid grid-cols-2 gap-4">
-                <div className="p-4 bg-muted/30 rounded-xl border">
-                  <p className="text-[9px] uppercase font-black text-muted-foreground tracking-widest mb-1">Assigned Partner</p>
-                  <p className="text-sm font-bold text-primary truncate">{viewingLpo.vendorName}</p>
-                </div>
-                <div className="p-4 bg-muted/30 rounded-xl border">
-                  <p className="text-[9px] uppercase font-black text-muted-foreground tracking-widest mb-1">Cycle Status</p>
-                  <Badge variant="outline" className="text-[9px] uppercase font-black px-1.5 h-4.5 border-accent text-accent">{viewingLpo.status}</Badge>
-                </div>
-              </div>
-
-              <div className="space-y-3">
-                <p className="text-[10px] uppercase font-black text-muted-foreground tracking-widest px-1">Committed Items</p>
-                <div className="border rounded-xl divide-y bg-card shadow-sm overflow-hidden">
-                  {viewingLpo.items.map((i, idx) => (
-                    <div key={idx} className="p-4 flex justify-between items-center text-xs group hover:bg-muted/10 transition-colors">
-                      <div className="flex flex-col gap-0.5">
-                        <span className="font-bold text-primary">{i.description}</span>
-                        <span className="text-[9px] font-black uppercase text-muted-foreground">x{i.quantity} @ Ksh {i.unitPrice.toLocaleString()}</span>
-                      </div>
-                      <span className="font-black tracking-tighter text-primary">Ksh {i.total.toLocaleString()}</span>
-                    </div>
-                  ))}
-                </div>
-              </div>
-
-              <div className="flex justify-between items-center py-6 border-t px-2">
-                <span className="text-xs font-black uppercase text-muted-foreground tracking-widest">Total Committed Value</span>
-                <span className="text-2xl font-black text-primary tracking-tighter">Ksh {viewingLpo.totalValue.toLocaleString()}</span>
-              </div>
-            </div>
-          )}
-        </DialogContent>
-      </Dialog>
-
       <AlertDialog open={!!prToDelete} onOpenChange={(open) => !open && setPrToDelete(null)}>
         <AlertDialogContent className="rounded-2xl">
           <AlertDialogHeader>
@@ -894,7 +389,7 @@ function OrdersHubContent() {
               Purge Internal Request?
             </AlertDialogTitle>
             <AlertDialogDescription className="text-xs font-medium leading-relaxed">
-              This will permanently delete internal requisition **{prToDelete?.refNumber}**. This action is destructive and cannot be undone within the current session.
+              This will permanently delete internal requisition **{prToDelete?.refNumber}**. This action is destructive and cannot be undone.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter className="gap-2 sm:gap-0">
@@ -911,8 +406,8 @@ function OrdersHubContent() {
 
 export default function LPOsPage() {
   return (
-    <Suspense fallback={<div className="p-10 text-center font-black animate-pulse text-muted-foreground uppercase tracking-widest text-xs">Initializing Orders Hub...</div>}>
-      <OrdersHubContent />
+    <Suspense fallback={<div className="p-10 text-center font-black animate-pulse text-muted-foreground uppercase tracking-widest text-xs">Initializing Hub...</div>}>
+      <RequisitionsHubContent />
     </Suspense>
   );
 }
