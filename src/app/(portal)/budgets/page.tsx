@@ -30,6 +30,7 @@ import { RoleGuard } from '@/components/auth/RoleGuard';
 import { Budget, getBudgetStats } from '@/lib/types';
 import { Badge } from '@/components/ui/badge';
 import { useToast } from '@/hooks/use-toast';
+import { cn } from '@/lib/utils';
 
 const budgetSchema = z.object({
   name: z.string().min(2, "Name required"),
