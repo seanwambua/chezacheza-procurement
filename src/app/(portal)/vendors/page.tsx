@@ -494,12 +494,12 @@ export default function VendorsPage() {
                       <ArrowLeft className="w-3.5 h-3.5 mr-1.5" /> Back to Database
                     </Button>
 
-                    <div className="flex flex-col xl:flex-row xl:items-center justify-between gap-6 mb-8">
-                      <div className="flex items-center gap-4 sm:gap-6">
+                    <div className="flex flex-col xl:flex-row xl:items-start justify-between gap-6 mb-8">
+                      <div className="flex items-start gap-4 sm:gap-6 flex-1">
                         <div className="w-14 h-14 sm:w-20 sm:h-20 rounded-2xl bg-muted flex items-center justify-center text-xl sm:text-3xl font-black text-primary shrink-0 shadow-inner">
                           {selectedVendor.name.charAt(0)}
                         </div>
-                        <div className="min-w-0">
+                        <div className="min-w-0 flex-1">
                           <h3 className="text-xl sm:text-2xl md:text-3xl font-black text-primary tracking-tighter truncate leading-tight">
                             {selectedVendor.name}
                           </h3>
@@ -509,23 +509,24 @@ export default function VendorsPage() {
                             </Badge>
                             <span className="text-[10px] text-muted-foreground font-bold uppercase opacity-70">Joined: {selectedVendor.onboardingDate}</span>
                           </div>
+
+                          <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 mt-6 max-w-md">
+                            <Button variant="outline" size="sm" className="h-9 text-[10px] font-bold uppercase tracking-tight shadow-sm w-full">
+                              <Mail className="w-3.5 h-3.5 mr-1.5 text-accent" /> Email
+                            </Button>
+                            <Button variant="outline" size="sm" className="h-9 text-[10px] font-bold uppercase tracking-tight shadow-sm w-full">
+                              <Phone className="w-3.5 h-3.5 mr-1.5 text-accent" /> Call
+                            </Button>
+                            <Button 
+                              variant="outline" 
+                              size="sm" 
+                              className="h-9 text-[10px] font-bold uppercase tracking-tight shadow-sm w-full"
+                              onClick={() => setIsFeedbackDialogOpen(true)}
+                            >
+                              <MessageSquareMore className="w-3.5 h-3.5 mr-1.5 text-accent" /> Feedback
+                            </Button>
+                          </div>
                         </div>
-                      </div>
-                      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-2 shrink-0">
-                        <Button variant="outline" size="sm" className="h-9 text-[10px] font-bold uppercase tracking-tight shadow-sm flex-1">
-                          <Mail className="w-3.5 h-3.5 mr-1.5 text-accent" /> Email
-                        </Button>
-                        <Button variant="outline" size="sm" className="h-9 text-[10px] font-bold uppercase tracking-tight shadow-sm flex-1">
-                          <Phone className="w-3.5 h-3.5 mr-1.5 text-accent" /> Call
-                        </Button>
-                        <Button 
-                          variant="outline" 
-                          size="sm" 
-                          className="h-9 text-[10px] font-bold uppercase tracking-tight shadow-sm md:col-span-1 sm:col-span-2 flex-1"
-                          onClick={() => setIsFeedbackDialogOpen(true)}
-                        >
-                          <MessageSquareMore className="w-3.5 h-3.5 mr-1.5 text-accent" /> Feedback
-                        </Button>
                       </div>
                     </div>
 
