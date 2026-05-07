@@ -19,8 +19,7 @@ import {
   PanelLeftClose,
   PanelLeft,
   ChevronDown,
-  Check,
-  MessageSquareWarning
+  Check
 } from 'lucide-react';
 import { useUserStore } from '@/lib/user-store';
 import { UserRole, User } from '@/lib/types';
@@ -51,7 +50,6 @@ const navGroups = [
       { name: 'Approvals', href: '/approvals', icon: CheckSquare, roles: ['Admin', 'Manager', 'Finance'] as UserRole[] },
       { name: 'LPOs', href: '/lpos', icon: ShoppingCart, roles: ['Admin', 'Manager', 'Finance'] as UserRole[] },
       { name: 'Deliveries (GRN)', href: '/deliveries', icon: Truck, roles: ['Admin', 'Manager', 'Finance'] as UserRole[] },
-      { name: 'Disputes', href: '/disputes', icon: MessageSquareWarning, roles: ['Admin', 'Manager', 'Finance', 'Staff'] as UserRole[] },
     ]
   },
   {
