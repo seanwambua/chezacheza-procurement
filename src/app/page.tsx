@@ -25,7 +25,7 @@ export default function Home() {
           <div className="flex items-center gap-4">
             <Link href="/how-to" className="flex items-center gap-1.5 text-[10px] sm:text-xs font-bold uppercase text-muted-foreground hover:text-accent transition-colors">
               <HelpCircle className="w-3.5 h-3.5" />
-              <span className="hidden xs:inline">How it works</span>
+              <span>How it works</span>
             </Link>
             <Link href="/dashboard">
               <Button variant="ghost" className="font-bold uppercase text-xs h-9">
