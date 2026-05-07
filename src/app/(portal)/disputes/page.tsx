@@ -43,9 +43,18 @@ import { useToast } from '@/hooks/use-toast';
 import { GRN, VendorFeedback } from '@/lib/types';
 
 export default function DisputesPage() {
-  const { grns, lpos, vendors, vendorFeedback, resolveDispute, addFeedback, selectedYear } = useStore();
+  const store = useStore();
   const { currentUser, viewPreference } = useUserStore();
   const { toast } = useToast();
+  
+  // Robustly extract store values with fallbacks
+  const grns = store.grns || [];
+  const vendors = store.vendors || [];
+  const vendorFeedback = store.vendorFeedback || [];
+  const selectedYear = store.selectedYear;
+  const resolveDispute = store.resolveDispute;
+  const addFeedback = store.addFeedback;
+
   const [mounted, setMounted] = useState(false);
   const [search, setSearch] = useState('');
   
