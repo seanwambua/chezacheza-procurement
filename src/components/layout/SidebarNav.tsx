@@ -19,7 +19,8 @@ import {
   PanelLeftClose,
   PanelLeft,
   ChevronDown,
-  Check
+  Check,
+  PackageSearch
 } from 'lucide-react';
 import { useUserStore } from '@/lib/user-store';
 import { UserRole, User } from '@/lib/types';
@@ -46,9 +47,8 @@ const navGroups = [
     id: 'procurement',
     label: 'Procurement Cycle',
     items: [
-      { name: 'Requisitions', href: '/requisitions', icon: FileText, roles: ['Admin', 'Manager', 'Staff', 'Finance'] as UserRole[] },
+      { name: 'Orders Hub', href: '/lpos', icon: PackageSearch, roles: ['Admin', 'Manager', 'Staff', 'Finance'] as UserRole[] },
       { name: 'Approvals', href: '/approvals', icon: CheckSquare, roles: ['Admin', 'Manager', 'Finance'] as UserRole[] },
-      { name: 'LPOs', href: '/lpos', icon: ShoppingCart, roles: ['Admin', 'Manager', 'Finance'] as UserRole[] },
       { name: 'Deliveries (GRN)', href: '/deliveries', icon: Truck, roles: ['Admin', 'Manager', 'Finance'] as UserRole[] },
     ]
   },
