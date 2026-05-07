@@ -44,7 +44,7 @@ export default function Home() {
               <Zap className="w-3 h-3" />
               Enterprise Procurement
             </div>
-            <h1 className="text-4xl sm:text-6xl md:text-7xl font-black text-primary tracking-tighter leading-[1.0] sm:leading-[0.9]">
+            <h1 className="text-4xl sm:6xl md:text-7xl font-black text-primary tracking-tighter leading-[1.0] sm:leading-[0.9]">
               Strategic Control Over Every <span className="text-accent">Commitment.</span>
             </h1>
             <p className="text-base sm:text-lg text-muted-foreground max-w-2xl mx-auto font-medium px-4">
@@ -166,7 +166,7 @@ export default function Home() {
         <div className="max-w-7xl mx-auto flex flex-col md:flex-row items-center justify-between gap-6 sm:gap-8">
           <div className="text-center md:text-left">
             <p className="text-sm font-bold text-primary uppercase tracking-tighter">CPP Portal</p>
-            <p className="text-xs text-muted-foreground mt-1">© 2025 Chezacheza Procurement.</p>
+            <p className="text-xs text-muted-foreground mt-1">© 2026 Chezacheza Procurement.</p>
           </div>
           <div className="flex flex-wrap justify-center gap-6 sm:gap-8">
             <Link href="/how-to" className="text-[10px] sm:text-xs font-bold uppercase text-muted-foreground hover:text-accent transition-colors">How it works</Link>

@@ -122,7 +122,7 @@ export default function PortalLayout({
 
             <div className="flex flex-col sm:flex-row items-center justify-between gap-6 pt-6 border-t">
               <p className="text-[10px] text-muted-foreground font-bold uppercase tracking-wider opacity-60">
-                © 2025 Chezacheza Organizational Policy
+                © 2026 Chezacheza Organizational Policy
               </p>
               <Button 
                 className="bg-primary text-primary-foreground font-black uppercase text-xs h-12 px-10 rounded-xl shadow-xl hover:shadow-primary/20 transition-all"

@@ -53,4 +53,4 @@ The portal features a highly customizable interface:
 - **Dark Mode**: Full system-wide support for dark and light themes.
 
 ---
-*© 2025 Chezacheza. All rights reserved.*
+*© 2026 Chezacheza. All rights reserved.*
