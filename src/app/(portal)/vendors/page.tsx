@@ -421,7 +421,7 @@ export default function VendorsPage() {
                   <ArrowLeft className="w-3.5 h-3.5 mr-1.5" /> Back to Database
                 </Button>
 
-                <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 mb-8">
+                <div className="flex flex-col xl:flex-row xl:items-center justify-between gap-6 mb-8">
                   <div className="flex items-center gap-4 sm:gap-6">
                     <div className="w-14 h-14 sm:w-20 sm:h-20 rounded-2xl bg-muted flex items-center justify-center text-xl sm:text-3xl font-black text-primary shrink-0 shadow-inner">
                       {selectedVendor.name.charAt(0)}
@@ -438,20 +438,20 @@ export default function VendorsPage() {
                       </div>
                     </div>
                   </div>
-                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 shrink-0">
-                    <Button variant="outline" size="sm" className="h-9 text-[10px] font-bold uppercase tracking-tight shadow-sm">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-2 shrink-0">
+                    <Button variant="outline" size="sm" className="h-9 text-[10px] font-bold uppercase tracking-tight shadow-sm flex-1">
                       <Mail className="w-3.5 h-3.5 mr-1.5 text-accent" /> Email
                     </Button>
-                    <Button variant="outline" size="sm" className="h-9 text-[10px] font-bold uppercase tracking-tight shadow-sm">
+                    <Button variant="outline" size="sm" className="h-9 text-[10px] font-bold uppercase tracking-tight shadow-sm flex-1">
                       <Phone className="w-3.5 h-3.5 mr-1.5 text-accent" /> Call
                     </Button>
                     <Button 
                       variant="outline" 
                       size="sm" 
-                      className="h-9 text-[10px] font-bold uppercase tracking-tight shadow-sm"
+                      className="h-9 text-[10px] font-bold uppercase tracking-tight shadow-sm md:col-span-1 sm:col-span-2 flex-1"
                       onClick={() => setIsFeedbackDialogOpen(true)}
                     >
-                      <Star className="w-3.5 h-3.5 mr-1.5 text-accent" /> Feedback
+                      <MessageSquareMore className="w-3.5 h-3.5 mr-1.5 text-accent" /> Feedback
                     </Button>
                   </div>
                 </div>
