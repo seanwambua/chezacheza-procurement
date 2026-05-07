@@ -1,4 +1,3 @@
-
 import { create } from 'zustand';
 import { persist, createJSONStorage } from 'zustand/middleware';
 import { User, UserRole, ROLE_PERMISSIONS } from './types';
@@ -72,6 +71,8 @@ export const useUserStore = create<UserState>()(
       hasPermission: (permission) => {
         const user = get().currentUser;
         if (!user) return false;
+        
+        // Admin has global wild-card access
         if (user.role === 'Admin') return true;
         
         const permissions = ROLE_PERMISSIONS[user.role] || [];

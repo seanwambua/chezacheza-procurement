@@ -187,10 +187,11 @@ export const useStore = create<ProcurementState>()(
 
       updateLPO: (id, updates) => set((state) => ({
         lpos: (state.lpos || []).map(lpo => {
-           if (lpo.id === id && (lpo.status === 'Dispatched' || lpo.status === 'Fulfilled' || lpo.status === 'Closed')) {
-              return lpo;
+           // Allow status updates even if agreement is dispatched/fulfilled
+           if (lpo.id === id) {
+              return { ...lpo, ...updates };
            }
-           return lpo.id === id ? { ...lpo, ...updates } : lpo;
+           return lpo;
         })
       })),
 
@@ -248,6 +249,16 @@ export const useStore = create<ProcurementState>()(
         );
 
         const lpo = (state.lpos || []).find(l => l.id === grn.lpoId);
+        
+        // Update Vendor Dispute Count
+        const updatedVendors = (state.vendors || []).map(v => {
+          if (lpo && v.id === lpo.vendorId && grn.disputeFlag) {
+            return { ...v, disputeCount: (v.disputeCount || 0) + 1 };
+          }
+          return v;
+        });
+
+        // Reconcile Budget
         const updatedBudgets = (state.budgets || []).map(b => {
           const pr = (state.prs || []).find(p => p.id === lpo?.prId);
           if (lpo && pr && b.name === pr.budgetLine && b.fiscalYear === pr.fiscalYear) {
@@ -263,7 +274,8 @@ export const useStore = create<ProcurementState>()(
         return {
           grns: [grn, ...(state.grns || [])],
           lpos: updatedLpos,
-          budgets: updatedBudgets
+          budgets: updatedBudgets,
+          vendors: updatedVendors
         };
       }),
 
