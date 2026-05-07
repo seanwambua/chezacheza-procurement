@@ -7,11 +7,11 @@ import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent } from '@/components/ui/card';
 import { StatCard } from '@/components/dashboard/StatCard';
-import { PieChart, TrendingUp, Lock, Plus, Pencil, Trash2, MoreVertical, PauseCircle, PlayCircle, FileText, ShoppingCart, AlertCircle } from 'lucide-react';
+import { PieChart, TrendingUp, Plus, Pencil, Trash2, MoreVertical, PauseCircle, PlayCircle, AlertCircle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogFooter, DialogDescription } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogFooter } from "@/components/ui/dialog";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -22,16 +22,13 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
+import { Form, FormControl, FormField, FormItem, FormLabel } from "@/components/ui/form";
 import { Input } from '@/components/ui/input';
-import { Textarea } from '@/components/ui/textarea';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { RoleGuard } from '@/components/auth/RoleGuard';
 import { Budget, getBudgetStats } from '@/lib/types';
 import { Badge } from '@/components/ui/badge';
-import { cn } from '@/lib/utils';
 import { useToast } from '@/hooks/use-toast';
 
 const budgetSchema = z.object({
@@ -48,7 +45,7 @@ const budgetSchema = z.object({
 type BudgetFormValues = z.infer<typeof budgetSchema>;
 
 export default function BudgetsPage() {
-  const { budgets, prs, lpos, addBudget, updateBudget, deleteBudget, selectedYear } = useStore();
+  const { budgets, addBudget, updateBudget, deleteBudget, selectedYear } = useStore();
   const { currentUser, viewPreference } = useUserStore();
   const { toast } = useToast();
   const [mounted, setMounted] = useState(false);
@@ -195,57 +192,84 @@ export default function BudgetsPage() {
         </div>
       </div>
 
-      <Card className="border-border shadow-none overflow-hidden bg-card">
-        <Table>
-          <TableHeader>
-            <TableRow className="bg-muted/30">
-              <TableHead className="font-bold uppercase text-[10px]">Budget</TableHead>
-              <TableHead className="font-bold uppercase text-[10px]">Utilization</TableHead>
-              <TableHead className="text-right font-bold uppercase text-[10px]">Remaining (Q)</TableHead>
-              <TableHead className="w-[50px]"></TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {filteredBudgets.map((b) => {
-              const stats = getBudgetStats(b);
-              return (
-                <TableRow key={b.id} className="group hover:bg-muted/5">
-                  <TableCell>
-                    <div className="flex flex-col">
-                      <span className="font-bold text-primary flex items-center gap-2">
-                        {b.name} {stats.isPaused ? <PauseCircle className="w-3.5 h-3.5 text-destructive" /> : <PlayCircle className="w-3.5 h-3.5 text-accent" />}
-                      </span>
-                      <span className="text-[9px] uppercase font-bold opacity-50">{b.department}</span>
-                    </div>
-                  </TableCell>
-                  <TableCell>
-                    <div className="flex items-center gap-2">
-                      <div className="h-1.5 flex-1 bg-muted rounded-full overflow-hidden">
-                        <div className={`h-full ${stats.isPaused ? 'bg-destructive' : 'bg-accent'}`} style={{ width: `${Math.min(100, stats.utilization)}%` }} />
-                      </div>
-                      <Badge variant={stats.isPaused ? "destructive" : "secondary"} className="text-[9px] h-4">
-                        {stats.isPaused ? "PAUSED" : "ACTIVE"}
-                      </Badge>
-                    </div>
-                  </TableCell>
-                  <TableCell className="text-right font-black text-xs">
-                    Ksh {stats.remainingInQuarter.toLocaleString()}
-                  </TableCell>
-                  <TableCell>
-                    <DropdownMenu>
-                      <DropdownMenuTrigger asChild><Button variant="ghost" size="icon" className="h-8 w-8 opacity-0 group-hover:opacity-100"><MoreVertical className="w-4 h-4" /></Button></DropdownMenuTrigger>
-                      <DropdownMenuContent align="end">
-                        <DropdownMenuItem onClick={() => {setEditingBudget(b); setIsDialogOpen(true);}} className="text-xs font-bold"><Pencil className="w-4 h-4 mr-2" /> Edit</DropdownMenuItem>
-                        <DropdownMenuItem onClick={() => setBudgetToDelete(b)} className="text-destructive text-xs font-bold"><Trash2 className="w-4 h-4 mr-2" /> Purge</DropdownMenuItem>
-                      </DropdownMenuContent>
-                    </DropdownMenu>
-                  </TableCell>
-                </TableRow>
-              );
-            })}
-          </TableBody>
-        </Table>
-      </Card>
+      <TooltipProvider delayDuration={100}>
+        <Card className="border-border shadow-none overflow-hidden bg-card">
+          <Table>
+            <TableHeader>
+              <TableRow className="bg-muted/30">
+                <TableHead className="font-bold uppercase text-[10px]">Budget</TableHead>
+                <TableHead className="font-bold uppercase text-[10px]">Utilization</TableHead>
+                <TableHead className="text-right font-bold uppercase text-[10px]">Remaining (Q)</TableHead>
+                <TableHead className="w-[50px]"></TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {filteredBudgets.map((b) => {
+                const stats = getBudgetStats(b);
+                return (
+                  <TableRow key={b.id} className="group hover:bg-muted/5">
+                    <TableCell>
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <div className={cn("flex flex-col", isDetailed && "cursor-help")}>
+                            <span className="font-bold text-primary flex items-center gap-2">
+                              {b.name} {stats.isPaused ? <PauseCircle className="w-3.5 h-3.5 text-destructive" /> : <PlayCircle className="w-3.5 h-3.5 text-accent" />}
+                            </span>
+                            <span className="text-[9px] uppercase font-bold opacity-50">{b.department}</span>
+                          </div>
+                        </TooltipTrigger>
+                        {isDetailed && (
+                          <TooltipContent className="max-w-[200px] text-[10px] space-y-1">
+                            <p className="font-bold uppercase tracking-wider text-accent">Strategic Context</p>
+                            <p className="font-medium">{b.description || 'No strategic description provided.'}</p>
+                          </TooltipContent>
+                        )}
+                      </Tooltip>
+                    </TableCell>
+                    <TableCell>
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <div className={cn("flex items-center gap-2", isDetailed && "cursor-help")}>
+                            <div className="h-1.5 flex-1 bg-muted rounded-full overflow-hidden">
+                              <div className={`h-full ${stats.isPaused ? 'bg-destructive' : 'bg-accent'}`} style={{ width: `${Math.min(100, stats.utilization)}%` }} />
+                            </div>
+                            <Badge variant={stats.isPaused ? "destructive" : "secondary"} className="text-[9px] h-4">
+                              {stats.isPaused ? "PAUSED" : "ACTIVE"}
+                            </Badge>
+                          </div>
+                        </TooltipTrigger>
+                        {isDetailed && (
+                          <TooltipContent className="text-[10px] space-y-2 p-3">
+                            <p className="font-bold uppercase tracking-wider text-accent border-b pb-1">Allocation Breakdown</p>
+                            <div className="grid grid-cols-2 gap-x-4 gap-y-1">
+                              <span>Q1:</span> <span className="font-bold text-right">Ksh {b.q1Allocation.toLocaleString()}</span>
+                              <span>Q2:</span> <span className="font-bold text-right">Ksh {b.q2Allocation.toLocaleString()}</span>
+                              <span>Q3:</span> <span className="font-bold text-right">Ksh {b.q3Allocation.toLocaleString()}</span>
+                              <span>Q4:</span> <span className="font-bold text-right">Ksh {b.q4Allocation.toLocaleString()}</span>
+                            </div>
+                          </TooltipContent>
+                        )}
+                      </Tooltip>
+                    </TableCell>
+                    <TableCell className="text-right font-black text-xs">
+                      Ksh {stats.remainingInQuarter.toLocaleString()}
+                    </TableCell>
+                    <TableCell>
+                      <DropdownMenu>
+                        <DropdownMenuTrigger asChild><Button variant="ghost" size="icon" className="h-8 w-8 opacity-0 group-hover:opacity-100"><MoreVertical className="w-4 h-4" /></Button></DropdownMenuTrigger>
+                        <DropdownMenuContent align="end">
+                          <DropdownMenuItem onClick={() => {setEditingBudget(b); setIsDialogOpen(true);}} className="text-xs font-bold"><Pencil className="w-4 h-4 mr-2" /> Edit</DropdownMenuItem>
+                          <DropdownMenuItem onClick={() => setBudgetToDelete(b)} className="text-destructive text-xs font-bold"><Trash2 className="w-4 h-4 mr-2" /> Purge</DropdownMenuItem>
+                        </DropdownMenuContent>
+                      </DropdownMenu>
+                    </TableCell>
+                  </TableRow>
+                );
+              })}
+            </TableBody>
+          </Table>
+        </Card>
+      </TooltipProvider>
 
       <AlertDialog open={!!budgetToDelete} onOpenChange={(open) => !open && setBudgetToDelete(null)}>
         <AlertDialogContent>
