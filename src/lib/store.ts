@@ -1,7 +1,7 @@
 import { create } from 'zustand';
 import { persist, createJSONStorage } from 'zustand/middleware';
-import { PurchaseRequisition, Vendor, LPO, Budget, GRN, PRStatus, calculatePRTotal, FiscalYear } from './types';
-import { MOCK_PRS, MOCK_VENDORS, MOCK_LPOS, MOCK_BUDGETS, MOCK_GRNS, MOCK_FISCAL_YEARS } from './mock-data';
+import { PurchaseRequisition, Vendor, LPO, Budget, GRN, PRStatus, calculatePRTotal, FiscalYear, VendorFeedback } from './types';
+import { MOCK_PRS, MOCK_VENDORS, MOCK_LPOS, MOCK_BUDGETS, MOCK_GRNS, MOCK_FISCAL_YEARS, MOCK_FEEDBACK } from './mock-data';
 
 interface ProcurementState {
   prs: PurchaseRequisition[];
@@ -10,6 +10,7 @@ interface ProcurementState {
   grns: GRN[];
   budgets: Budget[];
   fiscalYears: FiscalYear[];
+  vendorFeedback: VendorFeedback[];
   selectedYear: string;
   
   // Actions
@@ -28,6 +29,10 @@ interface ProcurementState {
   updateBudget: (id: string, updates: Partial<Budget>) => void;
   deleteBudget: (id: string) => void;
   
+  // Dispute Actions
+  resolveDispute: (grnId: string, notes: string) => void;
+  addFeedback: (feedback: Omit<VendorFeedback, 'id' | 'createdAt'>) => void;
+
   // Fiscal Year CRUD
   addFiscalYear: (fy: Omit<FiscalYear, 'id' | 'createdAt'>) => void;
   updateFiscalYear: (id: string, updates: Partial<FiscalYear>) => void;
@@ -45,6 +50,7 @@ export const useStore = create<ProcurementState>()(
       grns: MOCK_GRNS,
       budgets: MOCK_BUDGETS,
       fiscalYears: MOCK_FISCAL_YEARS,
+      vendorFeedback: MOCK_FEEDBACK,
       selectedYear: '2024',
 
       setSelectedYear: (selectedYear) => set({ selectedYear }),
@@ -207,7 +213,11 @@ export const useStore = create<ProcurementState>()(
       })),
 
       addGRN: (grnData) => set((state) => {
-        const grn = { ...grnData, fiscalYear: state.selectedYear };
+        const grn: GRN = { 
+          ...grnData, 
+          fiscalYear: state.selectedYear,
+          disputeStatus: grnData.disputeFlag ? 'Open' : undefined
+        };
         const updatedLpos = state.lpos.map(lpo => 
           lpo.id === grn.lpoId ? { ...lpo, status: grn.disputeFlag ? 'Partially Fulfilled' : 'Fulfilled' as any } : lpo
         );
@@ -230,6 +240,39 @@ export const useStore = create<ProcurementState>()(
           lpos: updatedLpos,
           budgets: updatedBudgets
         };
+      }),
+
+      resolveDispute: (grnId, notes) => set((state) => {
+        const grn = state.grns.find(g => g.id === grnId);
+        if (!grn) return state;
+
+        const updatedGrns = state.grns.map(g => 
+          g.id === grnId ? { 
+            ...g, 
+            disputeStatus: 'Resolved', 
+            resolutionNotes: notes, 
+            resolvedAt: new Date().toISOString() 
+          } : g
+        );
+
+        const lpo = state.lpos.find(l => l.id === grn.lpoId);
+        const updatedVendors = state.vendors.map(v => 
+          v.id === lpo?.vendorId ? { ...v, disputeCount: Math.max(0, v.disputeCount - 1) } : v
+        );
+
+        return {
+          grns: updatedGrns,
+          vendors: updatedVendors
+        };
+      }),
+
+      addFeedback: (feedbackData) => set((state) => {
+        const newFeedback: VendorFeedback = {
+          ...feedbackData,
+          id: `F-${Math.floor(Math.random() * 10000)}`,
+          createdAt: new Date().toISOString()
+        };
+        return { vendorFeedback: [newFeedback, ...state.vendorFeedback] };
       }),
 
       addBudget: (bData) => set((state) => {

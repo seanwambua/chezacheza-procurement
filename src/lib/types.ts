@@ -69,6 +69,19 @@ export interface GRN {
   }[];
   disputeFlag: boolean;
   disputeReason?: string;
+  disputeStatus?: 'Open' | 'Resolved';
+  resolutionNotes?: string;
+  resolvedAt?: string;
+}
+
+export interface VendorFeedback {
+  id: string;
+  vendorId: string;
+  vendorName: string;
+  authorName: string;
+  rating: number;
+  comment: string;
+  createdAt: string;
 }
 
 export interface Budget {
@@ -122,7 +135,8 @@ export const ROLE_PERMISSIONS: Record<UserRole, string[]> = {
     'view_vendors',
     'manage_vendors',
     'view_lpos',
-    'view_deliveries'
+    'view_deliveries',
+    'manage_disputes'
   ],
   Finance: [
     'view_dashboard',
@@ -133,13 +147,15 @@ export const ROLE_PERMISSIONS: Record<UserRole, string[]> = {
     'approve_requisitions',
     'view_vendors',
     'view_lpos',
-    'view_payments'
+    'view_payments',
+    'manage_disputes'
   ],
   Staff: [
     'view_dashboard',
     'view_requisitions',
     'create_requisitions',
-    'view_own_requisitions'
+    'view_own_requisitions',
+    'submit_feedback'
   ],
 };
 

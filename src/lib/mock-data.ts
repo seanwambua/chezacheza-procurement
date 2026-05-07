@@ -1,4 +1,4 @@
-import { PurchaseRequisition, Vendor, LPO, Budget, GRN, User, FiscalYear } from './types';
+import { PurchaseRequisition, Vendor, LPO, Budget, GRN, User, FiscalYear, VendorFeedback } from './types';
 
 export const MOCK_FISCAL_YEARS: FiscalYear[] = [
   {
@@ -114,7 +114,22 @@ export const MOCK_LPOS: LPO[] = [
   }
 ];
 
-export const MOCK_GRNS: GRN[] = [];
+export const MOCK_GRNS: GRN[] = [
+  {
+    id: 'GRN-9001',
+    lpoId: 'LPO-5001',
+    lpoNumber: 'LPO/2024/201',
+    fiscalYear: '2024',
+    receivedDate: '2024-03-21',
+    receivedBy: 'Jane Doe',
+    items: [
+      { description: 'Office Chairs', orderedQty: 10, receivedQty: 10, qualityRating: 2, specificationMatch: true, condition: 'Damaged' }
+    ],
+    disputeFlag: true,
+    disputeReason: '3 chairs arrived with broken armrests.',
+    disputeStatus: 'Open'
+  }
+];
 
 export const MOCK_USERS: User[] = [
   {
@@ -126,4 +141,16 @@ export const MOCK_USERS: User[] = [
     status: 'Active',
     createdAt: '2024-01-01T12:00:00Z',
   },
+];
+
+export const MOCK_FEEDBACK: VendorFeedback[] = [
+  {
+    id: 'F-001',
+    vendorId: 'V-001',
+    vendorName: 'TechSolutions Ltd',
+    authorName: 'Jane Doe',
+    rating: 5,
+    comment: 'Excellent service and prompt delivery. The hardware quality is top-notch.',
+    createdAt: '2024-03-05T09:00:00Z'
+  }
 ];
