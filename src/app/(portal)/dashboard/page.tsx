@@ -53,7 +53,7 @@ import {
   FormItem,
   FormLabel,
   FormMessage,
-} from "@/form";
+} from "@/components/ui/form";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -63,10 +63,10 @@ import {
   AlertDialogFooter,
   AlertDialogHeader,
   AlertDialogTitle,
-} from "@/alert-dialog";
-import { Input } from '@/input';
-import { Button } from '@/button';
-import { Checkbox } from '@/checkbox';
+} from "@/components/ui/alert-dialog";
+import { Input } from '@/components/ui/input';
+import { Button } from '@/components/ui/button';
+import { Checkbox } from '@/components/ui/checkbox';
 import { calculatePRTotal, FiscalYear } from '@/lib/types';
 import Link from 'next/link';
 import { cn } from '@/lib/utils';
@@ -531,16 +531,16 @@ export default function DashboardPage() {
               <AlertCircle className="w-5 h-5" /> 
               Purge Fiscal Period FY {yearToDelete}?
             </AlertDialogTitle>
-            <div className="text-sm text-muted-foreground space-y-3">
-              <p>This will permanently delete the entire fiscal period and all its associated data. This action cannot be undone.</p>
-              <div className="p-3 bg-destructive/10 border border-destructive/20 rounded-lg space-y-1">
-                <p className="font-black uppercase text-[10px]">Cascading Impact:</p>
-                <ul className="list-disc pl-4 text-[9px] font-bold">
-                  <li>All departmental budgets for {yearToDelete}</li>
-                  <li>All purchase requisitions and approval logs</li>
-                  <li>All Local Purchase Orders (LPOs) and GRNs</li>
-                </ul>
-              </div>
+            <AlertDialogDescription>
+              This will permanently delete the entire fiscal period and all its associated data. This action cannot be undone.
+            </AlertDialogDescription>
+            <div className="p-3 bg-destructive/10 border border-destructive/20 rounded-lg space-y-1 text-sm text-muted-foreground">
+              <p className="font-black uppercase text-[10px]">Cascading Impact:</p>
+              <ul className="list-disc pl-4 text-[9px] font-bold">
+                <li>All departmental budgets for {yearToDelete}</li>
+                <li>All purchase requisitions and approval logs</li>
+                <li>All Local Purchase Orders (LPOs) and GRNs</li>
+              </ul>
             </div>
           </AlertDialogHeader>
           <AlertDialogFooter>
