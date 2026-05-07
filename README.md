@@ -1,4 +1,4 @@
-# Chezacheza Procurement Portal (CPP)
+# Chezacheza Procurement Portal (CP)
 
 An enterprise-grade procurement management system designed for Chezacheza, providing strategic control over organizational commitments, departmental budgets, and vendor relationships.
 

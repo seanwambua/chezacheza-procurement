@@ -20,7 +20,7 @@ export default function Home() {
           <div className="flex items-center gap-2">
             <Link href="/" className="hover:opacity-80 transition-opacity">
               <h1 className="text-xl font-headline font-bold text-primary tracking-tighter">
-                CPP <span className="text-accent">Portal</span>
+                Chezacheza <span className="text-accent">Portal</span>
               </h1>
             </Link>
           </div>
@@ -167,14 +167,14 @@ export default function Home() {
       <footer className="border-t py-8 sm:py-12 bg-card px-4 sm:px-6">
         <div className="max-w-7xl mx-auto flex flex-col md:flex-row items-center justify-between gap-6 sm:gap-8">
           <div className="text-center md:text-left">
-            <p className="text-sm font-bold text-primary uppercase tracking-tighter">CPP Portal</p>
+            {/* <p className="text-sm font-bold text-primary uppercase tracking-tighter">CPP Portal</p> */}
             <p className="text-xs text-muted-foreground mt-1">© 2026 Chezacheza Procurement.</p>
           </div>
           <div className="flex flex-wrap justify-center gap-6 sm:gap-8">
-            <Link href="/how-to" className="text-[10px] sm:text-xs font-bold uppercase text-muted-foreground hover:text-accent transition-colors">How it works</Link>
-            <Link href="/settings" className="text-[10px] sm:text-xs font-bold uppercase text-muted-foreground hover:text-accent transition-colors">Settings</Link>
-            <Link href="/users" className="text-[10px] sm:text-xs font-bold uppercase text-muted-foreground hover:text-accent transition-colors">Users</Link>
-            <Link href="/vendors" className="text-[10px] sm:text-xs font-bold uppercase text-muted-foreground hover:text-accent transition-colors">Vendors</Link>
+            <Link href="/how-to" className="text-[10px] sm:text-xs font-bold uppercase text-muted-foreground hover:text-accent transition-colors">How it works?</Link>
+            {/* <Link href="/settings" className="text-[10px] sm:text-xs font-bold uppercase text-muted-foreground hover:text-accent transition-colors">Settings</Link> */}
+            {/* <Link href="/users" className="text-[10px] sm:text-xs font-bold uppercase text-muted-foreground hover:text-accent transition-colors">Users</Link> */}
+            {/* <Link href="/vendors" className="text-[10px] sm:text-xs font-bold uppercase text-muted-foreground hover:text-accent transition-colors">Vendors</Link> */}
           </div>
         </div>
       </footer>
