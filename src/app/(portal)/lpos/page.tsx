@@ -27,7 +27,8 @@ import {
   Pencil,
   Lock,
   Eye,
-  CheckCircle2
+  CheckCircle2,
+  ShieldCheck
 } from 'lucide-react';
 import { 
   Table, 
