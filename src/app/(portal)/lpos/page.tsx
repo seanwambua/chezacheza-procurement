@@ -16,6 +16,7 @@ import {
   PlusCircle, 
   Trash, 
   Pencil,
+  Wallet
 } from 'lucide-react';
 import { 
   Table, 
